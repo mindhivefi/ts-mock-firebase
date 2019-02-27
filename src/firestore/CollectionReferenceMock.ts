@@ -13,6 +13,7 @@ import {
 import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 import { Mocker } from 'index';
 import { FirestoreMock } from '.';
+import { MockCollection } from './index';
 import { generateDocumentId, resolveReference } from './utils/index';
 
 export interface CollectionMocker extends Mocker {
@@ -21,6 +22,8 @@ export interface CollectionMocker extends Mocker {
   setDoc(doc: DocumentReferenceMock): void;
 
   deleteDoc(id: string): void;
+
+  load(collection: MockCollection): void;
 
   reset(): void;
 }
@@ -44,6 +47,20 @@ export class CollectionReferenceMock implements CollectionReference {
 
       deleteDoc: (documentId: string) => {
         delete this._docs[documentId];
+      },
+
+      load: (collection: MockCollection) => {
+        this.mocker.reset();
+
+        if (collection.docs) {
+          for (const documentId in collection.docs) {
+            const documentData = collection.docs[documentId];
+
+            const document = new DocumentReferenceMock(this.firestore, documentId, this);
+            this.mocker.setDoc(document);
+            document.mocker.load(documentData);
+          }
+        }
       },
 
       reset: () => {
@@ -119,7 +136,7 @@ export class CollectionReferenceMock implements CollectionReference {
    * @return true if this `CollectionReference` is equal to the provided one.
    */
   public isEqual = (other: CollectionReference | Query): boolean => {
-    throw new Error('Not implemented yet');
+    return this === other;
   };
 
   /**

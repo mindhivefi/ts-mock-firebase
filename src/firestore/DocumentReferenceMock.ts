@@ -16,6 +16,7 @@ import {
 import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import { FirestoreMock } from '.';
 import { Mocker } from '../index';
+import { MockDocument } from './index';
 import { resolveReference } from './utils/index';
 
 export interface SnaphotObserver {
@@ -32,6 +33,8 @@ export interface DocumentMocker extends Mocker {
   collection(id: string): CollectionReferenceMock;
 
   setCollection(collection: CollectionReferenceMock): void;
+
+  load(document: MockDocument): void;
 
   listeners(): DocumentSnapshotFunction[];
 }
@@ -159,6 +162,23 @@ export default class DocumentReferenceMock implements DocumentReference {
         this._collections = {};
         this._snapshotListeners = [];
         this.data = undefined;
+      },
+
+      load: (document: MockDocument) => {
+        this.mocker.reset();
+        this.data = document.data ? { ...document.data } : undefined;
+
+        const collections = document.collections;
+
+        if (collections) {
+          for (const collectionId in collections) {
+            const collectionData = collections[collectionId];
+
+            const collection = new CollectionReferenceMock(this.firestore as FirestoreMock, collectionId, this);
+            this.mocker.setCollection(collection);
+            collection.mocker.load(collectionData);
+          }
+        }
       },
 
       listeners: () => {

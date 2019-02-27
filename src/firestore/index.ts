@@ -1,8 +1,10 @@
 import * as types from '@firebase/firestore-types';
 import { CollectionReference, DocumentReference } from '@firebase/firestore-types';
 import { FirebaseAppMock } from 'firebaseApp';
+import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import { Mocker } from '../index';
 import DocumentReferenceMock from './DocumentReferenceMock';
+import { DocumentSnapshotFunction } from './DocumentReferenceMock';
 import { resolveReference } from './utils/index';
 
 declare module '@firebase/app-types' {
@@ -30,9 +32,32 @@ declare module '@firebase/app-types' {
   }
 }
 
+/**
+ * Document object to define database data to be set into a mock
+ */
+export interface MockDocument {
+  data?: types.DocumentData;
+  collections?: MockCollections;
+  listerners?: DocumentSnapshotFunction[];
+}
+
+export interface MockCollection {
+  docs?: { [documentId: string]: MockDocument };
+  listeners?: any[]; // todo typing
+}
+/**
+ * Collection object to define database data to be set into a mock
+ */
+export interface MockCollections {
+  [collectionId: string]: MockCollection;
+}
+
+export type MockDatabase = MockCollections;
+
 export interface FirestoreMocker extends Mocker {
-  loadDatabase(json: string): void;
-  saveDatabase(): string;
+  loadDatabase(collection: MockCollections): void;
+  fromJson(json: string): void;
+  toJson(): string;
 }
 
 export class FirestoreMock implements types.FirebaseFirestore {
@@ -47,10 +72,21 @@ export class FirestoreMock implements types.FirebaseFirestore {
     };
 
     this.mocker = {
-      loadDatabase: (json: string) => {
+      loadDatabase: (collections: MockCollections) => {
+        this.root.mocker.reset();
+        for (const collectionId in collections) {
+          const collectionData = collections[collectionId];
+
+          const collection = new CollectionReferenceMock(this, collectionId, this.root);
+          this.root.mocker.setCollection(collection);
+          collection.mocker.load(collectionData);
+        }
+      },
+      fromJson: (json: string) => {
         console.error('Loading of database is not implmented yet.');
       },
-      saveDatabase: () => {
+
+      toJson: () => {
         console.error('Saving of database is not implmented yet.');
         return '';
       },
