@@ -10,14 +10,53 @@ import {
   QuerySnapshot,
   WhereFilterOp,
 } from '@firebase/firestore-types';
+import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import { Mocker } from 'index';
 import { FirestoreMock } from '.';
+import { generateDocumentId, resolveReference } from './utils/index';
 
+export interface CollectionMocker extends Mocker {
+  doc(id: string): DocumentReferenceMock;
+
+  setDoc(doc: DocumentReferenceMock): void;
+
+  deleteDoc(id: string): void;
+
+  reset(): void;
+}
 export class CollectionReferenceMock implements CollectionReference {
+  private _docs: {
+    [documentId: string]: DocumentReferenceMock;
+  } = {};
+
   public constructor(
     public firestore: FirestoreMock,
     public id: string,
     public parent: DocumentReference | null = null,
-  ) {}
+  ) {
+    this.mocker = {
+      doc: (documentId: string) => {
+        return this._docs[documentId];
+      },
+      setDoc: (doc: DocumentReferenceMock) => {
+        this._docs[doc.id] = doc;
+      },
+
+      deleteDoc: (documentId: string) => {
+        delete this._docs[documentId];
+      },
+
+      reset: () => {
+        for (const documentId in this._docs) {
+          const doc = this._docs[documentId];
+          doc.mocker.reset();
+        }
+        this._docs = {};
+      },
+    };
+  }
+
+  public mocker: CollectionMocker;
 
   /** The identifier of the collection. */
   // readonly id: string;
@@ -33,7 +72,7 @@ export class CollectionReferenceMock implements CollectionReference {
    * to the root of the database).
    */
   get path(): string {
-    throw new Error('Not implemented yet');
+    return this.parent ? `${this.parent.path}/${this.id}` : this.id;
   }
 
   /**
@@ -45,7 +84,14 @@ export class CollectionReferenceMock implements CollectionReference {
    * @return The `DocumentReference` instance.
    */
   public doc = (documentPath?: string): DocumentReference => {
-    throw new Error('Not implemented yet');
+    return resolveReference(
+      this.firestore,
+      this.parent as DocumentReferenceMock,
+      false,
+      documentPath || generateDocumentId(),
+      false,
+      this,
+    ) as DocumentReference;
   };
 
   /**
@@ -57,7 +103,13 @@ export class CollectionReferenceMock implements CollectionReference {
    * newly created document after it has been written to the backend.
    */
   public add = (data: DocumentData): Promise<DocumentReference> => {
-    throw new Error('Not implemented yet');
+    return new Promise<DocumentReference>((resolve, reject) => {
+      const id = generateDocumentId();
+      const document = new DocumentReferenceMock(this.firestore, id, this);
+      this.mocker.setDoc(document);
+      document.data = { ...data };
+      resolve(document);
+    });
   };
 
   /**

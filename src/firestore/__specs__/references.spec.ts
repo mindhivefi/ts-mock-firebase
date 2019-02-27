@@ -1,4 +1,4 @@
-import { FirebaseAppMock } from '../../firebaseApp';
+import { FirebaseAppMock } from 'firebaseApp';
 
 describe('Firestore references', () => {
   describe('Collection References', () => {
@@ -10,14 +10,22 @@ describe('Firestore references', () => {
       expect(ref).toBeDefined();
     });
 
-    // describe('Reference paths', () => {
-    //   it('Collections has equal path', () => {
-    //     const app = new FirebaseAppMock();
+    describe('Reference paths', () => {
+      it('Collections has equal path', () => {
+        const app = new FirebaseAppMock();
 
-    //     const firestore = app.firestore();
-    //     const ref = firestore.collection('company/mindhive/users/ville');
-    //     expect(ref.path).toMatch('company/mindhive/users/ville');
-    //   });
-    // });
+        const firestore = app.firestore();
+        const ref = firestore.collection('company/mindhive/users');
+        expect(ref.path).toMatch('company/mindhive/users');
+      });
+
+      it('Documents has equal path', () => {
+        const app = new FirebaseAppMock();
+
+        const firestore = app.firestore();
+        const ref = firestore.doc('company/mindhive/users/ville');
+        expect(ref.path).toMatch('company/mindhive/users/ville');
+      });
+    });
   });
 });

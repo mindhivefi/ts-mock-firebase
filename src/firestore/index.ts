@@ -1,6 +1,9 @@
 import * as types from '@firebase/firestore-types';
+import { CollectionReference, DocumentReference } from '@firebase/firestore-types';
 import { FirebaseAppMock } from 'firebaseApp';
-import { CollectionReferenceMock } from './CollectionReferenceMock';
+import { Mocker } from '../index';
+import DocumentReferenceMock from './DocumentReferenceMock';
+import { resolveReference } from './utils/index';
 
 declare module '@firebase/app-types' {
   interface FirebaseNamespace {
@@ -27,11 +30,34 @@ declare module '@firebase/app-types' {
   }
 }
 
+export interface FirestoreMocker extends Mocker {
+  loadDatabase(json: string): void;
+  saveDatabase(): string;
+}
+
 export class FirestoreMock implements types.FirebaseFirestore {
+  public readonly root: DocumentReferenceMock = new DocumentReferenceMock(this, '', null as any);
+
+  public mocker: FirestoreMocker;
+
   public constructor(app: FirebaseAppMock) {
     this.app = app;
     this.INTERNAL = {
       // delete: () => void,
+    };
+
+    this.mocker = {
+      loadDatabase: (json: string) => {
+        console.error('Loading of database is not implmented yet.');
+      },
+      saveDatabase: () => {
+        console.error('Saving of database is not implmented yet.');
+        return '';
+      },
+
+      reset: () => {
+        this.root.mocker.reset();
+      },
     };
   }
   /**
@@ -74,7 +100,7 @@ export class FirestoreMock implements types.FirebaseFirestore {
    * @return The `CollectionReference` instance.
    */
   public collection = (collectionPath: string): types.CollectionReference => {
-    return new CollectionReferenceMock(this, collectionPath);
+    return resolveReference(this, this.root, true, collectionPath) as CollectionReference;
   };
 
   /**
@@ -85,7 +111,7 @@ export class FirestoreMock implements types.FirebaseFirestore {
    * @return The `DocumentReference` instance.
    */
   public doc = (documentPath: string): types.DocumentReference => {
-    throw new Error('Not implemented yet');
+    return resolveReference(this, this.root, false, documentPath) as DocumentReference;
   };
 
   /**
