@@ -1,9 +1,15 @@
 import { FirebaseAppMock } from 'firebaseApp';
 import { FirestoreMock } from 'firestore';
 import { MockDatabase } from '../index';
+import { DocumentSnapshot } from '@firebase/firestore-types';
+import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 
 describe('Database state restoring', () => {
   it('Create database from object model', async () => {
+    const dogWhisper = (snapshot: DocumentSnapshot) => {
+      console.log(snapshot);
+    };
+
     const database: MockDatabase = {
       animals: {
         docs: {
@@ -36,6 +42,7 @@ describe('Database state restoring', () => {
             data: {
               name: "Santa's little helper",
             },
+            listerners: [dogWhisper],
           },
         },
       },
@@ -59,5 +66,9 @@ describe('Database state restoring', () => {
     expect(snap.data()).toEqual({
       quantity: 2,
     });
+
+    const doc = firestore.doc('animals/dog') as DocumentReferenceMock;
+    expect(doc.mocker.listeners().length).toBe(1);
+    expect(doc.mocker.listeners()[0]).toBe(dogWhisper);
   });
 });

@@ -179,6 +179,11 @@ export default class DocumentReferenceMock implements DocumentReference {
             collection.mocker.load(collectionData);
           }
         }
+
+        const listeners = document.listerners;
+        if (listeners) {
+          this._snapshotListeners = listeners.slice();
+        }
       },
 
       listeners: () => {
