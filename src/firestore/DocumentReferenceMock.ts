@@ -143,7 +143,11 @@ export default class DocumentReferenceMock implements DocumentReference {
    * to the backend (Note that it won't resolve while you're offline).
    */
   public set = async (data: DocumentData, options?: SetOptions) => {
-    this.data = { ...data };
+    if (options && options.merge) {
+      this.data = { ...this.data, ...data };
+    } else {
+      this.data = { ...data };
+    }
 
     this.fireSnapshowListeners(new DocumentSnapshotMock(this, this.data));
   };
@@ -159,6 +163,10 @@ export default class DocumentReferenceMock implements DocumentReference {
    * to the backend (Note that it won't resolve while you're offline).
    */
   public update = async (data: UpdateData | string | FieldPath, value?: any, ...moreFieldsAndValues: any[]) => {
+    if (!this.data) {
+      // TODO change to use actual exception
+      throw new Error('No entity to update');
+    }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
       this.data = {

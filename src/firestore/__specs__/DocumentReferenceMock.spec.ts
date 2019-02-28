@@ -46,6 +46,33 @@ describe('DocumentReferenceMock', () => {
       expect(firestore.doc('test/doc')).toBe(document);
     });
 
+    it('will only update defined fields if merge options set to true', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+
+      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      firestore.root.mocker.setCollection(collection);
+      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      collection.mocker.setDoc(document);
+      const data = {
+        test: 'data',
+      };
+      await document.set(data);
+      expect(document.data).toEqual(data);
+
+      await document.set(
+        {
+          new: 'field',
+        },
+        { merge: true },
+      );
+
+      expect(document.data).toEqual({
+        test: 'data',
+        new: 'field',
+      });
+    });
+
     it('will trigger onSnapshot event listeners', async () => {
       const app = new FirebaseAppMock();
       const firestore = app.firestore() as FirestoreMock;
@@ -211,6 +238,25 @@ describe('DocumentReferenceMock', () => {
         test: 'data',
         test2: 'more',
       });
+    });
+
+    it('will fail if document do not exist', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+
+      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      firestore.root.mocker.setCollection(collection);
+      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      collection.mocker.setDoc(document);
+
+      expect.assertions(1);
+      try {
+        await document.update({
+          test2: 'more',
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
     });
 
     // it('will alter the data wih key-value pairs', async () => {
