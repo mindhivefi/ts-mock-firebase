@@ -51,5 +51,55 @@ describe('CollectionReferenceMock', () => {
     });
   });
 
+  describe('get()', () => {
+    it('will get all documents', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase({
+        list: {
+          docs: {
+            c: {
+              data: { name: 'c' },
+            },
+            b: {
+              data: { name: 'b' },
+            },
+            a: {
+              data: { name: 'a' },
+            },
+          },
+        },
+      });
+      const query = await firestore.collection('list').get();
+
+      expect(query).toBeDefined();
+      expect(query.size).toBe(3);
+    });
+  });
+
+  // describe('orderBy()', () => {
+  //   it('will return documents in ascending order as default', async () => {
+  //     const app = new FirebaseAppMock();
+  //     const firestore = app.firestore() as FirestoreMock;
+  //     firestore.mocker.loadDatabase({
+  //       list: {
+  //         docs: {
+  //           c: {
+  //             data: { name: 'c' },
+  //           },
+  //           b: {
+  //             data: { name: 'b' },
+  //           },
+  //           a: {
+  //             data: { name: 'a' },
+  //           },
+  //         },
+  //       },
+  //     });
+  //     const query = await firestore.collection('list').orderBy('name').get();
+
+  //   });
+  // });
+
   // TODO document id generation
 });

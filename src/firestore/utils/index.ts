@@ -3,6 +3,12 @@ import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 import * as uuidv4 from 'uuid/v4';
 
+export class NotImplementedYet extends Error {
+  constructor() {
+    super('Not implmeneted yet');
+  }
+}
+
 /**
  * Generate an unique document id
  */
