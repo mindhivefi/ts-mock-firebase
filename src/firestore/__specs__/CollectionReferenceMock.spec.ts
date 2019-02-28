@@ -2,6 +2,7 @@ import { FirebaseAppMock } from 'firebaseApp';
 import { FirestoreMock } from 'firestore';
 import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import { MockFirebaseValidationError } from '../utils/index';
 
 describe('CollectionReferenceMock', () => {
   describe('References', () => {
@@ -67,6 +68,25 @@ describe('CollectionReferenceMock', () => {
     },
   };
 
+  const testData2 = {
+    list: {
+      docs: {
+        a: {
+          data: { name: 'a' },
+        },
+        b: {
+          data: { name: 'b', key: 'm' },
+        },
+        c: {
+          data: { name: 'c', key: 'm' },
+        },
+        d: {
+          data: { name: 'b' },
+        },
+      },
+    },
+  };
+
   describe('get()', () => {
     it('will get all documents', async () => {
       const app = new FirebaseAppMock();
@@ -107,49 +127,269 @@ describe('CollectionReferenceMock', () => {
         name: 'c',
       });
     });
+
+    it('will return documents in ascending order as explicitly', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+      const query = await firestore
+        .collection('list')
+        .orderBy('name', 'asc')
+        .get();
+
+      expect(query).toBeDefined();
+      expect(query.size).toBe(3);
+      expect(query.docs[0].data()).toEqual({
+        name: 'a',
+      });
+      expect(query.docs[1].data()).toEqual({
+        name: 'b',
+      });
+      expect(query.docs[2].data()).toEqual({
+        name: 'c',
+      });
+    });
+
+    it('will return documents in descending order explicitly', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+      const query = await firestore
+        .collection('list')
+        .orderBy('name', 'desc')
+        .get();
+
+      expect(query).toBeDefined();
+      expect(query.size).toBe(3);
+      expect(query.docs[0].data()).toEqual({
+        name: 'c',
+      });
+      expect(query.docs[1].data()).toEqual({
+        name: 'b',
+      });
+      expect(query.docs[2].data()).toEqual({
+        name: 'a',
+      });
+    });
   });
 
-  it('will return documents in ascending order as explicitly', async () => {
-    const app = new FirebaseAppMock();
-    const firestore = app.firestore() as FirestoreMock;
-    firestore.mocker.loadDatabase(testData);
-    const query = await firestore
-      .collection('list')
-      .orderBy('name', 'asc')
-      .get();
+  describe('where()', () => {
+    describe('equality', () => {
+      it('will return fields with a equal match', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData2);
+        const query = await firestore
+          .collection('list')
+          .where('key', '==', 'm')
+          .get();
 
-    expect(query).toBeDefined();
-    expect(query.size).toBe(3);
-    expect(query.docs[0].data()).toEqual({
-      name: 'a',
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          name: 'b',
+          key: 'm',
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'c',
+          key: 'm',
+        });
+      });
     });
-    expect(query.docs[1].data()).toEqual({
-      name: 'b',
-    });
-    expect(query.docs[2].data()).toEqual({
-      name: 'c',
-    });
-  });
+    describe('comparization', () => {
+      const testData3 = {
+        list: {
+          docs: {
+            a: {
+              data: {
+                name: 'a',
+                value: 5,
+              },
+            },
+            b: {
+              data: {
+                name: 'b',
+                value: 2,
+              },
+            },
+            c: {
+              data: {
+                name: 'c',
+                value: 10,
+              },
+            },
+            d: {
+              data: {
+                name: 'd',
+                value: 20,
+              },
+            },
+          },
+        },
+      };
 
-  it('will return documents in descemdomg order explicitly', async () => {
-    const app = new FirebaseAppMock();
-    const firestore = app.firestore() as FirestoreMock;
-    firestore.mocker.loadDatabase(testData);
-    const query = await firestore
-      .collection('list')
-      .orderBy('name', 'desc')
-      .get();
+      it('will return fields with less than', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData3);
+        const query = await firestore
+          .collection('list')
+          .where('value', '<', 10)
+          .get();
 
-    expect(query).toBeDefined();
-    expect(query.size).toBe(3);
-    expect(query.docs[0].data()).toEqual({
-      name: 'c',
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          name: 'a',
+          value: 5,
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'b',
+          value: 2,
+        });
+      });
+
+      it('will return fields with less or equal', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData3);
+        const query = await firestore
+          .collection('list')
+          .where('value', '<=', 10)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(3);
+        expect(query.docs[0].data()).toEqual({
+          name: 'a',
+          value: 5,
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'b',
+          value: 2,
+        });
+        expect(query.docs[2].data()).toEqual({
+          name: 'c',
+          value: 10,
+        });
+      });
+
+      it('will return fields greater than', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData3);
+        const query = await firestore
+          .collection('list')
+          .where('value', '>', 10)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(1);
+        expect(query.docs[0].data()).toEqual({
+          name: 'd',
+          value: 20,
+        });
+      });
+
+      it('will return fields greater or equal', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData3);
+        const query = await firestore
+          .collection('list')
+          .where('value', '>=', 10)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          name: 'c',
+          value: 10,
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'd',
+          value: 20,
+        });
+      });
     });
-    expect(query.docs[1].data()).toEqual({
-      name: 'b',
-    });
-    expect(query.docs[2].data()).toEqual({
-      name: 'a',
+    describe('array checks', () => {
+      const testData4 = {
+        list: {
+          docs: {
+            a: {
+              data: {
+                name: 'a',
+                values: [2, 5, 6],
+              },
+            },
+            b: {
+              data: {
+                name: 'b',
+                values: [2, 1, 7],
+              },
+            },
+            c: {
+              data: {
+                name: 'c',
+                values: [1, 5, 8],
+              },
+            },
+          },
+        },
+      };
+
+      it('is in array match', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData4);
+        const query = await firestore
+          .collection('list')
+          .where('values', 'array-contains', 5)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          name: 'a',
+          values: [2, 5, 6],
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'c',
+          values: [1, 5, 8],
+        });
+      });
+
+      it('is not in array match', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData4);
+        const query = await firestore
+          .collection('list')
+          .where('values', 'array-contains', 55)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(0);
+      });
+
+      it('will throw error when matching non array field', () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData4);
+
+        const crash = () => {
+          firestore
+            .collection('list')
+            .where('name', 'array-contains', 2)
+            .get()
+            .catch(error => {
+              // excpect call to fail. Raise the error further for jest
+              throw error;
+            });
+        };
+
+        expect(crash).toThrowError(MockFirebaseValidationError);
+      });
     });
   });
 });

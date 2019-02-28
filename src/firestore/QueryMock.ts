@@ -13,12 +13,21 @@ import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 import QueryDocumentSnapshotMock from 'firestore/QueryDocumentSnapshotMock';
 import QuerySnapshotMock from 'firestore/QuerySnapshotMock';
 import { NotImplementedYet } from 'firestore/utils/index';
+import { MockFirebaseValidationError } from './utils/index';
+import { createFirestoreMatchRuleFunction } from './utils/matching';
+import { querySortFunction } from './utils/sortings';
 
+interface QueryOperations {
+  orderBy?(docs: DocumentReferenceMock[]): DocumentReferenceMock[];
+  where?(docs: DocumentReferenceMock[]): DocumentReferenceMock[];
+}
 /**
  * A `Query` refers to a Query which you can read or listen to. You can also
  * construct refined `Query` objects by adding filters and ordering.
  */
 export default class QueryMock implements Query {
+  private operations: QueryOperations = {};
+
   public constructor(public collectionRef: CollectionReference, public docRefs: DocumentReferenceMock[]) {
     this.firestore = collectionRef.firestore;
   }
@@ -40,7 +49,15 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
-    throw new NotImplementedYet();
+    if (this.operations.where) {
+      throw new MockFirebaseValidationError('Query already have where-clause.');
+    }
+
+    const matchFun = createFirestoreMatchRuleFunction(fieldPath, opStr, value);
+    this.operations.where = (docs: DocumentReferenceMock[]): DocumentReferenceMock[] => {
+      return docs.filter(document => matchFun(document));
+    };
+    return this;
   };
 
   /**
@@ -53,7 +70,15 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   orderBy = (fieldPath: string | FieldPath, directionStr?: OrderByDirection): Query => {
-    throw new NotImplementedYet();
+    if (this.operations.orderBy) {
+      throw new MockFirebaseValidationError('Query already have orderBy-clause.');
+    }
+
+    this.operations.orderBy = (docs: DocumentReferenceMock[]): DocumentReferenceMock[] => {
+      docs.sort(querySortFunction(fieldPath, directionStr));
+      return docs;
+    };
+    return this;
   };
 
   /**
@@ -191,7 +216,18 @@ export default class QueryMock implements Query {
    * @return A Promise that will be resolved with the results of the Query.
    */
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
-    return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocs())));
+    let docs = [...this.docRefs];
+
+    const operations = this.operations;
+
+    if (operations.where) {
+      docs = operations.where(docs);
+    }
+    if (operations.orderBy) {
+      docs = operations.orderBy(docs);
+    }
+
+    return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocSnapshots(docs))));
   };
 
   /**
@@ -239,7 +275,7 @@ export default class QueryMock implements Query {
     throw new NotImplementedYet();
   };
 
-  private getDocs = (): QueryDocumentSnapshot[] => {
-    return this.docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
+  private getDocSnapshots = (docRefs: DocumentReferenceMock[] = this.docRefs): QueryDocumentSnapshot[] => {
+    return docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
   };
 }

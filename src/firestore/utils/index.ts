@@ -9,6 +9,7 @@ export class NotImplementedYet extends Error {
   }
 }
 
+export class MockFirebaseValidationError extends Error {}
 /**
  * Generate an unique document id
  */
