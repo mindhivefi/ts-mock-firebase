@@ -70,7 +70,7 @@ export default class QueryDocumentSnapshotMock implements QueryDocumentSnapshot 
    * @return An Object containing all fields in the document.
    */
   public data = (options?: SnapshotOptions): DocumentData => {
-    return this._query.data();
+    return this._query.data;
   };
 
   /**

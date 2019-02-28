@@ -194,9 +194,6 @@ export default class QueryMock implements Query {
     return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocs())));
   };
 
-  private getDocs = (): QueryDocumentSnapshot[] => {
-    return this.docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
-  };
   /**
    * Attaches a listener for QuerySnapshot events. You may either pass
    * individual `onNext` and `onError` callbacks or pass a single observer
@@ -240,5 +237,9 @@ export default class QueryMock implements Query {
   // ): () => void;
   onSnapshot = () => {
     throw new NotImplementedYet();
+  };
+
+  private getDocs = (): QueryDocumentSnapshot[] => {
+    return this.docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
   };
 }

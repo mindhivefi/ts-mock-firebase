@@ -14,9 +14,9 @@ import {
 import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import { FirestoreMock } from '.';
 import { Mocker } from '../index';
+import DocumentSnapshotMock from './DocumentSnapshotMock';
 import { MockDocument } from './index';
 import { resolveReference } from './utils/index';
-import DocumentSnapshotMock from './DocumentSnapshotMock';
 
 export interface SnaphotObserver {
   next?: (snapshot: DocumentSnapshot) => void;

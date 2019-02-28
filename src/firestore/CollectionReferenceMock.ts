@@ -16,6 +16,7 @@ import { FirestoreMock } from '.';
 import { MockCollection } from './index';
 import QueryMock from './QueryMock';
 import { generateDocumentId, NotImplementedYet, resolveReference } from './utils/index';
+import { querySortFunction } from './utils/sortings';
 
 export interface CollectionMocker extends Mocker {
   doc(id: string): DocumentReferenceMock;
@@ -170,7 +171,7 @@ export class CollectionReferenceMock implements CollectionReference {
    * @return The created Query.
    */
   public orderBy = (fieldPath: string | FieldPath, directionStr?: OrderByDirection): Query => {
-    throw new Error('Not implemented yet');
+    return new QueryMock(this, this.getDocs().sort(querySortFunction(fieldPath, directionStr)));
   };
 
   /**

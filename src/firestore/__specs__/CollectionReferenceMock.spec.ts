@@ -51,55 +51,105 @@ describe('CollectionReferenceMock', () => {
     });
   });
 
+  const testData = {
+    list: {
+      docs: {
+        c: {
+          data: { name: 'c' },
+        },
+        b: {
+          data: { name: 'b' },
+        },
+        a: {
+          data: { name: 'a' },
+        },
+      },
+    },
+  };
+
   describe('get()', () => {
     it('will get all documents', async () => {
       const app = new FirebaseAppMock();
       const firestore = app.firestore() as FirestoreMock;
-      firestore.mocker.loadDatabase({
-        list: {
-          docs: {
-            c: {
-              data: { name: 'c' },
-            },
-            b: {
-              data: { name: 'b' },
-            },
-            a: {
-              data: { name: 'a' },
-            },
-          },
-        },
-      });
+      firestore.mocker.loadDatabase(testData);
       const query = await firestore.collection('list').get();
 
       expect(query).toBeDefined();
       expect(query.size).toBe(3);
+      expect(query.docs[0].data()).toEqual({
+        name: 'c',
+      });
+      expect(query.docs[2].data()).toEqual({
+        name: 'a',
+      });
     });
   });
 
-  // describe('orderBy()', () => {
-  //   it('will return documents in ascending order as default', async () => {
-  //     const app = new FirebaseAppMock();
-  //     const firestore = app.firestore() as FirestoreMock;
-  //     firestore.mocker.loadDatabase({
-  //       list: {
-  //         docs: {
-  //           c: {
-  //             data: { name: 'c' },
-  //           },
-  //           b: {
-  //             data: { name: 'b' },
-  //           },
-  //           a: {
-  //             data: { name: 'a' },
-  //           },
-  //         },
-  //       },
-  //     });
-  //     const query = await firestore.collection('list').orderBy('name').get();
+  describe('orderBy()', () => {
+    it('will return documents in ascending order as default', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+      const query = await firestore
+        .collection('list')
+        .orderBy('name')
+        .get();
 
-  //   });
-  // });
+      expect(query).toBeDefined();
+      expect(query.size).toBe(3);
+      expect(query.docs[0].data()).toEqual({
+        name: 'a',
+      });
+      expect(query.docs[1].data()).toEqual({
+        name: 'b',
+      });
+      expect(query.docs[2].data()).toEqual({
+        name: 'c',
+      });
+    });
+  });
 
-  // TODO document id generation
+  it('will return documents in ascending order as explicitly', async () => {
+    const app = new FirebaseAppMock();
+    const firestore = app.firestore() as FirestoreMock;
+    firestore.mocker.loadDatabase(testData);
+    const query = await firestore
+      .collection('list')
+      .orderBy('name', 'asc')
+      .get();
+
+    expect(query).toBeDefined();
+    expect(query.size).toBe(3);
+    expect(query.docs[0].data()).toEqual({
+      name: 'a',
+    });
+    expect(query.docs[1].data()).toEqual({
+      name: 'b',
+    });
+    expect(query.docs[2].data()).toEqual({
+      name: 'c',
+    });
+  });
+
+  it('will return documents in descemdomg order explicitly', async () => {
+    const app = new FirebaseAppMock();
+    const firestore = app.firestore() as FirestoreMock;
+    firestore.mocker.loadDatabase(testData);
+    const query = await firestore
+      .collection('list')
+      .orderBy('name', 'desc')
+      .get();
+
+    expect(query).toBeDefined();
+    expect(query.size).toBe(3);
+    expect(query.docs[0].data()).toEqual({
+      name: 'c',
+    });
+    expect(query.docs[1].data()).toEqual({
+      name: 'b',
+    });
+    expect(query.docs[2].data()).toEqual({
+      name: 'a',
+    });
+  });
 });
