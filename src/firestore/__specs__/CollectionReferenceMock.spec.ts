@@ -105,6 +105,48 @@ describe('CollectionReferenceMock', () => {
     });
   });
 
+  describe('limit()', () => {
+    it('will return max number of documents defined by limit', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+      const query = await firestore
+        .collection('list')
+        .orderBy('name')
+        .limit(2)
+        .get();
+
+      expect(query).toBeDefined();
+      expect(query.size).toBe(2);
+      expect(query.docs[0].data()).toEqual({
+        name: 'a',
+      });
+      expect(query.docs[1].data()).toEqual({
+        name: 'b',
+      });
+    });
+
+    it('will give an error if limit is zero or negative', () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+
+      expect(() =>
+        firestore
+          .collection('list')
+          .orderBy('name')
+          .limit(-2),
+      ).toThrow();
+
+      expect(() =>
+        firestore
+          .collection('list')
+          .orderBy('name')
+          .limit(0),
+      ).toThrow();
+    });
+  });
+
   describe('orderBy()', () => {
     it('will return documents in ascending order as default', async () => {
       const app = new FirebaseAppMock();

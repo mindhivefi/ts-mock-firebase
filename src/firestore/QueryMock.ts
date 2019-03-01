@@ -15,6 +15,7 @@ import QuerySnapshotMock from 'firestore/QuerySnapshotMock';
 import { NotImplementedYet } from 'firestore/utils/index';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
+import { MockFirebaseValidationError } from './utils/index';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -31,6 +32,8 @@ interface MockQueryRules {
   order?: MockQueryOrderRule[];
 
   where?: MockQueryWhereRule[];
+
+  limit?: number;
 }
 /**
  * A `Query` refers to a Query which you can read or listen to. You can also
@@ -97,7 +100,11 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   limit = (limit: number): Query => {
-    throw new NotImplementedYet();
+    if (limit <= 0) {
+      throw new MockFirebaseValidationError('Query limit value must be greater than zero');
+    }
+    this.rules.limit = limit;
+    return this;
   };
 
   /**
@@ -209,7 +216,7 @@ export default class QueryMock implements Query {
    * @return true if this `Query` is equal to the provided one.
    */
   isEqual = (other: Query): boolean => {
-    return this === other;
+    return this === other; // TODO make this work, will need to do deep compare for rules
   };
 
   /**
@@ -226,11 +233,13 @@ export default class QueryMock implements Query {
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     let docs = [...this.docRefs];
 
-    const rules = this.rules;
+    const { limit, where, order } = this.rules;
 
-    docs = filterDocumentsByRules(docs, rules.where);
-    docs = sortDocumentsByRules(docs, rules.order);
-
+    docs = filterDocumentsByRules(docs, where);
+    docs = sortDocumentsByRules(docs, order);
+    if (limit) {
+      docs = docs.slice(0, Math.min(docs.length, limit));
+    }
     return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocSnapshots(docs))));
   };
 
