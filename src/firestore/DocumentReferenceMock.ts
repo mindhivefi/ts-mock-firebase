@@ -18,7 +18,7 @@ import DocumentSnapshotMock from './DocumentSnapshotMock';
 import { MockDocument } from './index';
 import { resolveReference } from './utils/index';
 
-export interface SnaphotObserver {
+export interface SnapshotObserver {
   next?: (snapshot: DocumentSnapshot) => void;
   error?: (error: FirestoreError) => void;
   complete?: () => void;
@@ -244,8 +244,8 @@ export default class DocumentReferenceMock implements DocumentReference {
    * the snapshot listener.
    */
   onSnapshot = (
-    nextObservationOrOptions: SnaphotObserver | SnapshotListenOptions | DocumentSnapshotFunction,
-    ObserverErrorOrNext?: SnaphotObserver | ErrorFunction | DocumentSnapshotFunction,
+    nextObservationOrOptions: SnapshotObserver | SnapshotListenOptions | DocumentSnapshotFunction,
+    ObserverErrorOrNext?: SnapshotObserver | ErrorFunction | DocumentSnapshotFunction,
     completeOrError?: SubscriptionFunction | ErrorFunction,
     onComplete?: SubscriptionFunction,
   ): SubscriptionFunction => {

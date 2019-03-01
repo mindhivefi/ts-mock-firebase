@@ -2,20 +2,23 @@ import {
   CollectionReference,
   FieldPath,
   FirebaseFirestore,
+  FirestoreError,
   GetOptions,
   OrderByDirection,
   Query,
   QueryDocumentSnapshot,
-  QuerySnapshot,
+  SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
+import { QuerySnapshot } from '@firebase/firestore-types';
 import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 import QueryDocumentSnapshotMock from 'firestore/QueryDocumentSnapshotMock';
 import QuerySnapshotMock from 'firestore/QuerySnapshotMock';
 import { NotImplementedYet } from 'firestore/utils/index';
+import { ErrorFunction, SubscriptionFunction } from './DocumentReferenceMock';
+import { MockFirebaseValidationError } from './utils/index';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
-import { MockFirebaseValidationError } from './utils/index';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -46,6 +49,12 @@ export default class QueryMock implements Query {
     this.firestore = collectionRef.firestore;
   }
 
+  private createClone(): QueryMock {
+    const clone = new QueryMock(this.collectionRef, this.docRefs);
+    clone.firestore = this.firestore;
+    clone.rules = { ...this.rules };
+    return clone;
+  }
   /**
    * The `Firestore` for the Firestore database (useful for performing
    * transactions, etc.).
@@ -63,14 +72,15 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
-    const where: MockQueryWhereRule[] = this.rules.where || [];
+    const result = this.createClone();
+    const where: MockQueryWhereRule[] = result.rules.where || [];
     where.push({
       fieldPath,
       opStr,
       value,
     });
-    this.rules.where = where;
-    return this;
+    result.rules.where = where;
+    return result;
   };
 
   /**
@@ -83,13 +93,14 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query => {
-    const rules = this.rules.order || ([] as MockQueryOrderRule[]);
+    const result = this.createClone();
+    const rules = result.rules.order || ([] as MockQueryOrderRule[]);
     rules.push({
       fieldPath,
       directionStr,
     });
-    this.rules.order = rules;
-    return this;
+    result.rules.order = rules;
+    return result;
   };
 
   /**
@@ -103,8 +114,9 @@ export default class QueryMock implements Query {
     if (limit <= 0) {
       throw new MockFirebaseValidationError('Query limit value must be greater than zero');
     }
-    this.rules.limit = limit;
-    return this;
+    const result = this.createClone();
+    result.rules.limit = limit;
+    return result;
   };
 
   /**
@@ -260,31 +272,11 @@ export default class QueryMock implements Query {
    * @return An unsubscribe function that can be called to cancel
    * the snapshot listener.
    */
-  // onSnapshot(observer: {
-  //   next?: (snapshot: QuerySnapshot) => void;
-  //   error?: (error: Error) => void;
-  //   complete?: () => void;
-  // }): () => void;
-  // onSnapshot(
-  //   options: SnapshotListenOptions,
-  //   observer: {
-  //     next?: (snapshot: QuerySnapshot) => void;
-  //     error?: (error: Error) => void;
-  //     complete?: () => void;
-  //   },
-  // ): () => void;
-  // onSnapshot(
-  //   onNext: (snapshot: QuerySnapshot) => void,
-  //   onError?: (error: Error) => void,
-  //   onCompletion?: () => void,
-  // ): () => void;
-  // onSnapshot(
-  //   options: SnapshotListenOptions,
-  //   onNext: (snapshot: QuerySnapshot) => void,
-  //   onError?: (error: Error) => void,
-  //   onCompletion?: () => void,
-  // ): () => void;
-  onSnapshot = () => {
+  onSnapshot = (
+    optionsOrObserverOrOnNext: SnapshotListenOptions | QuerySnapshotObserver | QuerySnapshotFunction,
+    observerOrOnNextOrOnError?: QuerySnapshotObserver | QuerySnapshotFunction | ErrorFunction,
+    onErrorOrOnCompletion?: ErrorFunction | SubscriptionFunction,
+  ): SubscriptionFunction => {
     throw new NotImplementedYet();
   };
 
@@ -292,3 +284,11 @@ export default class QueryMock implements Query {
     return docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
   };
 }
+
+export interface QuerySnapshotObserver {
+  next?: (snapshot: QuerySnapshot) => void;
+  error?: (error: FirestoreError) => void;
+  complete?: () => void;
+}
+
+export type QuerySnapshotFunction = (snapshot: QuerySnapshot) => void;
