@@ -5,7 +5,7 @@ import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
 import { Mocker } from '../index';
 import DocumentReferenceMock from './DocumentReferenceMock';
 import { DocumentSnapshotFunction } from './DocumentReferenceMock';
-import { resolveReference } from './utils/index';
+import { NotImplementedYet, resolveReference } from './utils/index';
 
 declare module '@firebase/app-types' {
   interface FirebaseNamespace {
@@ -126,7 +126,9 @@ export class FirestoreMock implements types.FirebaseFirestore {
    * @return A promise that represents successfully enabling persistent
    * storage.
    */
-  public enablePersistence = async (settings?: types.PersistenceSettings) => {};
+  public enablePersistence = async (settings?: types.PersistenceSettings) => {
+    throw new NotImplementedYet();
+  };
 
   /**
    * Gets a `CollectionReference` instance that refers to the collection at

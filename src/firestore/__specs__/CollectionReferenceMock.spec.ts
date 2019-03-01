@@ -171,6 +171,30 @@ describe('CollectionReferenceMock', () => {
         name: 'a',
       });
     });
+
+    it('will return documents in descending order explicitly', async () => {
+      const app = new FirebaseAppMock();
+      const firestore = app.firestore() as FirestoreMock;
+      firestore.mocker.loadDatabase(testData);
+      const query = await firestore
+        .collection('list')
+        .orderBy('name', 'desc')
+        .get();
+
+      expect(query).toBeDefined();
+      expect(query.size).toBe(3);
+      expect(query.docs[0].data()).toEqual({
+        name: 'c',
+      });
+      expect(query.docs[1].data()).toEqual({
+        name: 'b',
+      });
+      expect(query.docs[2].data()).toEqual({
+        name: 'a',
+      });
+    });
+
+    // TODO ordering by multiple fields
   });
 
   describe('where()', () => {
@@ -311,7 +335,30 @@ describe('CollectionReferenceMock', () => {
           value: 20,
         });
       });
+
+      it('will return fields between', async () => {
+        const app = new FirebaseAppMock();
+        const firestore = app.firestore() as FirestoreMock;
+        firestore.mocker.loadDatabase(testData3);
+        const query = await firestore
+          .collection('list')
+          .where('value', '>=', 5)
+          .where('value', '<', 15)
+          .get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          name: 'a',
+          value: 5,
+        });
+        expect(query.docs[1].data()).toEqual({
+          name: 'c',
+          value: 10,
+        });
+      });
     });
+
     describe('array checks', () => {
       const testData4 = {
         list: {
@@ -391,5 +438,18 @@ describe('CollectionReferenceMock', () => {
         expect(crash).toThrowError(MockFirebaseValidationError);
       });
     });
+
+    //   describe('misuse', () => {
+    //     it('will raise mock validity error when trying to use where -clause twice', async () => {
+    //       const app = new FirebaseAppMock();
+    //       const firestore = app.firestore() as FirestoreMock;
+
+    //       expect.assertions(1);
+    //       const ref = firestore.collection('list');
+
+    //       await expect(ref.where('name', '==', 'a').where('name', '')).toBeDefined();
+    //       expect(query.size).toBe(0);
+    //     })
+    //   })
   });
 });

@@ -13,20 +13,31 @@ import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
 import QueryDocumentSnapshotMock from 'firestore/QueryDocumentSnapshotMock';
 import QuerySnapshotMock from 'firestore/QuerySnapshotMock';
 import { NotImplementedYet } from 'firestore/utils/index';
-import { MockFirebaseValidationError } from './utils/index';
-import { createFirestoreMatchRuleFunction } from './utils/matching';
-import { querySortFunction } from './utils/sortings';
+import { filterDocumentsByRules } from './utils/matching';
+import { sortDocumentsByRules } from './utils/sortings';
 
-interface QueryOperations {
-  orderBy?(docs: DocumentReferenceMock[]): DocumentReferenceMock[];
-  where?(docs: DocumentReferenceMock[]): DocumentReferenceMock[];
+export interface MockQueryOrderRule {
+  fieldPath: string | FieldPath;
+  directionStr?: OrderByDirection;
+}
+export interface MockQueryWhereRule {
+  fieldPath: string | FieldPath;
+  opStr: WhereFilterOp;
+  value: any;
+}
+
+interface MockQueryRules {
+  // orderBy?: QueryOperationFunction[];
+  order?: MockQueryOrderRule[];
+
+  where?: MockQueryWhereRule[];
 }
 /**
  * A `Query` refers to a Query which you can read or listen to. You can also
  * construct refined `Query` objects by adding filters and ordering.
  */
 export default class QueryMock implements Query {
-  private operations: QueryOperations = {};
+  private rules: MockQueryRules = {};
 
   public constructor(public collectionRef: CollectionReference, public docRefs: DocumentReferenceMock[]) {
     this.firestore = collectionRef.firestore;
@@ -49,14 +60,13 @@ export default class QueryMock implements Query {
    * @return The created Query.
    */
   public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
-    if (this.operations.where) {
-      throw new MockFirebaseValidationError('Query already have where-clause.');
-    }
-
-    const matchFun = createFirestoreMatchRuleFunction(fieldPath, opStr, value);
-    this.operations.where = (docs: DocumentReferenceMock[]): DocumentReferenceMock[] => {
-      return docs.filter(document => matchFun(document));
-    };
+    const where: MockQueryWhereRule[] = this.rules.where || [];
+    where.push({
+      fieldPath,
+      opStr,
+      value,
+    });
+    this.rules.where = where;
     return this;
   };
 
@@ -69,15 +79,13 @@ export default class QueryMock implements Query {
    * not specified, order will be ascending.
    * @return The created Query.
    */
-  orderBy = (fieldPath: string | FieldPath, directionStr?: OrderByDirection): Query => {
-    if (this.operations.orderBy) {
-      throw new MockFirebaseValidationError('Query already have orderBy-clause.');
-    }
-
-    this.operations.orderBy = (docs: DocumentReferenceMock[]): DocumentReferenceMock[] => {
-      docs.sort(querySortFunction(fieldPath, directionStr));
-      return docs;
-    };
+  orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query => {
+    const rules = this.rules.order || ([] as MockQueryOrderRule[]);
+    rules.push({
+      fieldPath,
+      directionStr,
+    });
+    this.rules.order = rules;
     return this;
   };
 
@@ -218,14 +226,10 @@ export default class QueryMock implements Query {
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     let docs = [...this.docRefs];
 
-    const operations = this.operations;
+    const rules = this.rules;
 
-    if (operations.where) {
-      docs = operations.where(docs);
-    }
-    if (operations.orderBy) {
-      docs = operations.orderBy(docs);
-    }
+    docs = filterDocumentsByRules(docs, rules.where);
+    docs = sortDocumentsByRules(docs, rules.order);
 
     return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocSnapshots(docs))));
   };

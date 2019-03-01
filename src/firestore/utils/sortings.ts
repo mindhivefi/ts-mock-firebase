@@ -1,5 +1,6 @@
 import { FieldPath, OrderByDirection } from '@firebase/firestore-types';
 import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import { MockQueryOrderRule } from 'firestore/QueryMock';
 import { NotImplementedYet } from 'firestore/utils/index';
 
 export type SortFunction = (a: any, b: any) => number;
@@ -30,4 +31,49 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
     };
   }
   throw new NotImplementedYet();
+}
+
+export function sortDocumentsByRules(
+  docs: DocumentReferenceMock[],
+  rules?: MockQueryOrderRule[],
+): DocumentReferenceMock[] {
+  if (!rules) {
+    return docs;
+  }
+  docs.sort((a: DocumentReferenceMock, b: DocumentReferenceMock) => {
+    const A = a.data;
+    const B = b.data;
+
+    if (A && B) {
+      for (const rule of rules) {
+        const fieldPath = rule.fieldPath;
+        if (typeof fieldPath === 'string') {
+          const first = A[fieldPath]; // TODO fieldPaths
+          const second = B[fieldPath]; // TODO fieldPaths
+          if (first && second) {
+            switch (typeof first) {
+              case 'string': {
+                const value = rule.directionStr === 'asc' ? first.localeCompare(second) : second.localeCompare(first);
+                if (value !== 0) {
+                  return value;
+                }
+                continue;
+              }
+              case 'number': {
+                const value = rule.directionStr === 'asc' ? first - second : second - first;
+                if (value !== 0) {
+                  return value;
+                }
+                continue;
+              }
+              default:
+                continue;
+            }
+          }
+        }
+      }
+    }
+    return -1;
+  });
+  return docs;
 }
