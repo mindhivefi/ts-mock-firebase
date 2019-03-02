@@ -1,26 +1,26 @@
 import { DocumentSnapshot } from '@firebase/firestore-types';
-import { FirebaseAppMock } from 'firebaseApp';
-import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
-import { DocumentSnapshotFunction } from '../DocumentReferenceMock';
-import { FirestoreMock } from '../index';
+import { MockFirebaseApp } from 'firebaseApp';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockFirebaseFirestore } from '../index';
+import { MockDocumentSnapshotCallback } from '../MockDocumentReference';
 
 describe('DocumentReferenceMock', () => {
   describe('Refrences', () => {
     it('collection() returns a collection by id', () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
       const document = firestore.root;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
 
       expect(document.collection('test')).toBe(collection);
     });
 
     it('collection() returns a collection by path', () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
       const collection = firestore.collection('company/mindhive/skills/coding/technologies');
       const document = firestore.root.collection('company').doc('mindhive');
@@ -31,12 +31,12 @@ describe('DocumentReferenceMock', () => {
 
   describe('set()', () => {
     it('will replace the current data', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
         test: 'data',
@@ -47,12 +47,12 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will only update defined fields if merge options set to true', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
         test: 'data',
@@ -74,17 +74,17 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will trigger onSnapshot event listeners', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
 
       let snap: DocumentSnapshot | undefined = undefined;
 
-      const listener: DocumentSnapshotFunction = (snapshot: DocumentSnapshot) => {
+      const listener: MockDocumentSnapshotCallback = (snapshot: DocumentSnapshot) => {
         snap = snapshot;
       };
 
@@ -108,12 +108,12 @@ describe('DocumentReferenceMock', () => {
 
   describe('delete()', () => {
     it('will remove the document', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
 
       await document.delete();
@@ -121,17 +121,17 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will trigger onSnapshot -event', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
 
       let snap: DocumentSnapshot | undefined = undefined;
 
-      const listener: DocumentSnapshotFunction = (snapshot: DocumentSnapshot) => {
+      const listener: MockDocumentSnapshotCallback = (snapshot: DocumentSnapshot) => {
         snap = snapshot;
       };
 
@@ -148,12 +148,12 @@ describe('DocumentReferenceMock', () => {
 
   describe('get()', () => {
     it('will get snapshot with data', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
         test: 'data',
@@ -166,12 +166,12 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will get snapshot with exists = false if document does not exists', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
 
       const snapshot = await document.get();
@@ -183,14 +183,14 @@ describe('DocumentReferenceMock', () => {
 
   describe('isEqual()', () => {
     it('will identify if the document refence points to itself ', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
-      const document2 = new DocumentReferenceMock(firestore, 'doc2', collection);
+      const document2 = new MockDocumentReference(firestore, 'doc2', collection);
       collection.mocker.setDoc(document2);
 
       expect(document.isEqual(document)).toBeTruthy();
@@ -200,9 +200,9 @@ describe('DocumentReferenceMock', () => {
 
   describe('onSnapshot()', () => {
     it('will let user to start and stop listening snapshots', () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
-      const doc = firestore.doc('test/doc') as DocumentReferenceMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
+      const doc = firestore.doc('test/doc') as MockDocumentReference;
       const listener = (snapshot: DocumentSnapshot) => {
         console.log(snapshot);
       };
@@ -218,12 +218,12 @@ describe('DocumentReferenceMock', () => {
 
   describe('update()', () => {
     it('will alter the data', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
         test: 'data',
@@ -241,12 +241,12 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will fail if document do not exist', async () => {
-      const app = new FirebaseAppMock();
-      const firestore = app.firestore() as FirestoreMock;
+      const app = new MockFirebaseApp();
+      const firestore = app.firestore() as MockFirebaseFirestore;
 
-      const collection = new CollectionReferenceMock(firestore, 'test', null);
+      const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
-      const document = new DocumentReferenceMock(firestore, 'doc', collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
 
       expect.assertions(1);

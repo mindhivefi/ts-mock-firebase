@@ -15,8 +15,12 @@ import { NotImplementedYet } from './utils/index';
  * number of documents can be determined via the `empty` and `size`
  * properties.
  */
-export default class QuerySnapshowMock implements QuerySnapshot {
-  public constructor(public query: Query, private _docs: QueryDocumentSnapshot[]) {}
+export default class MockQuerySnapshot implements QuerySnapshot {
+  public constructor(
+    public query: Query,
+    private _docs: QueryDocumentSnapshot[],
+    private _docChanges: DocumentChange[],
+  ) {}
 
   /**
    * The query on which you called `get` or `onSnapshot` in order to get this
@@ -59,7 +63,7 @@ export default class QuerySnapshowMock implements QuerySnapshot {
    * snapshot events.
    */
   public docChanges = (options?: SnapshotListenOptions): DocumentChange[] => {
-    throw new NotImplementedYet();
+    return this._docChanges;
   };
 
   /**

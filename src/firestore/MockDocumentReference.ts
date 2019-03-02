@@ -1,5 +1,6 @@
 import {
   CollectionReference,
+  DocumentChangeType,
   DocumentData,
   DocumentReference,
   DocumentSnapshot,
@@ -11,12 +12,13 @@ import {
   SnapshotListenOptions,
   UpdateData,
 } from '@firebase/firestore-types';
-import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
-import { FirestoreMock } from '.';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import MockCallbackHandler from 'firestore/utils/CallbackHandler';
+import { resolveReference } from 'firestore/utils/index';
+import { MockFirebaseFirestore } from '.';
 import { Mocker } from '../index';
-import DocumentSnapshotMock from './DocumentSnapshotMock';
 import { MockDocument } from './index';
-import { resolveReference } from './utils/index';
+import MockDocumentSnapshot from './MockDocumentSnapshot';
 
 export interface SnapshotObserver {
   next?: (snapshot: DocumentSnapshot) => void;
@@ -29,24 +31,24 @@ export interface SnapshotObserver {
  * to alter document's internal state for test use case
  */
 export interface DocumentMocker extends Mocker {
-  collection(id: string): CollectionReferenceMock;
+  collection(id: string): MockCollectionReference;
 
-  setCollection(collection: CollectionReferenceMock): void;
+  setCollection(collection: MockCollectionReference): void;
 
   load(document: MockDocument): void;
 
-  listeners(): DocumentSnapshotFunction[];
+  listeners(): MockDocumentSnapshotCallback[];
 }
 
-export default class DocumentReferenceMock implements DocumentReference {
+export default class MockDocumentReference implements DocumentReference {
   // if data does not exists, the document will be treated is if it does not exists
   public data: any = undefined;
 
   private _collections: {
-    [id: string]: CollectionReferenceMock;
+    [id: string]: MockCollectionReference;
   } = {};
 
-  private _snapshotListeners: DocumentSnapshotFunction[] = [];
+  private _snapshotCallbackHandler = new MockCallbackHandler<DocumentSnapshot>();
 
   public mocker: DocumentMocker;
 
@@ -62,7 +64,7 @@ export default class DocumentReferenceMock implements DocumentReference {
         return this._collections[collectionId];
       },
 
-      setCollection: (collection: CollectionReferenceMock) => {
+      setCollection: (collection: MockCollectionReference) => {
         this._collections[collection.id] = collection;
       },
 
@@ -72,7 +74,7 @@ export default class DocumentReferenceMock implements DocumentReference {
           collection.mocker.reset();
         }
         this._collections = {};
-        this._snapshotListeners = [];
+        this._snapshotCallbackHandler.reset();
         this.data = undefined;
       },
 
@@ -86,7 +88,7 @@ export default class DocumentReferenceMock implements DocumentReference {
           for (const collectionId in collections) {
             const collectionData = collections[collectionId];
 
-            const collection = new CollectionReferenceMock(this.firestore as FirestoreMock, collectionId, this);
+            const collection = new MockCollectionReference(this.firestore as MockFirebaseFirestore, collectionId, this);
             this.mocker.setCollection(collection);
             collection.mocker.load(collectionData);
           }
@@ -94,12 +96,12 @@ export default class DocumentReferenceMock implements DocumentReference {
 
         const listeners = document.listerners;
         if (listeners) {
-          this._snapshotListeners = listeners.slice();
+          this._snapshotCallbackHandler.load(listeners);
         }
       },
 
       listeners: () => {
-        return this._snapshotListeners.slice();
+        return this._snapshotCallbackHandler.list;
       },
     };
   }
@@ -119,7 +121,7 @@ export default class DocumentReferenceMock implements DocumentReference {
    * @return The `CollectionReference` instance.
    */
   public collection = (collectionPath: string): CollectionReference => {
-    return resolveReference(this.firestore as FirestoreMock, this, true, collectionPath) as CollectionReference;
+    return resolveReference(this.firestore as MockFirebaseFirestore, this, true, collectionPath) as CollectionReference;
   };
 
   /**
@@ -143,13 +145,16 @@ export default class DocumentReferenceMock implements DocumentReference {
    * to the backend (Note that it won't resolve while you're offline).
    */
   public set = async (data: DocumentData, options?: SetOptions) => {
+    const changeType: DocumentChangeType = this.data ? 'modified' : 'added';
     if (options && options.merge) {
       this.data = { ...this.data, ...data };
     } else {
       this.data = { ...data };
     }
 
-    this.fireSnapshowListeners(new DocumentSnapshotMock(this, this.data));
+    const documentSnapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    this._snapshotCallbackHandler.fire(documentSnapshot);
+    (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, documentSnapshot);
   };
 
   /**
@@ -176,7 +181,7 @@ export default class DocumentReferenceMock implements DocumentReference {
     } else {
       throw new Error('Update for name value pairs is not implemented yet.');
     }
-    this.fireSnapshowListeners(new DocumentSnapshotMock(this, this.data));
+    this.fireDocumentChangeEvent('modified');
   };
 
   /**
@@ -202,11 +207,12 @@ export default class DocumentReferenceMock implements DocumentReference {
    * offline).
    */
   public delete = async () => {
-    const listeners = this._snapshotListeners.slice();
-    (this.parent as CollectionReferenceMock).mocker.deleteDoc(this.id);
+    const callbaks = this._snapshotCallbackHandler.list;
+    const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(this.id);
     this.data = undefined;
-    this.fireSnapshowListeners(new DocumentSnapshotMock(this, undefined), listeners);
+    // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
 
+    this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
     this.mocker.reset();
   };
 
@@ -223,7 +229,7 @@ export default class DocumentReferenceMock implements DocumentReference {
    * current document contents.
    */
   public get = async (options?: GetOptions): Promise<DocumentSnapshot> => {
-    return new DocumentSnapshotMock(this, this.data);
+    return new MockDocumentSnapshot(this, this.data);
   };
 
   /**
@@ -244,44 +250,34 @@ export default class DocumentReferenceMock implements DocumentReference {
    * the snapshot listener.
    */
   onSnapshot = (
-    nextObservationOrOptions: SnapshotObserver | SnapshotListenOptions | DocumentSnapshotFunction,
-    ObserverErrorOrNext?: SnapshotObserver | ErrorFunction | DocumentSnapshotFunction,
-    completeOrError?: SubscriptionFunction | ErrorFunction,
-    onComplete?: SubscriptionFunction,
-  ): SubscriptionFunction => {
+    nextObservationOrOptions: SnapshotObserver | SnapshotListenOptions | MockDocumentSnapshotCallback,
+    ObserverErrorOrNext?: SnapshotObserver | ErrorFunction | MockDocumentSnapshotCallback,
+    completeOrError?: MockSubscriptionFunction | ErrorFunction,
+    onComplete?: MockSubscriptionFunction,
+  ): MockSubscriptionFunction => {
     if (typeof nextObservationOrOptions === 'function') {
-      const listener = nextObservationOrOptions;
+      const callback = nextObservationOrOptions;
       const unsubscribe = () => {
-        this.removeListener(listener);
+        this._snapshotCallbackHandler.remove(callback);
       };
-      this._snapshotListeners.push(listener);
+      this._snapshotCallbackHandler.add(callback);
       return unsubscribe;
     }
     throw new Error('Not implemented yet');
   };
 
-  private removeListener = (listener: DocumentSnapshotFunction) => {
-    const index = this._snapshotListeners.findIndex(item => item === listener);
-    if (index >= 0) {
-      this._snapshotListeners.splice(index, 1);
-    }
-  };
-
-  private fireSnapshowListeners = (
-    snapshot: DocumentSnapshotMock,
-    listeners: DocumentSnapshotFunction[] = this._snapshotListeners,
+  public fireDocumentChangeEvent = (
+    changeType: DocumentChangeType,
+    oldIndex: number = -1,
+    callbacks?: MockDocumentSnapshotCallback[],
   ) => {
-    for (const listener of listeners) {
-      try {
-        listener(snapshot);
-      } catch (error) {
-        console.error(`Error on onSnapshot -event handler in document: ${this.path}: ${error}.`);
-      }
-    }
+    const snapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, snapshot, oldIndex);
+    this._snapshotCallbackHandler.fire(snapshot, callbacks);
   };
 }
 
-export type SubscriptionFunction = () => void;
+export type MockSubscriptionFunction = () => void;
 export type ErrorFunction = (error: Error) => void;
 export type FirebaseErrorFunction = (error: FirestoreError) => void;
-export type DocumentSnapshotFunction = (snapshot: DocumentSnapshot) => void;
+export type MockDocumentSnapshotCallback = (snapshot: DocumentSnapshot) => void;

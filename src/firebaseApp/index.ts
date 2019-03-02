@@ -27,7 +27,7 @@ import {
 } from '@firebase/app-types/private';
 import { FirebaseFirestore } from '@firebase/firestore-types';
 import { createSubscribe, deepCopy, deepExtend, ErrorFactory, patchProperty } from '@firebase/util';
-import { FirestoreMock } from '../firestore';
+import { MockFirebaseFirestore } from '../firestore';
 
 const contains = function(obj: object, key: string) {
   return Object.prototype.hasOwnProperty.call(obj, key);
@@ -43,7 +43,7 @@ let tokenListeners: any[] = [];
  * Global context object for a collection of services using
  * a shared authentication state.
  */
-export class FirebaseAppMock implements FirebaseApp {
+export class MockFirebaseApp implements FirebaseApp {
   private options_: FirebaseOptions;
   private name_: string;
   private isDeleted_ = false;
@@ -80,7 +80,7 @@ export class FirebaseAppMock implements FirebaseApp {
       },
     };
 
-    this._firestore = new FirestoreMock(this);
+    this._firestore = new MockFirebaseFirestore(this);
   }
 
   get automaticDataCollectionEnabled(): boolean {
@@ -209,8 +209,8 @@ export class FirebaseAppMock implements FirebaseApp {
 
 // Prevent dead-code elimination of these methods w/o invalid property
 // copying.
-(FirebaseAppMock.prototype.name && FirebaseAppMock.prototype.options) ||
-  FirebaseAppMock.prototype.delete ||
+(MockFirebaseApp.prototype.name && MockFirebaseApp.prototype.options) ||
+  MockFirebaseApp.prototype.delete ||
   console.log('dc');
 
 /**
@@ -287,7 +287,7 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     return apps_[nameOfApp];
   }
 
-  patchProperty(app, 'App', FirebaseAppMock);
+  patchProperty(app, 'App', MockFirebaseApp);
 
   /**
    * Create a new App instance (name must be unique).
@@ -309,7 +309,7 @@ export function createFirebaseNamespace(): FirebaseNamespace {
       error('duplicate-app', { name: name });
     }
 
-    const newApp = new FirebaseAppMock(options, config, namespace as FirebaseNamespace);
+    const newApp = new MockFirebaseApp(options, config, namespace as FirebaseNamespace);
 
     apps_[name] = newApp;
     callAppHooks(newApp, 'create');

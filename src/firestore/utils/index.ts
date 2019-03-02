@@ -1,6 +1,6 @@
-import { FirestoreMock } from 'firestore';
-import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import { MockFirebaseFirestore } from 'firestore';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import MockDocumentReference from 'firestore/MockDocumentReference';
 import * as uuidv4 from 'uuid/v4';
 
 export class NotImplementedYet extends Error {
@@ -175,13 +175,13 @@ function isValidUnicodeString(s: string): boolean {
 }
 
 export function resolveReference(
-  firestore: FirestoreMock,
-  root: DocumentReferenceMock | null,
+  firestore: MockFirebaseFirestore,
+  root: MockDocumentReference | null,
   isCollectionPath: boolean,
   path: string,
   startParity: boolean = true,
-  rootCollection?: CollectionReferenceMock,
-): CollectionReferenceMock | DocumentReferenceMock {
+  rootCollection?: MockCollectionReference,
+): MockCollectionReference | MockDocumentReference {
   let testPath = path;
   if (!startParity) {
     /* if there is no start parity, it means that that path seeking is starting from a document level.
@@ -195,7 +195,7 @@ export function resolveReference(
 
   const elements = path.split('/');
   let doc = root || firestore.root;
-  let collection = rootCollection || (doc.parent as CollectionReferenceMock);
+  let collection = rootCollection || (doc.parent as MockCollectionReference);
 
   let parity = startParity;
 
@@ -203,14 +203,14 @@ export function resolveReference(
     if (parity) {
       collection = doc.mocker.collection(id);
       if (!collection) {
-        collection = new CollectionReferenceMock(firestore, id, doc !== firestore.root ? doc : null);
+        collection = new MockCollectionReference(firestore, id, doc !== firestore.root ? doc : null);
         doc.mocker.setCollection(collection);
       }
     } else {
       if (collection) {
         doc = collection.mocker.doc(id);
         if (!doc) {
-          doc = new DocumentReferenceMock(firestore, id, collection);
+          doc = new MockDocumentReference(firestore, id, collection);
           collection.mocker.setDoc(doc);
         }
       }
@@ -223,3 +223,13 @@ export function resolveReference(
 
   return isCollectionPath ? collection : doc;
 }
+
+// function filterDocuments(docs: ) {
+//   const { limit, where, order } = this.rules;
+
+//   docs = filterDocumentsByRules(docs, where);
+//   docs = sortDocumentsByRules(docs, order);
+//   if (limit) {
+//     docs = docs.slice(0, Math.min(docs.length, limit));
+//   }
+// }

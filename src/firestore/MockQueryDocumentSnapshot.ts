@@ -6,7 +6,7 @@ import {
   SnapshotMetadata,
   SnapshotOptions,
 } from '@firebase/firestore-types';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import MockDocumentReference from 'firestore/MockDocumentReference';
 
 /**
  * A `DocumentSnapshot` contains data read from a document in your Firestore
@@ -17,13 +17,13 @@ import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
  * access will return 'undefined'. You can use the `exists` property to
  * explicitly verify a document's existence.
  */
-export default class QueryDocumentSnapshotMock implements QueryDocumentSnapshot {
+export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot {
   /**
    *
    * @param _queryMock A `DocumentReference` to the document location.
    * @param _query The ID of the document for which this `DocumentSnapshot` contains data.
    */
-  public constructor(public _query: DocumentReferenceMock) {}
+  public constructor(public _query: MockDocumentReference) {}
 
   public get ref() {
     return this._query;

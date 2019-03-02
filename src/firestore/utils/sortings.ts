@@ -1,6 +1,6 @@
 import { FieldPath, OrderByDirection } from '@firebase/firestore-types';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
-import { MockQueryOrderRule } from 'firestore/QueryMock';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockQueryOrderRule } from 'firestore/MockQuery';
 import { NotImplementedYet } from 'firestore/utils/index';
 
 export type SortFunction = (a: any, b: any) => number;
@@ -13,7 +13,7 @@ export type SortFunction = (a: any, b: any) => number;
  */
 export function querySortFunction(fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): SortFunction {
   if (typeof fieldPath === 'string') {
-    return (a: DocumentReferenceMock, b: DocumentReferenceMock) => {
+    return (a: MockDocumentReference, b: MockDocumentReference) => {
       const first = a.data[fieldPath];
       const second = b.data[fieldPath];
 
@@ -34,13 +34,13 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
 }
 
 export function sortDocumentsByRules(
-  docs: DocumentReferenceMock[],
+  docs: MockDocumentReference[],
   rules?: MockQueryOrderRule[],
-): DocumentReferenceMock[] {
+): MockDocumentReference[] {
   if (!rules) {
     return docs;
   }
-  docs.sort((a: DocumentReferenceMock, b: DocumentReferenceMock) => {
+  docs.sort((a: MockDocumentReference, b: MockDocumentReference) => {
     const A = a.data;
     const B = b.data;
 

@@ -1,10 +1,10 @@
 import * as types from '@firebase/firestore-types';
 import { CollectionReference, DocumentReference } from '@firebase/firestore-types';
-import { FirebaseAppMock } from 'firebaseApp';
-import { CollectionReferenceMock } from 'firestore/CollectionReferenceMock';
+import { MockFirebaseApp } from 'firebaseApp';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import { Mocker } from '../index';
-import DocumentReferenceMock from './DocumentReferenceMock';
-import { DocumentSnapshotFunction } from './DocumentReferenceMock';
+import MockDocumentReference from './MockDocumentReference';
+import { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { NotImplementedYet, resolveReference } from './utils/index';
 
 declare module '@firebase/app-types' {
@@ -38,7 +38,7 @@ declare module '@firebase/app-types' {
 export interface MockDocument {
   data?: types.DocumentData;
   collections?: MockCollections;
-  listerners?: DocumentSnapshotFunction[];
+  listerners?: MockDocumentSnapshotCallback[];
 }
 
 export interface MockCollection {
@@ -60,12 +60,12 @@ export interface FirestoreMocker extends Mocker {
   toJson(): string;
 }
 
-export class FirestoreMock implements types.FirebaseFirestore {
-  public readonly root: DocumentReferenceMock = new DocumentReferenceMock(this, '', null as any);
+export class MockFirebaseFirestore implements types.FirebaseFirestore {
+  public readonly root: MockDocumentReference = new MockDocumentReference(this, '', null as any);
 
   public mocker: FirestoreMocker;
 
-  public constructor(app: FirebaseAppMock) {
+  public constructor(app: MockFirebaseApp) {
     this.app = app;
     this.INTERNAL = {
       // delete: () => void,
@@ -77,7 +77,7 @@ export class FirestoreMock implements types.FirebaseFirestore {
         for (const collectionId in collections) {
           const collectionData = collections[collectionId];
 
-          const collection = new CollectionReferenceMock(this, collectionId, this.root);
+          const collection = new MockCollectionReference(this, collectionId, this.root);
           this.root.mocker.setCollection(collection);
           collection.mocker.load(collectionData);
         }
@@ -181,7 +181,7 @@ export class FirestoreMock implements types.FirebaseFirestore {
   /**
    * The `FirebaseApp` associated with this `Firestore` instance.
    */
-  public app: FirebaseAppMock;
+  public app: MockFirebaseApp;
 
   /**
    * Re-enables use of the network for this Firestore instance after a prior

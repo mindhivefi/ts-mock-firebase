@@ -1,9 +1,9 @@
 import {
+  isValidCollectionReference,
   isValidDocumentId,
+  isValidDocumentReference,
   isValidFirestoreFieldName,
   isValidFirestoreFieldPath,
-  isValidDocumentReference,
-  isValidCollectionReference,
 } from '..';
 
 describe('Document id validation', () => {

@@ -7,15 +7,16 @@ import {
   OrderByDirection,
   Query,
   QueryDocumentSnapshot,
+  QuerySnapshot,
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import { QuerySnapshot } from '@firebase/firestore-types';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
-import QueryDocumentSnapshotMock from 'firestore/QueryDocumentSnapshotMock';
-import QuerySnapshotMock from 'firestore/QuerySnapshotMock';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
+import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
 import { NotImplementedYet } from 'firestore/utils/index';
-import { ErrorFunction, SubscriptionFunction } from './DocumentReferenceMock';
+import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import MockCallbackHandler from './utils/CallbackHandler';
 import { MockFirebaseValidationError } from './utils/index';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
@@ -38,19 +39,23 @@ interface MockQueryRules {
 
   limit?: number;
 }
+
+export type MockQuerySnapshotCallback = (snapshot: QuerySnapshot) => void;
 /**
  * A `Query` refers to a Query which you can read or listen to. You can also
  * construct refined `Query` objects by adding filters and ordering.
  */
-export default class QueryMock implements Query {
+export default class MockQuery implements Query {
   private rules: MockQueryRules = {};
 
-  public constructor(public collectionRef: CollectionReference, public docRefs: DocumentReferenceMock[]) {
+  private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
+
+  public constructor(public collectionRef: CollectionReference, public docRefs: MockDocumentReference[]) {
     this.firestore = collectionRef.firestore;
   }
 
-  private createClone(): QueryMock {
-    const clone = new QueryMock(this.collectionRef, this.docRefs);
+  private createClone(): MockQuery {
+    const clone = new MockQuery(this.collectionRef, this.docRefs);
     clone.firestore = this.firestore;
     clone.rules = { ...this.rules };
     return clone;
@@ -228,7 +233,7 @@ export default class QueryMock implements Query {
    * @return true if this `Query` is equal to the provided one.
    */
   isEqual = (other: Query): boolean => {
-    return this === other; // TODO make this work, will need to do deep compare for rules
+    return this === other;
   };
 
   /**
@@ -273,22 +278,28 @@ export default class QueryMock implements Query {
    * the snapshot listener.
    */
   onSnapshot = (
-    optionsOrObserverOrOnNext: SnapshotListenOptions | QuerySnapshotObserver | QuerySnapshotFunction,
-    observerOrOnNextOrOnError?: QuerySnapshotObserver | QuerySnapshotFunction | ErrorFunction,
-    onErrorOrOnCompletion?: ErrorFunction | SubscriptionFunction,
-  ): SubscriptionFunction => {
+    optionsOrObserverOrOnNext: SnapshotListenOptions | MockQuerySnapshotObserver | MockQuerySnapshotCallback,
+    observerOrOnNextOrOnError?: MockQuerySnapshotObserver | MockQuerySnapshotCallback | ErrorFunction,
+    onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction,
+  ): MockSubscriptionFunction => {
+    if (typeof optionsOrObserverOrOnNext === 'function') {
+      this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
+
+      return () => this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
+    }
     throw new NotImplementedYet();
   };
 
-  private getDocSnapshots = (docRefs: DocumentReferenceMock[] = this.docRefs): QueryDocumentSnapshot[] => {
-    return docRefs.map(doc => new QueryDocumentSnapshotMock(doc) as QueryDocumentSnapshot);
+  private getDocSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
+    return docRefs.map(doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot);
   };
 }
 
-export interface QuerySnapshotObserver {
+export interface MockQueryListener {
+  // collectionListener:
+}
+export interface MockQuerySnapshotObserver {
   next?: (snapshot: QuerySnapshot) => void;
   error?: (error: FirestoreError) => void;
   complete?: () => void;
 }
-
-export type QuerySnapshotFunction = (snapshot: QuerySnapshot) => void;

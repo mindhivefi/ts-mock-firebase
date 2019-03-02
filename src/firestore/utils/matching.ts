@@ -1,10 +1,10 @@
 import { FieldPath, WhereFilterOp } from '@firebase/firestore-types';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
-import { MockQueryWhereRule } from 'firestore/QueryMock';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockQueryWhereRule } from 'firestore/MockQuery';
 import { NotImplementedYet } from 'firestore/utils/index';
 import { MockFirebaseValidationError } from './index';
 
-export type MatchFunction = (doc: DocumentReferenceMock) => boolean;
+export type MatchFunction = (doc: MockDocumentReference) => boolean;
 
 export function createFirestoreMatchRuleFunction(
   fieldPath: string | FieldPath,
@@ -12,7 +12,7 @@ export function createFirestoreMatchRuleFunction(
   value: any,
 ): MatchFunction {
   if (typeof fieldPath === 'string') {
-    return (doc: DocumentReferenceMock) => {
+    return (doc: MockDocumentReference) => {
       if (!doc.data) {
         return false;
       }
@@ -48,9 +48,9 @@ export function createFirestoreMatchRuleFunction(
 }
 
 export function filterDocumentsByRules(
-  docs: DocumentReferenceMock[],
+  docs: MockDocumentReference[],
   rules?: MockQueryWhereRule[],
-): DocumentReferenceMock[] {
+): MockDocumentReference[] {
   if (!rules) {
     return docs;
   }
@@ -69,7 +69,7 @@ export function filterDocumentsByRules(
   return result;
 }
 
-function doesRuleMatch(rule: MockQueryWhereRule, doc: DocumentReferenceMock) {
+function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
   const { fieldPath, opStr, value } = rule;
 
   if (typeof fieldPath !== 'string') {

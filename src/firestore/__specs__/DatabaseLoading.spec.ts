@@ -1,8 +1,8 @@
-import { FirebaseAppMock } from 'firebaseApp';
-import { FirestoreMock } from 'firestore';
-import { MockDatabase } from '../index';
 import { DocumentSnapshot } from '@firebase/firestore-types';
-import DocumentReferenceMock from 'firestore/DocumentReferenceMock';
+import { MockFirebaseApp } from 'firebaseApp';
+import { MockFirebaseFirestore } from 'firestore';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockDatabase } from '../index';
 
 describe('Database state restoring', () => {
   it('Create database from object model', async () => {
@@ -48,8 +48,8 @@ describe('Database state restoring', () => {
       },
     };
 
-    const app = new FirebaseAppMock();
-    const firestore = app.firestore() as FirestoreMock;
+    const app = new MockFirebaseApp();
+    const firestore = app.firestore() as MockFirebaseFirestore;
     firestore.mocker.loadDatabase(database);
 
     expect(firestore.doc('animals/dog')).toBeDefined();
@@ -67,7 +67,7 @@ describe('Database state restoring', () => {
       quantity: 2,
     });
 
-    const doc = firestore.doc('animals/dog') as DocumentReferenceMock;
+    const doc = firestore.doc('animals/dog') as MockDocumentReference;
     expect(doc.mocker.listeners().length).toBe(1);
     expect(doc.mocker.listeners()[0]).toBe(dogWhisper);
   });
