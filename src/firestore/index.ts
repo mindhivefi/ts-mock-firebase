@@ -1,5 +1,8 @@
 import * as types from '@firebase/firestore-types';
-import { CollectionReference, DocumentReference } from '@firebase/firestore-types';
+import {
+  CollectionReference,
+  DocumentReference,
+} from '@firebase/firestore-types';
 import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import { Mocker } from '../index';
@@ -41,8 +44,12 @@ export interface MockDocument {
   listerners?: MockDocumentSnapshotCallback[];
 }
 
+export interface MockDocuments {
+  [documentId: string]: MockDocument;
+}
+
 export interface MockCollection {
-  docs?: { [documentId: string]: MockDocument };
+  docs?: MockDocuments;
   listeners?: any[]; // todo typing
 }
 /**
@@ -55,13 +62,34 @@ export interface MockCollections {
 export type MockDatabase = MockCollections;
 
 export interface FirestoreMocker extends Mocker {
-  loadDatabase(collection: MockCollections): void;
+  /**
+   * Load the whole database from MockDatabase -object
+   *
+   * @param {MockDatabase} database Datbase model
+   * @memberof FirestoreMocker
+   */
+  fromMockDatabase(database: MockDatabase): void;
+  /**
+   * Create a copy of the whole database
+   *
+   * @returns {MockDatabase}
+   * @memberof FirestoreMocker
+   */
+  toMockDatabase(): MockDatabase;
   fromJson(json: string): void;
   toJson(): string;
 }
 
+/**
+ * `Firestore` represents a Firestore Database and is the entry point for all
+ * Firestore operations.
+ */
 export class MockFirebaseFirestore implements types.FirebaseFirestore {
-  public readonly root: MockDocumentReference = new MockDocumentReference(this, '', null as any);
+  public readonly root: MockDocumentReference = new MockDocumentReference(
+    this,
+    '',
+    null as any,
+  );
 
   public mocker: FirestoreMocker;
 
@@ -72,23 +100,32 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
     };
 
     this.mocker = {
-      loadDatabase: (collections: MockCollections) => {
+      fromMockDatabase: (database: MockDatabase) => {
         this.root.mocker.reset();
-        for (const collectionId in collections) {
-          const collectionData = collections[collectionId];
+        for (const collectionId in database) {
+          const collectionData = database[collectionId];
 
-          const collection = new MockCollectionReference(this, collectionId, this.root);
+          const collection = new MockCollectionReference(
+            this,
+            collectionId,
+            this.root,
+          );
           this.root.mocker.setCollection(collection);
           collection.mocker.load(collectionData);
         }
       },
+
+      toMockDatabase: (): MockDatabase => {
+        const database: MockDatabase = this.root.mocker.saveCollections();
+        return database;
+      },
+
       fromJson: (json: string) => {
-        console.error('Loading of database is not implmented yet.');
+        this.mocker.fromMockDatabase(JSON.parse(json));
       },
 
       toJson: () => {
-        console.error('Saving of database is not implmented yet.');
-        return '';
+        return JSON.stringify(this.mocker.toMockDatabase(), undefined, 2);
       },
 
       reset: () => {
@@ -138,7 +175,12 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @return The `CollectionReference` instance.
    */
   public collection = (collectionPath: string): types.CollectionReference => {
-    return resolveReference(this, this.root, true, collectionPath) as CollectionReference;
+    return resolveReference(
+      this,
+      this.root,
+      true,
+      collectionPath,
+    ) as CollectionReference;
   };
 
   /**
@@ -149,7 +191,12 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @return The `DocumentReference` instance.
    */
   public doc = (documentPath: string): types.DocumentReference => {
-    return resolveReference(this, this.root, false, documentPath) as DocumentReference;
+    return resolveReference(
+      this,
+      this.root,
+      false,
+      documentPath,
+    ) as DocumentReference;
   };
 
   /**
@@ -166,7 +213,9 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * transaction failed, a rejected Promise with the corresponding failure
    * error will be returned.
    */
-  public runTransaction = <T>(updateFunction: (transaction: types.Transaction) => Promise<T>): Promise<T> => {
+  public runTransaction = <T>(
+    updateFunction: (transaction: types.Transaction) => Promise<T>,
+  ): Promise<T> => {
     throw new Error('Not implemented yet');
   };
 

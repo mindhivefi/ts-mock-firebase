@@ -17,7 +17,7 @@ import MockCallbackHandler from 'firestore/utils/CallbackHandler';
 import { resolveReference } from 'firestore/utils/index';
 import { MockFirebaseFirestore } from '.';
 import { Mocker } from '../index';
-import { MockDocument } from './index';
+import { MockDocument, MockCollections } from './index';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 
 export interface SnapshotObserver {
@@ -37,6 +37,10 @@ export interface DocumentMocker extends Mocker {
 
   load(document: MockDocument): void;
 
+  saveDocument(): MockDocument;
+
+  saveCollections(): MockCollections;
+
   listeners(): MockDocumentSnapshotCallback[];
 }
 
@@ -48,7 +52,9 @@ export default class MockDocumentReference implements DocumentReference {
     [id: string]: MockCollectionReference;
   } = {};
 
-  private _snapshotCallbackHandler = new MockCallbackHandler<DocumentSnapshot>();
+  private _snapshotCallbackHandler = new MockCallbackHandler<
+    DocumentSnapshot
+  >();
 
   public mocker: DocumentMocker;
 
@@ -58,7 +64,11 @@ export default class MockDocumentReference implements DocumentReference {
    * transactions, etc.).
    * @param parent A reference to the Collection to which this DocumentReference belongs.
    */
-  public constructor(public firestore: FirebaseFirestore, public id: string, public parent: CollectionReference) {
+  public constructor(
+    public firestore: FirebaseFirestore,
+    public id: string,
+    public parent: CollectionReference,
+  ) {
     this.mocker = {
       collection: (collectionId: string) => {
         return this._collections[collectionId];
@@ -88,7 +98,11 @@ export default class MockDocumentReference implements DocumentReference {
           for (const collectionId in collections) {
             const collectionData = collections[collectionId];
 
-            const collection = new MockCollectionReference(this.firestore as MockFirebaseFirestore, collectionId, this);
+            const collection = new MockCollectionReference(
+              this.firestore as MockFirebaseFirestore,
+              collectionId,
+              this,
+            );
             this.mocker.setCollection(collection);
             collection.mocker.load(collectionData);
           }
@@ -98,6 +112,29 @@ export default class MockDocumentReference implements DocumentReference {
         if (listeners) {
           this._snapshotCallbackHandler.load(listeners);
         }
+      },
+
+      saveCollections: (): MockCollections => {
+        const result: MockCollections = {};
+        for (const collectionId in this._collections) {
+          const collection = this._collections[collectionId];
+          result[collectionId] = collection.mocker.saveCollection();
+        }
+        return result;
+      },
+
+      saveDocument: (): MockDocument => {
+        const result: MockDocument = {
+          data: { ...this.data }, // TODO deep copy
+        };
+        const collectionKeys = Object.getOwnPropertyNames(this._collections);
+        if (collectionKeys.length > 0) {
+          const collections = this.mocker.saveCollections();
+          if (collections) {
+            result.collections = collections;
+          }
+        }
+        return result;
       },
 
       listeners: () => {
@@ -121,7 +158,12 @@ export default class MockDocumentReference implements DocumentReference {
    * @return The `CollectionReference` instance.
    */
   public collection = (collectionPath: string): CollectionReference => {
-    return resolveReference(this.firestore as MockFirebaseFirestore, this, true, collectionPath) as CollectionReference;
+    return resolveReference(
+      this.firestore as MockFirebaseFirestore,
+      this,
+      true,
+      collectionPath,
+    ) as CollectionReference;
   };
 
   /**
@@ -152,9 +194,15 @@ export default class MockDocumentReference implements DocumentReference {
       this.data = { ...data };
     }
 
-    const documentSnapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    const documentSnapshot = new MockDocumentSnapshot(
+      this,
+      this.data,
+    ) as DocumentSnapshot;
     this._snapshotCallbackHandler.fire(documentSnapshot);
-    (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, documentSnapshot);
+    (this.parent as MockCollectionReference).fireSubDocumentChange(
+      changeType,
+      documentSnapshot,
+    );
   };
 
   /**
@@ -167,7 +215,11 @@ export default class MockDocumentReference implements DocumentReference {
    * @return A Promise resolved once the data has been successfully written
    * to the backend (Note that it won't resolve while you're offline).
    */
-  public update = async (data: UpdateData | string | FieldPath, value?: any, ...moreFieldsAndValues: any[]) => {
+  public update = async (
+    data: UpdateData | string | FieldPath,
+    value?: any,
+    ...moreFieldsAndValues: any[]
+  ) => {
     if (!this.data) {
       // TODO change to use actual exception
       throw new Error('No entity to update');
@@ -208,7 +260,9 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public delete = async () => {
     const callbaks = this._snapshotCallbackHandler.list;
-    const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(this.id);
+    const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
+      this.id,
+    );
     // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
 
     this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
@@ -252,8 +306,14 @@ export default class MockDocumentReference implements DocumentReference {
    * the snapshot listener.
    */
   onSnapshot = (
-    nextObservationOrOptions: SnapshotObserver | SnapshotListenOptions | MockDocumentSnapshotCallback,
-    ObserverErrorOrNext?: SnapshotObserver | ErrorFunction | MockDocumentSnapshotCallback,
+    nextObservationOrOptions:
+      | SnapshotObserver
+      | SnapshotListenOptions
+      | MockDocumentSnapshotCallback,
+    ObserverErrorOrNext?:
+      | SnapshotObserver
+      | ErrorFunction
+      | MockDocumentSnapshotCallback,
     completeOrError?: MockSubscriptionFunction | ErrorFunction,
     onComplete?: MockSubscriptionFunction,
   ): MockSubscriptionFunction => {
@@ -273,8 +333,15 @@ export default class MockDocumentReference implements DocumentReference {
     oldIndex: number = -1,
     callbacks?: MockDocumentSnapshotCallback[],
   ) => {
-    const snapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
-    (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, snapshot, oldIndex);
+    const snapshot = new MockDocumentSnapshot(
+      this,
+      this.data,
+    ) as DocumentSnapshot;
+    (this.parent as MockCollectionReference).fireSubDocumentChange(
+      changeType,
+      snapshot,
+      oldIndex,
+    );
     this._snapshotCallbackHandler.fire(snapshot, callbacks);
   };
 }

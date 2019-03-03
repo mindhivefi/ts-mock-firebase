@@ -15,15 +15,25 @@ import {
 } from '@firebase/firestore-types';
 import { QueryDocumentSnapshot } from '@firebase/firestore-types';
 import MockDocumentReference from 'firestore/MockDocumentReference';
-import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from 'firestore/MockQuery';
+import MockQuery, {
+  MockQuerySnapshotCallback,
+  MockQuerySnapshotObserver,
+} from 'firestore/MockQuery';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import { generateDocumentId, NotImplementedYet, resolveReference } from 'firestore/utils/index';
+import {
+  generateDocumentId,
+  NotImplementedYet,
+  resolveReference,
+} from 'firestore/utils/index';
 import { Mocker } from 'index';
-import { MockFirebaseFirestore } from '.';
-import { MockCollection } from './index';
-import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import {
+  ErrorFunction,
+  MockSubscriptionFunction,
+} from './MockDocumentReference';
 import MockQuerySnapshot from './MockQuerySnapshot';
 import MockCallbackHandler from './utils/CallbackHandler';
+import { MockDocuments, MockFirebaseFirestore } from '.';
+import { MockCollection } from './index';
 
 export interface CollectionMocker extends Mocker {
   doc(id: string): MockDocumentReference;
@@ -37,15 +47,18 @@ export interface CollectionMocker extends Mocker {
 
   load(collection: MockCollection): void;
 
+  saveCollection(): MockCollection;
+
   docRefs: () => MockDocumentReference[];
 
   reset(): void;
 }
 
+interface MockDocumentReferences {
+  [documentId: string]: MockDocumentReference;
+}
 export class MockCollectionReference implements CollectionReference {
-  private _docRefs: {
-    [documentId: string]: MockDocumentReference;
-  } = {};
+  private _docRefs: MockDocumentReferences = {};
 
   private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
 
@@ -79,11 +92,29 @@ export class MockCollectionReference implements CollectionReference {
           for (const documentId in collection.docs) {
             const documentData = collection.docs[documentId];
 
-            const document = new MockDocumentReference(this.firestore, documentId, this);
+            const document = new MockDocumentReference(
+              this.firestore,
+              documentId,
+              this,
+            );
             this.mocker.setDoc(document);
             document.mocker.load(documentData);
           }
         }
+      },
+
+      saveCollection: (): MockCollection => {
+        const collection: MockCollection = {};
+        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+        if (docKeys.length > 0) {
+          const docs: MockDocuments = (collection.docs = {});
+          for (const docId of docKeys) {
+            if (this._docRefs[docId].data) {
+              docs[docId] = this._docRefs[docId].mocker.saveDocument();
+            }
+          }
+        }
+        return collection;
       },
 
       reset: () => {
@@ -173,7 +204,11 @@ export class MockCollectionReference implements CollectionReference {
    * @param value The value for comparison
    * @return The created Query.
    */
-  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
+  public where = (
+    fieldPath: string | FieldPath,
+    opStr: WhereFilterOp,
+    value: any,
+  ): Query => {
     return new MockQuery(this, this.getDocs()).where(fieldPath, opStr, value);
   };
 
@@ -186,7 +221,10 @@ export class MockCollectionReference implements CollectionReference {
    * not specified, order will be ascending.
    * @return The created Query.
    */
-  public orderBy = (fieldPath: string | FieldPath, directionStr?: OrderByDirection): Query => {
+  public orderBy = (
+    fieldPath: string | FieldPath,
+    directionStr?: OrderByDirection,
+  ): Query => {
     return new MockQuery(this, this.getDocs()).orderBy(fieldPath, directionStr);
   };
 
@@ -346,8 +384,14 @@ export class MockCollectionReference implements CollectionReference {
    */
 
   public onSnapshot = (
-    optionsOrObserverOrOnNext: SnapshotListenOptions | MockQuerySnapshotObserver | MockQuerySnapshotCallback,
-    observerOrOnNextOrOnError?: MockQuerySnapshotObserver | MockQuerySnapshotCallback | ErrorFunction,
+    optionsOrObserverOrOnNext:
+      | SnapshotListenOptions
+      | MockQuerySnapshotObserver
+      | MockQuerySnapshotCallback,
+    observerOrOnNextOrOnError?:
+      | MockQuerySnapshotObserver
+      | MockQuerySnapshotCallback
+      | ErrorFunction,
     onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction,
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
@@ -360,7 +404,11 @@ export class MockCollectionReference implements CollectionReference {
     throw new Error('Not implemented yet');
   };
 
-  public fireSubDocumentChange = (type: DocumentChangeType, snapshot: DocumentSnapshot, oldIndex: number = -1) => {
+  public fireSubDocumentChange = (
+    type: DocumentChangeType,
+    snapshot: DocumentSnapshot,
+    oldIndex: number = -1,
+  ) => {
     switch (type) {
       case 'modified':
         {
@@ -374,7 +422,11 @@ export class MockCollectionReference implements CollectionReference {
               newIndex: index,
             },
           ];
-          const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
+          const querySnapshot = new MockQuerySnapshot(
+            this,
+            docs,
+            documentChanges,
+          );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
         break;
@@ -391,7 +443,11 @@ export class MockCollectionReference implements CollectionReference {
               newIndex,
             },
           ];
-          const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
+          const querySnapshot = new MockQuerySnapshot(
+            this,
+            docs,
+            documentChanges,
+          );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
         break;
@@ -407,7 +463,11 @@ export class MockCollectionReference implements CollectionReference {
               newIndex: -1,
             },
           ];
-          const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
+          const querySnapshot = new MockQuerySnapshot(
+            this,
+            docs,
+            documentChanges,
+          );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
         break;
@@ -427,7 +487,9 @@ export class MockCollectionReference implements CollectionReference {
     const result: QueryDocumentSnapshot[] = [];
     Object.keys(this._docRefs).forEach(key => {
       if (this._docRefs[key] && this._docRefs[key].data) {
-        result.push(new MockQueryDocumentSnapshot(this._docRefs[key]) as QueryDocumentSnapshot);
+        result.push(new MockQueryDocumentSnapshot(
+          this._docRefs[key],
+        ) as QueryDocumentSnapshot);
       }
     });
     return result;

@@ -15,7 +15,12 @@
  * limitations under the License.
  */
 
-import { FirebaseApp, FirebaseAppConfig, FirebaseNamespace, FirebaseOptions } from '@firebase/app-types';
+import {
+  FirebaseApp,
+  FirebaseAppConfig,
+  FirebaseNamespace,
+  FirebaseOptions,
+} from '@firebase/app-types';
 import {
   _FirebaseApp,
   _FirebaseNamespace,
@@ -25,8 +30,13 @@ import {
   FirebaseServiceFactory,
   FirebaseServiceNamespace,
 } from '@firebase/app-types/private';
-import { FirebaseFirestore } from '@firebase/firestore-types';
-import { createSubscribe, deepCopy, deepExtend, ErrorFactory, patchProperty } from '@firebase/util';
+import {
+  createSubscribe,
+  deepCopy,
+  deepExtend,
+  ErrorFactory,
+  patchProperty,
+} from '@firebase/util';
 import { MockFirebaseFirestore } from '../firestore';
 
 const contains = function(obj: object, key: string) {
@@ -53,7 +63,7 @@ export class MockFirebaseApp implements FirebaseApp {
     };
   } = {};
 
-  private _firestore: FirebaseFirestore;
+  private _firestore: MockFirebaseFirestore;
 
   private _automaticDataCollectionEnabled: boolean;
 
@@ -65,7 +75,8 @@ export class MockFirebaseApp implements FirebaseApp {
     private firebase_: FirebaseNamespace = firebaseNamespace,
   ) {
     this.name_ = config.name!;
-    this._automaticDataCollectionEnabled = config.automaticDataCollectionEnabled || false;
+    this._automaticDataCollectionEnabled =
+      config.automaticDataCollectionEnabled || false;
     this.options_ = deepCopy<FirebaseOptions>(options);
     this.INTERNAL = {
       getUid: () => null,
@@ -76,7 +87,9 @@ export class MockFirebaseApp implements FirebaseApp {
         setTimeout(() => callback(null), 0);
       },
       removeAuthTokenListener: (callback: (token: string | null) => void) => {
-        tokenListeners = tokenListeners.filter(listener => listener !== callback);
+        tokenListeners = tokenListeners.filter(
+          listener => listener !== callback,
+        );
       },
     };
 
@@ -147,7 +160,10 @@ export class MockFirebaseApp implements FirebaseApp {
    * The service name is passed to this already
    * @internal
    */
-  _getService(name: string, instanceIdentifier: string = DEFAULT_ENTRY_NAME): FirebaseService {
+  _getService(
+    name: string,
+    instanceIdentifier: string = DEFAULT_ENTRY_NAME,
+  ): FirebaseService {
     this.checkDestroyed_();
 
     if (!this.services_[name]) {
@@ -159,12 +175,13 @@ export class MockFirebaseApp implements FirebaseApp {
        * If a custom instance has been defined (i.e. not '[DEFAULT]')
        * then we will pass that instance on, otherwise we pass `null`
        */
-      const instanceSpecifier = instanceIdentifier !== DEFAULT_ENTRY_NAME ? instanceIdentifier : undefined;
-      const service = (this.firebase_ as _FirebaseNamespace).INTERNAL.factories[name](
-        this,
-        this.extendApp.bind(this),
-        instanceSpecifier,
-      );
+      const instanceSpecifier =
+        instanceIdentifier !== DEFAULT_ENTRY_NAME
+          ? instanceIdentifier
+          : undefined;
+      const service = (this.firebase_ as _FirebaseNamespace).INTERNAL.factories[
+        name
+      ](this, this.extendApp.bind(this), instanceSpecifier);
       this.services_[name][instanceIdentifier] = service;
     }
 
@@ -292,8 +309,12 @@ export function createFirebaseNamespace(): FirebaseNamespace {
   /**
    * Create a new App instance (name must be unique).
    */
-  function initializeApp(options: FirebaseOptions, configOrName?: FirebaseAppConfig | string): FirebaseApp {
-    const config: FirebaseAppConfig = typeof configOrName === 'object' ? configOrName : { name: configOrName };
+  function initializeApp(
+    options: FirebaseOptions,
+    configOrName?: FirebaseAppConfig | string,
+  ): FirebaseApp {
+    const config: FirebaseAppConfig =
+      typeof configOrName === 'object' ? configOrName : { name: configOrName };
 
     if (config.name === undefined) {
       config.name = DEFAULT_ENTRY_NAME;
@@ -309,7 +330,11 @@ export function createFirebaseNamespace(): FirebaseNamespace {
       error('duplicate-app', { name: name });
     }
 
-    const newApp = new MockFirebaseApp(options, config, namespace as FirebaseNamespace);
+    const newApp = new MockFirebaseApp(
+      options,
+      config,
+      namespace as FirebaseNamespace,
+    );
 
     apps_[name] = newApp;
     callAppHooks(newApp, 'create');
@@ -437,7 +462,9 @@ type AppError =
 // TypeScript does not support non-string indexes!
 // let errors: {[code: AppError: string} = {
 const errors: { [code: string]: string } = {
-  'no-app': "No Firebase App '{$name}' has been created - " + 'call Firebase App.initializeApp()',
+  'no-app':
+    "No Firebase App '{$name}' has been created - " +
+    'call Firebase App.initializeApp()',
   'bad-app-name': "Illegal App name: '{$name}",
   'duplicate-app': "Firebase App named '{$name}' already exists",
   'app-deleted': "Firebase App named '{$name}' already deleted",
@@ -447,7 +474,9 @@ const errors: { [code: string]: string } = {
     'account is only allowed in a Node.js environment. On client ' +
     'devices, you should instead initialize the SDK with an api key and ' +
     'auth domain',
-  'invalid-app-argument': 'firebase.{$name}() takes either no argument or a ' + 'Firebase App instance.',
+  'invalid-app-argument':
+    'firebase.{$name}() takes either no argument or a ' +
+    'Firebase App instance.',
 };
 
 const appErrors = new ErrorFactory<AppError>('app', 'Firebase', errors);

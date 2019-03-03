@@ -28,7 +28,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger update when document is changed', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
       const documentRef = firestore.doc('list/first');
@@ -58,7 +58,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger removed when document is deleted', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
       const documentRef = firestore.doc('list/first');
@@ -86,7 +86,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger added when document is set by a new reference', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
       const documentRef = firestore.doc('list/forth');
@@ -113,7 +113,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger added when document is added from CollectioReference', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
 
@@ -173,7 +173,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger update when document in query is changed', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore.collection('list').where('value', '>=', 3);
       const documentRef = firestore.doc('list/fourth');
@@ -204,7 +204,7 @@ describe('Snapshot listeners', () => {
 
     it('will not trigger update when document does not match the query', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore.collection('list').where('value', '>=', 3);
       const documentRef = firestore.doc('list/first');
@@ -226,7 +226,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger an added evenet, when new document is been added in a query range', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
         .collection('list')
@@ -261,7 +261,7 @@ describe('Snapshot listeners', () => {
 
     it('will not trigger an added event, when new document is been added outside of the query range', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
         .collection('list')
@@ -287,7 +287,7 @@ describe('Snapshot listeners', () => {
 
     it('will trigger an removed event, when a document is been deleted in a query range', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
         .collection('list')
@@ -318,7 +318,7 @@ describe('Snapshot listeners', () => {
 
     it('will not trigger a removed event, when deleted document is been removed outside of the query range', async () => {
       const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
-      firestore.mocker.loadDatabase(testDb1);
+      firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
         .collection('list')
@@ -337,6 +337,90 @@ describe('Snapshot listeners', () => {
 
       expect(snap).toBeUndefined();
       expect(onSnapshot.mock.calls.length).toBe(0);
+    });
+  });
+
+  describe('Triggering changed of documents to multiple targets', () => {
+    const testDb1: MockDatabase = {
+      list: {
+        docs: {
+          first: {
+            data: {
+              name: 'first',
+              value: 1,
+            },
+          },
+          second: {
+            data: {
+              name: 'second',
+              value: 2,
+            },
+          },
+          third: {
+            data: {
+              name: 'third',
+              value: 3,
+            },
+          },
+          fourth: {
+            data: {
+              name: 'fourth',
+              value: 4,
+            },
+          },
+        },
+      },
+    };
+
+    it('will trigger update to multiple query listeners, when document in query is changed', async () => {
+      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      firestore.mocker.fromMockDatabase(testDb1);
+
+      const queryRef = firestore.collection('list').where('value', '>=', 3);
+      const orderedQueryRef = queryRef.orderBy('value');
+      const documentRef = firestore.doc('list/fourth');
+
+      let querySnap: QuerySnapshot | undefined = undefined;
+      const onQuerySnapshot = jest.fn((snapshot: QuerySnapshot) => {
+        querySnap = snapshot;
+      });
+      queryRef.onSnapshot(onQuerySnapshot);
+
+      let orderedSnap: QuerySnapshot | undefined = undefined;
+      const onOrderedQuerySnapshot = jest.fn((snapshot: QuerySnapshot) => {
+        orderedSnap = snapshot;
+      });
+      orderedQueryRef.onSnapshot(onOrderedQuerySnapshot);
+
+      await documentRef.update({
+        name: 'modified',
+      });
+
+      expect(querySnap).toBeDefined();
+      expect(orderedSnap).toBeDefined();
+      expect(querySnap!.docs.length).toBe(2);
+      expect(orderedSnap!.docs.length).toBe(2);
+      expect(querySnap!.docs[1].data()).toEqual({
+        name: 'modified',
+        value: 4,
+      });
+      expect(orderedSnap!.docs[1].data()).toEqual({
+        name: 'modified',
+        value: 4,
+      });
+      let docChanges: DocumentChange[] = querySnap!.docChanges();
+      expect(docChanges.length).toBe(1);
+      expect(docChanges[0].type).toMatch('modified');
+      expect(docChanges[0].oldIndex).toBe(1);
+      expect(docChanges[0].newIndex).toBe(1);
+      docChanges = orderedSnap!.docChanges();
+      expect(docChanges.length).toBe(1);
+      expect(docChanges[0].type).toMatch('modified');
+      expect(docChanges[0].oldIndex).toBe(1);
+      expect(docChanges[0].newIndex).toBe(1);
+
+      expect(onQuerySnapshot.mock.calls.length).toBe(1);
+      expect(onOrderedQuerySnapshot.mock.calls.length).toBe(1);
     });
   });
 });

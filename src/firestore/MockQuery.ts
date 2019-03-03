@@ -15,7 +15,10 @@ import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
 import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
 import { NotImplementedYet } from 'firestore/utils/index';
-import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import {
+  ErrorFunction,
+  MockSubscriptionFunction,
+} from './MockDocumentReference';
 import MockCallbackHandler from './utils/CallbackHandler';
 import { MockFirebaseValidationError } from './utils/index';
 import { filterDocumentsByRules } from './utils/matching';
@@ -59,7 +62,9 @@ export default class MockQuery implements Query {
   ) {
     this.firestore = collectionRef.firestore;
     this.docRefs = docRefs.slice();
-    this.unsubscribeCollection = this.collectionRef.onSnapshot(this.handleCollectionSnapshotChange);
+    this.unsubscribeCollection = this.collectionRef.onSnapshot(
+      this.handleCollectionSnapshotChange,
+    );
   }
 
   private createClone = (): MockQuery => {
@@ -87,7 +92,11 @@ export default class MockQuery implements Query {
    * @param value The value for comparison
    * @return The created Query.
    */
-  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
+  public where = (
+    fieldPath: string | FieldPath,
+    opStr: WhereFilterOp,
+    value: any,
+  ): Query => {
     const result = this.createClone();
     const where: MockQueryWhereRule[] = result.rules.where || [];
     where.push({
@@ -108,7 +117,10 @@ export default class MockQuery implements Query {
    * not specified, order will be ascending.
    * @return The created Query.
    */
-  orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query => {
+  orderBy = (
+    fieldPath: string | FieldPath,
+    directionStr: OrderByDirection = 'asc',
+  ): Query => {
     const result = this.createClone();
     const rules = result.rules.order || ([] as MockQueryOrderRule[]);
     rules.push({
@@ -128,7 +140,9 @@ export default class MockQuery implements Query {
    */
   limit = (limit: number): Query => {
     if (limit <= 0) {
-      throw new MockFirebaseValidationError('Query limit value must be greater than zero');
+      throw new MockFirebaseValidationError(
+        'Query limit value must be greater than zero',
+      );
     }
     const result = this.createClone();
     result.rules.limit = limit;
@@ -283,14 +297,21 @@ export default class MockQuery implements Query {
    * the snapshot listener.
    */
   onSnapshot = (
-    optionsOrObserverOrOnNext: SnapshotListenOptions | MockQuerySnapshotObserver | MockQuerySnapshotCallback,
-    observerOrOnNextOrOnError?: MockQuerySnapshotObserver | MockQuerySnapshotCallback | ErrorFunction,
+    optionsOrObserverOrOnNext:
+      | SnapshotListenOptions
+      | MockQuerySnapshotObserver
+      | MockQuerySnapshotCallback,
+    observerOrOnNextOrOnError?:
+      | MockQuerySnapshotObserver
+      | MockQuerySnapshotCallback
+      | ErrorFunction,
     onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction,
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
 
-      return () => this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
+      return () =>
+        this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
     }
     throw new NotImplementedYet('MockQuery.onSnapshot');
   };
@@ -301,7 +322,8 @@ export default class MockQuery implements Query {
    */
   handleCollectionSnapshotChange = (snapshot: QuerySnapshot) => {
     const oldDocs = this.getFilterDocumentReferences();
-    this.docRefs = (this.collectionRef as MockCollectionReference).mocker.docRefs();
+    this.docRefs = (this
+      .collectionRef as MockCollectionReference).mocker.docRefs();
     const newDocs = this.getFilterDocumentReferences();
 
     const docChanges: DocumentChange[] = [];
@@ -312,7 +334,8 @@ export default class MockQuery implements Query {
       const newIndex = newDocs.findIndex(d => d.id === docId);
 
       switch (change.type) {
-        case 'modified': {
+        case 'modified':
+        case 'removed': {
           if (oldIndex >= 0) {
             docChanges.push({
               ...change,
@@ -332,29 +355,37 @@ export default class MockQuery implements Query {
           }
           break;
         }
-        case 'removed': {
-          if (oldIndex >= 0) {
-            docChanges.push({
-              ...change,
-              oldIndex,
-              newIndex,
-            });
-          }
-          break;
-        }
+        // case 'removed': {
+        //   if (oldIndex >= 0) {
+        //     docChanges.push({
+        //       ...change,
+        //       oldIndex,
+        //       newIndex,
+        //     });
+        //   }
+        //   break;
+        // }
         default:
           throw new Error(`Unexpected change type: ${change.type}`);
       }
     });
     if (docChanges.length > 0) {
       this._snapshotCallbackHandler.fire(
-        new MockQuerySnapshot(snapshot.query, this.getDocumentSnapshots(newDocs), docChanges),
+        new MockQuerySnapshot(
+          snapshot.query,
+          this.getDocumentSnapshots(newDocs),
+          docChanges,
+        ),
       );
     }
   };
 
-  private getDocumentSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
-    return docRefs.map(doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot);
+  private getDocumentSnapshots = (
+    docRefs: MockDocumentReference[] = this.docRefs,
+  ): QueryDocumentSnapshot[] => {
+    return docRefs.map(
+      doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot,
+    );
   };
 
   private getFilterDocumentReferences = () => {
@@ -370,9 +401,6 @@ export default class MockQuery implements Query {
   };
 }
 
-export interface MockQueryListener {
-  // collectionListener:
-}
 export interface MockQuerySnapshotObserver {
   next?: (snapshot: QuerySnapshot) => void;
   error?: (error: FirestoreError) => void;
