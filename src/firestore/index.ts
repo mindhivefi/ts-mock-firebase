@@ -7,6 +7,7 @@ import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import { Mocker } from '../index';
 import MockDocumentReference from './MockDocumentReference';
+import MockTransaction from 'firestore/MockTransaction';
 import { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { NotImplementedYet, resolveReference } from './utils/index';
 
@@ -140,7 +141,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @param settings The settings to use.
    */
   public settings = (settings: types.Settings): void => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockFirebaseFirestore.settings');
   };
 
   /**
@@ -164,7 +165,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * storage.
    */
   public enablePersistence = async (settings?: types.PersistenceSettings) => {
-    throw new NotImplementedYet('enablePersistence');
+    throw new NotImplementedYet('MockFirebaseFirestore.enablePersistence');
   };
 
   /**
@@ -213,10 +214,19 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * transaction failed, a rejected Promise with the corresponding failure
    * error will be returned.
    */
-  public runTransaction = <T>(
+  public runTransaction = async <T>(
     updateFunction: (transaction: types.Transaction) => Promise<T>,
   ): Promise<T> => {
-    throw new Error('Not implemented yet');
+    const transaction = new MockTransaction(this);
+    try {
+      const result = await updateFunction(transaction);
+
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      transaction.rollback();
+      return error;
+    }
   };
 
   /**
@@ -224,7 +234,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * atomic operation.
    */
   public batch = (): types.WriteBatch => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockFirebaseFirestore.batch');
   };
 
   /**
@@ -239,7 +249,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @return A promise that is resolved once the network has been enabled.
    */
   public enableNetwork = async () => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockFirebaseFirestore.enableNetwork');
   };
 
   /**
@@ -251,7 +261,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @return A promise that is resolved once the network has been disabled.
    */
   public disableNetwork = async () => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockFirebaseFirestore.disableNetwork');
   };
 
   public INTERNAL: any;

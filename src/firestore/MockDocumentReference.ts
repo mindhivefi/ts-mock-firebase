@@ -13,12 +13,14 @@ import {
   UpdateData,
 } from '@firebase/firestore-types';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import { resolveReference, MockFirebaseValidationError } from 'firestore/utils';
 import MockCallbackHandler from 'firestore/utils/CallbackHandler';
-import { resolveReference } from 'firestore/utils/index';
-import { MockFirebaseFirestore } from '.';
-import { Mocker } from '../index';
-import { MockDocument, MockCollections } from './index';
+
+import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
+import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
+import MockTransaction, { MockDocumentChange } from './MockTransaction';
+import { NotImplementedYet } from './utils';
 
 export interface SnapshotObserver {
   next?: (snapshot: DocumentSnapshot) => void;
@@ -188,11 +190,12 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public set = async (data: DocumentData, options?: SetOptions) => {
     const changeType: DocumentChangeType = this.data ? 'modified' : 'added';
-    if (options && options.merge) {
-      this.data = { ...this.data, ...data };
-    } else {
-      this.data = { ...data };
-    }
+    // if (options && options.merge) {
+    //   this.data = { ...this.data, ...data };
+    // } else {
+    //   this.data = { ...data };
+    // }
+    this._set(data, options);
 
     const documentSnapshot = new MockDocumentSnapshot(
       this,
@@ -203,6 +206,41 @@ export default class MockDocumentReference implements DocumentReference {
       changeType,
       documentSnapshot,
     );
+  };
+
+  private _set = async (data: DocumentData, options?: SetOptions) => {
+    if (options && options.merge) {
+      this.data = { ...this.data, ...data };
+    } else {
+      this.data = { ...data };
+    }
+  };
+
+  public setInTransaction = async (
+    transaction: MockTransaction,
+    transactioData: DocumentData,
+    setData: DocumentData,
+    options?: SetOptions,
+  ): Promise<DocumentData> => {
+    // const changeType: DocumentChangeType = transactioData
+    //   ? 'modified'
+    //   : 'added';
+
+    const data =
+      options && options.merge
+        ? { ...transactioData, ...setData }
+        : { ...setData };
+
+    // const documentSnapshot = new MockDocumentSnapshot(
+    //   this,
+    //   data,
+    // ) as DocumentSnapshot;
+    // this._snapshotCallbackHandler.fire(documentSnapshot);
+    // (this.parent as MockCollectionReference).fireSubDocumentChange(
+    //   changeType,
+    //   documentSnapshot,
+    // );
+    return data;
   };
 
   /**
@@ -222,7 +260,20 @@ export default class MockDocumentReference implements DocumentReference {
   ) => {
     if (!this.data) {
       // TODO change to use actual exception
-      throw new Error('No entity to update');
+      throw new MockFirebaseValidationError('No entity to update');
+    }
+    this._update(true, data, value, moreFieldsAndValues);
+  };
+
+  private _update = async (
+    fireCallbacks: boolean,
+    data: UpdateData | string | FieldPath,
+    value?: any,
+    ...moreFieldsAndValues: any[]
+  ) => {
+    if (!this.data) {
+      // TODO change to use actual exception
+      throw new MockFirebaseValidationError('No entity to update');
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
@@ -233,7 +284,39 @@ export default class MockDocumentReference implements DocumentReference {
     } else {
       throw new Error('Update for name value pairs is not implemented yet.');
     }
-    this.fireDocumentChangeEvent('modified');
+    fireCallbacks && this.fireDocumentChangeEvent('modified');
+  };
+
+  /**
+   * Updates fields in the document referred to by this `DocumentReference`.
+   * The update will fail if applied to a document that does not exist.
+   *
+   * @param data An object containing the fields and values with which to
+   * update the document. Fields can contain dots to reference nested fields
+   * within the document.
+   * @return A Promise resolved once the data has been successfully written
+   * to the backend (Note that it won't resolve while you're offline).
+   */
+  public updateInTransaction = (
+    transaction: MockTransaction,
+    transactionData: DocumentData,
+    data: UpdateData | string | FieldPath,
+    value?: any,
+    ...moreFieldsAndValues: any[]
+  ): DocumentData => {
+    if (!transactionData) {
+      // TODO change to use actual exception
+      throw new Error('No entity to update');
+    }
+    if (data) {
+      // only one parameter, so we treat it as UpdateData
+      return {
+        ...transactionData,
+        ...(data as UpdateData),
+      } as DocumentData;
+    } else {
+      throw new Error('Update for name value pairs is not implemented yet.');
+    }
   };
 
   /**
@@ -343,6 +426,48 @@ export default class MockDocumentReference implements DocumentReference {
       oldIndex,
     );
     this._snapshotCallbackHandler.fire(snapshot, callbacks);
+  };
+
+  public commitChange = async (
+    type: DocumentChangeType,
+    value: any,
+  ): Promise<MockDocumentChange> => {
+    switch (type) {
+      case 'added':
+        await this._set(value); // TODO options
+        return {
+          type,
+          doc: new MockDocumentSnapshot(this, {
+            ...value,
+          }),
+          newIndex: -1,
+          oldIndex: -1,
+        } as any; // TODO typing
+
+      case 'modified':
+        await this._update(false, value); // TODO FIeld paths etc
+        return {
+          type,
+          doc: new MockDocumentSnapshot(this, {
+            ...value,
+          }),
+          newIndex: -1,
+          oldIndex: -1,
+        } as any; // TODO typing
+
+      // case 'removed':
+      // await this._update(false, value); // TODO FIeld paths etc
+      // return {
+      //   type,
+      //   doc: new MockDocumentSnapshot(this, {
+      //     ...value,
+      //   }),
+      //   newIndex: -1,
+      //   oldIndex: -1,
+      // } as any; // TODO typing
+      default:
+        throw new NotImplementedYet('commitChange');
+    }
   };
 }
 

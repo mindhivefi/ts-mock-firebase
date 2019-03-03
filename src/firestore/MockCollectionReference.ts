@@ -9,11 +9,11 @@ import {
   GetOptions,
   OrderByDirection,
   Query,
+  QueryDocumentSnapshot,
   QuerySnapshot,
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import { QueryDocumentSnapshot } from '@firebase/firestore-types';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQuery, {
   MockQuerySnapshotCallback,
@@ -24,16 +24,17 @@ import {
   generateDocumentId,
   NotImplementedYet,
   resolveReference,
-} from 'firestore/utils/index';
+} from 'firestore/utils';
 import { Mocker } from 'index';
+
+import { MockDocuments, MockFirebaseFirestore } from '.';
+import { MockCollection } from '.';
 import {
   ErrorFunction,
   MockSubscriptionFunction,
 } from './MockDocumentReference';
 import MockQuerySnapshot from './MockQuerySnapshot';
 import MockCallbackHandler from './utils/CallbackHandler';
-import { MockDocuments, MockFirebaseFirestore } from '.';
-import { MockCollection } from './index';
 
 export interface CollectionMocker extends Mocker {
   doc(id: string): MockDocumentReference;
@@ -135,7 +136,9 @@ export class MockCollectionReference implements CollectionReference {
    * to the root of the database).
    */
   get path(): string {
-    return this.parent ? `${this.parent.path}/${this.id}` : this.id;
+    return this.parent && this.parent.id
+      ? `${this.parent.path}/${this.id}`
+      : this.id;
   }
 
   /**
@@ -402,6 +405,12 @@ export class MockCollectionReference implements CollectionReference {
       };
     }
     throw new Error('Not implemented yet');
+  };
+
+  public fireBatchDocumentChange = (documentChanges: DocumentChange[]) => {
+    const docs = this.getQueryDocumentSnapshots();
+    const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
+    this._snapshotCallbackHandler.fire(querySnapshot);
   };
 
   public fireSubDocumentChange = (
