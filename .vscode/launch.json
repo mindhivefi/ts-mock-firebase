@@ -10,7 +10,8 @@
       "request": "launch",
       "args": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "--coverage", "false"],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true
     },
     {
       "type": "node",
