@@ -24,13 +24,13 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
           case 'number':
             return directionStr === 'asc' ? first - second : second - first;
           default:
-            throw new NotImplementedYet();
+            throw new NotImplementedYet(`Query sorting for data type: ${typeof first}`);
         }
       }
       return -1;
     };
   }
-  throw new NotImplementedYet();
+  throw new NotImplementedYet(`querySortFunction support for field path listing`);
 }
 
 export function sortDocumentsByRules(

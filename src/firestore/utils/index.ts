@@ -4,8 +4,8 @@ import MockDocumentReference from 'firestore/MockDocumentReference';
 import * as uuidv4 from 'uuid/v4';
 
 export class NotImplementedYet extends Error {
-  constructor() {
-    super('Not implmeneted yet');
+  constructor(label?: string) {
+    super('Not implemented yet' + label ? ` (${label})` : '');
   }
 }
 
@@ -223,13 +223,3 @@ export function resolveReference(
 
   return isCollectionPath ? collection : doc;
 }
-
-// function filterDocuments(docs: ) {
-//   const { limit, where, order } = this.rules;
-
-//   docs = filterDocumentsByRules(docs, where);
-//   docs = sortDocumentsByRules(docs, order);
-//   if (limit) {
-//     docs = docs.slice(0, Math.min(docs.length, limit));
-//   }
-// }

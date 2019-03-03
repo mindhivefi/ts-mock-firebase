@@ -127,7 +127,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * storage.
    */
   public enablePersistence = async (settings?: types.PersistenceSettings) => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('enablePersistence');
   };
 
   /**

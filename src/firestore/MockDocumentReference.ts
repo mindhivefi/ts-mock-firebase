@@ -209,10 +209,12 @@ export default class MockDocumentReference implements DocumentReference {
   public delete = async () => {
     const callbaks = this._snapshotCallbackHandler.list;
     const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(this.id);
-    this.data = undefined;
     // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
 
     this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
+
+    // remove data after triggering events
+    this.data = undefined;
     this.mocker.reset();
   };
 

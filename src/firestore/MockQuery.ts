@@ -20,6 +20,9 @@ import MockCallbackHandler from './utils/CallbackHandler';
 import { MockFirebaseValidationError } from './utils/index';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
+import { DocumentChange } from '@firebase/firestore-types';
+import MockQuerySnapshot from 'firestore/MockQuerySnapshot';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -46,20 +49,28 @@ export type MockQuerySnapshotCallback = (snapshot: QuerySnapshot) => void;
  * construct refined `Query` objects by adding filters and ordering.
  */
 export default class MockQuery implements Query {
-  private rules: MockQueryRules = {};
-
   private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
+  private unsubscribeCollection: () => void;
 
-  public constructor(public collectionRef: CollectionReference, public docRefs: MockDocumentReference[]) {
+  public constructor(
+    public collectionRef: CollectionReference,
+    docRefs: MockDocumentReference[],
+    private rules: MockQueryRules = {},
+  ) {
     this.firestore = collectionRef.firestore;
+    this.docRefs = docRefs.slice();
+    this.unsubscribeCollection = this.collectionRef.onSnapshot(this.handleCollectionSnapshotChange);
   }
 
-  private createClone(): MockQuery {
-    const clone = new MockQuery(this.collectionRef, this.docRefs);
-    clone.firestore = this.firestore;
-    clone.rules = { ...this.rules };
-    return clone;
-  }
+  private createClone = (): MockQuery => {
+    return new MockQuery(this.collectionRef, this.docRefs, this.rules);
+  };
+
+  public docRefs: MockDocumentReference[];
+
+  public reset = () => {
+    this.unsubscribeCollection();
+  };
   /**
    * The `Firestore` for the Firestore database (useful for performing
    * transactions, etc.).
@@ -137,7 +148,7 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   startAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuery.startAt');
   };
 
   // /**
@@ -162,7 +173,7 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   startAfter = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuery.startAfter');
   };
 
   /**
@@ -187,7 +198,7 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   endBefore = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuery.endBefore');
   };
 
   /**
@@ -212,7 +223,7 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   endAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuery.endAt');
   };
 
   /**
@@ -248,16 +259,10 @@ export default class MockQuery implements Query {
    * @return A Promise that will be resolved with the results of the Query.
    */
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
-    let docs = [...this.docRefs];
-
-    const { limit, where, order } = this.rules;
-
-    docs = filterDocumentsByRules(docs, where);
-    docs = sortDocumentsByRules(docs, order);
-    if (limit) {
-      docs = docs.slice(0, Math.min(docs.length, limit));
-    }
-    return new Promise<QuerySnapshot>(resolve => resolve(new QuerySnapshotMock(this, this.getDocSnapshots(docs))));
+    const docs = this.getFilterDocumentReferences();
+    return new Promise<QuerySnapshot>(resolve =>
+      resolve(new QuerySnapshotMock(this, this.getDocumentSnapshots(docs), [])),
+    );
   };
 
   /**
@@ -287,11 +292,81 @@ export default class MockQuery implements Query {
 
       return () => this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
     }
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuery.onSnapshot');
   };
 
-  private getDocSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
+  /**
+   * Handle onSnapshot callbacks for document changes that have impact on this query.
+   * @memberof MockQuery
+   */
+  handleCollectionSnapshotChange = (snapshot: QuerySnapshot) => {
+    const oldDocs = this.getFilterDocumentReferences();
+    this.docRefs = (this.collectionRef as MockCollectionReference).mocker.docRefs();
+    const newDocs = this.getFilterDocumentReferences();
+
+    const docChanges: DocumentChange[] = [];
+
+    snapshot.docChanges().forEach(change => {
+      const docId: string = change.doc.id;
+      const oldIndex = oldDocs.findIndex(d => d.id === docId);
+      const newIndex = newDocs.findIndex(d => d.id === docId);
+
+      switch (change.type) {
+        case 'modified': {
+          if (oldIndex >= 0) {
+            docChanges.push({
+              ...change,
+              oldIndex,
+              newIndex,
+            });
+          }
+          break;
+        }
+        case 'added': {
+          if (newIndex >= 0) {
+            docChanges.push({
+              ...change,
+              oldIndex,
+              newIndex,
+            });
+          }
+          break;
+        }
+        case 'removed': {
+          if (oldIndex >= 0) {
+            docChanges.push({
+              ...change,
+              oldIndex,
+              newIndex,
+            });
+          }
+          break;
+        }
+        default:
+          throw new Error(`Unexpected change type: ${change.type}`);
+      }
+    });
+    if (docChanges.length > 0) {
+      this._snapshotCallbackHandler.fire(
+        new MockQuerySnapshot(snapshot.query, this.getDocumentSnapshots(newDocs), docChanges),
+      );
+    }
+  };
+
+  private getDocumentSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
     return docRefs.map(doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot);
+  };
+
+  private getFilterDocumentReferences = () => {
+    let docs = this.docRefs;
+    const { limit, where, order } = this.rules;
+
+    docs = filterDocumentsByRules(docs, where);
+    docs = sortDocumentsByRules(docs, order);
+    if (limit) {
+      docs = docs.slice(0, Math.min(docs.length, limit));
+    }
+    return docs;
   };
 }
 

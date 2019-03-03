@@ -37,6 +37,8 @@ export interface CollectionMocker extends Mocker {
 
   load(collection: MockCollection): void;
 
+  docRefs: () => MockDocumentReference[];
+
   reset(): void;
 }
 
@@ -58,6 +60,10 @@ export class MockCollectionReference implements CollectionReference {
       },
       setDoc: (doc: MockDocumentReference) => {
         this._docRefs[doc.id] = doc;
+      },
+
+      docRefs: () => {
+        return this.getDocs();
       },
 
       deleteDoc: (documentId: string) => {
@@ -192,7 +198,7 @@ export class MockCollectionReference implements CollectionReference {
    * @return The created Query.
    */
   public limit = (limit: number): Query => {
-    throw new Error('Not implemented yet');
+    return new MockQuery(this, this.getDocs()).limit(limit);
   };
   /**
    * Creates and returns a new Query that starts at the provided document
@@ -207,7 +213,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAt(snapshot: DocumentSnapshot): Query;
   // public startAt(...fieldValues: any[]): Query  {
   public startAt = (args: DocumentSnapshot | any[]) => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockCollectionReference.startAt');
   };
 
   /**
@@ -232,7 +238,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAfter(...fieldValues: any[]): Query;
   // public startAfter = (snapshot: DocumentSnapshot): Query=> {
   public startAfter = (args: DocumentSnapshot | any[]) => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockCollectionReference.startAfter');
   };
 
   /**
@@ -267,7 +273,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endBefore(...fieldValues: any[]): Query;
   public endBefore = (args: DocumentSnapshot | any[]) => {
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('MockCollectionReference.endBefore');
   };
   /**
    * Creates and returns a new Query that ends at the provided document
@@ -291,7 +297,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endAt(...fieldValues: any[]): Query;
   public endAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockCollectionReference.endAt');
   };
 
   /**
@@ -321,11 +327,6 @@ export class MockCollectionReference implements CollectionReference {
     });
   };
 
-  private getDocs(): MockDocumentReference[] {
-    return Object.getOwnPropertyNames(this._docRefs).map(docId => {
-      return this._docRefs[docId];
-    });
-  }
   /**
    * Attaches a listener for QuerySnapshot events. You may either pass
    * individual `onNext` and `onError` callbacks or pass a single observer
@@ -412,9 +413,15 @@ export class MockCollectionReference implements CollectionReference {
         break;
 
       default:
-        throw new NotImplementedYet();
+        throw new Error(`Unexpected change type: ${type}`);
     }
   };
+
+  private getDocs(): MockDocumentReference[] {
+    return Object.getOwnPropertyNames(this._docRefs).map(docId => {
+      return this._docRefs[docId];
+    });
+  }
 
   private getQueryDocumentSnapshots = (): QueryDocumentSnapshot[] => {
     const result: QueryDocumentSnapshot[] = [];

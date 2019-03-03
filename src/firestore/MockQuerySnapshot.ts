@@ -74,7 +74,7 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    * @param thisArg The `this` binding for the callback.
    */
   public forEach = (callback: (result: QueryDocumentSnapshot) => void, thisArg?: any): void => {
-    throw new NotImplementedYet();
+    throw new NotImplementedYet('MockQuerySnapshot.forEach');
   };
 
   /**

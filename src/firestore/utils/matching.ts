@@ -37,14 +37,13 @@ export function createFirestoreMatchRuleFunction(
             return field.indexOf(value) >= 0;
           }
           default:
-            throw new NotImplementedYet();
+            throw new Error(`Unexpection comparization operation: ${opStr}`);
         }
       }
       return false;
     };
   }
-
-  throw new NotImplementedYet();
+  throw new NotImplementedYet('createFirestoreMatchRuleFunction');
 }
 
 export function filterDocumentsByRules(
@@ -52,7 +51,7 @@ export function filterDocumentsByRules(
   rules?: MockQueryWhereRule[],
 ): MockDocumentReference[] {
   if (!rules) {
-    return docs;
+    return docs.filter(d => d.data !== undefined);
   }
   const result = docs.filter(doc => {
     // Documents that do not exists, will be removed automatically from the list
@@ -73,7 +72,7 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
   const { fieldPath, opStr, value } = rule;
 
   if (typeof fieldPath !== 'string') {
-    throw new NotImplementedYet(); // todo fieldValue support
+    throw new NotImplementedYet('doesRuleMatch - field value support');
   }
   const field = doc.data[fieldPath];
 
