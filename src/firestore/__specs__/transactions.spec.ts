@@ -141,23 +141,6 @@ describe('Transaction handling', () => {
     expect(onRef2CollectionSnapshot.mock.calls.length).toBe(1);
   });
 
-  it('will get value updated inside the transaction', async () => {
-    expect(true).toBeTruthy();
-
-    const firestore = new MockFirebaseApp().firestore();
-    firestore.mocker.fromMockDatabase(database);
-
-    let result = undefined;
-
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('a/first');
-
-      transaction.set(ref, { test: 'modified' });
-      result = await transaction.get(ref);
-    });
-    expect(result).toEqual({ test: 'modified' });
-  });
-
   it('will get value from document ref if value is not defined in transaction', async () => {
     expect(true).toBeTruthy();
 
@@ -175,8 +158,25 @@ describe('Transaction handling', () => {
       text: 'A',
     });
   });
+
+  it('will give an error if get is called after updating operations', async () => {
+    expect(true).toBeTruthy();
+
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    await firestore.runTransaction(async transaction => {
+      const ref = firestore.doc('b/A');
+      transaction.set(ref, { test: 'value' });
+
+      expect(async () => transaction.get(ref)).toThrow();
+    });
+  });
 });
 
-// TODO get
-
 // TODO oldIndex, newIndex
+
+/*
+ * TODO The transaction read a document that was modified outside of the transaction. In this case, the transaction automatically runs again. The transaction is retried a finite number of times.
+ * TODO The transaction exceeded the maximum request size of 10 MiB.
+ */

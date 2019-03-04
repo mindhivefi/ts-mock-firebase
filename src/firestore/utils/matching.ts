@@ -32,7 +32,9 @@ export function createFirestoreMatchRuleFunction(
             return field >= value;
           case 'array-contains': {
             if (!Array.isArray(field)) {
-              throw new MockFirebaseValidationError(`Field ${fieldPath} is not an array.`);
+              throw new MockFirebaseValidationError(
+                `Field ${fieldPath} is not an array.`,
+              );
             }
             return field.indexOf(value) >= 0;
           }
@@ -94,7 +96,10 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
         if (field < value) return false;
         break;
       case 'array-contains': {
-        if (!Array.isArray(field)) throw new MockFirebaseValidationError(`Field ${fieldPath} is not an array.`);
+        if (!Array.isArray(field))
+          throw new MockFirebaseValidationError(
+            `Field ${fieldPath} is not an array.`,
+          );
 
         if (field.indexOf(value) < 0) return false;
         break;

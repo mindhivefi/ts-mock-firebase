@@ -53,19 +53,31 @@ describe('Simple field sorting', () => {
 
   describe('String fields', () => {
     it('will sort string fields in ascending order with default direction', () => {
-      const data = [{ data: { a: 'Horse' } }, { data: { a: 'Dog' } }, { data: { a: 'Cat' } }];
+      const data = [
+        { data: { a: 'Horse' } },
+        { data: { a: 'Dog' } },
+        { data: { a: 'Cat' } },
+      ];
       const fun = querySortFunction('a');
       const result = data.sort(fun);
       expect(result[0].data.a).toBe('Cat');
     });
     it('will sort string fields in ascending order when direction is explicitly set', () => {
-      const data = [{ data: { a: 'Horse' } }, { data: { a: 'Dog' } }, { data: { a: 'Cat' } }];
+      const data = [
+        { data: { a: 'Horse' } },
+        { data: { a: 'Dog' } },
+        { data: { a: 'Cat' } },
+      ];
       const fun = querySortFunction('a', 'asc');
       const result = data.sort(fun);
       expect(result[0].data.a).toBe('Cat');
     });
     it('will sort string fields in descending order when direction is explicitly set', () => {
-      const data = [{ data: { a: 'Cat' } }, { data: { a: 'Dog' } }, { data: { a: 'Horse' } }];
+      const data = [
+        { data: { a: 'Cat' } },
+        { data: { a: 'Dog' } },
+        { data: { a: 'Horse' } },
+      ];
       const fun = querySortFunction('a', 'desc');
       const result = data.sort(fun);
       expect(result[0].data.a).toBe('Horse');

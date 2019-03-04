@@ -14,6 +14,7 @@ import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
 
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { NotImplementedYet } from './utils';
+import { MockFirebaseValidationError } from 'firestore/utils';
 
 export interface MockDocumentChange extends DocumentChange {
   doc: MockQueryDocumentSnapshot;
@@ -32,6 +33,16 @@ export default class MockTransaction implements Transaction {
     [documentPath: string]: DocumentChangeType;
   } = {};
 
+  /**
+   * True if any of set, update and delete -methods have been called. Firestore do not allow any reading
+   * of data after modifications are done. This field is used internally to indicate if these operations
+   * have been done.
+   *
+   * @private
+   * @memberof MockTransaction
+   */
+  private modified = false;
+
   public constructor(public firestore: MockFirebaseFirestore) {}
 
   /**
@@ -43,8 +54,12 @@ export default class MockTransaction implements Transaction {
   public get = (
     documentRef: MockDocumentReference,
   ): Promise<MockDocumentSnapshot> => {
-    const path = documentRef.path;
-    return this.transactionData[path] || documentRef.data;
+    if (this.modified) {
+      throw new MockFirebaseValidationError(
+        'Read operations can only be done before write operations.',
+      );
+    }
+    return documentRef.data;
   };
 
   /**
@@ -62,6 +77,7 @@ export default class MockTransaction implements Transaction {
     data: DocumentData,
     options?: SetOptions,
   ): Transaction => {
+    this.modified = true;
     const path = documentRef.path;
 
     let docData =
@@ -108,6 +124,8 @@ export default class MockTransaction implements Transaction {
     dataOrField?: UpdateData | string | FieldPath,
     ...moreFieldsAndValues: any[]
   ): Transaction => {
+    this.modified = true;
+
     if (typeof dataOrField === 'object') {
       // TODO fieldPaths...
       const path = documentRef.path;
@@ -154,6 +172,8 @@ export default class MockTransaction implements Transaction {
    * @return This `Transaction` instance. Used for chaining method calls.
    */
   delete = (documentRef: MockDocumentReference): Transaction => {
+    this.modified = true;
+
     const path = documentRef.path;
     this.transactionData[path] = undefined;
     this.transactionOperation[path] = 'removed';

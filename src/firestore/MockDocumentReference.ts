@@ -19,7 +19,10 @@ import MockCallbackHandler from 'firestore/utils/CallbackHandler';
 import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
+import MockFieldPath from './MockFieldPath';
 import MockTransaction, { MockDocumentChange } from './MockTransaction';
+
+export type MockFirestoreFieldPair = [string | FieldPath, any];
 
 export interface SnapshotObserver {
   next?: (snapshot: DocumentSnapshot) => void;
@@ -221,24 +224,10 @@ export default class MockDocumentReference implements DocumentReference {
     setData: DocumentData,
     options?: SetOptions,
   ): Promise<DocumentData> => {
-    // const changeType: DocumentChangeType = transactioData
-    //   ? 'modified'
-    //   : 'added';
-
     const data =
       options && options.merge
         ? { ...transactioData, ...setData }
         : { ...setData };
-
-    // const documentSnapshot = new MockDocumentSnapshot(
-    //   this,
-    //   data,
-    // ) as DocumentSnapshot;
-    // this._snapshotCallbackHandler.fire(documentSnapshot);
-    // (this.parent as MockCollectionReference).fireSubDocumentChange(
-    //   changeType,
-    //   documentSnapshot,
-    // );
     return data;
   };
 
@@ -281,7 +270,42 @@ export default class MockDocumentReference implements DocumentReference {
         ...(data as UpdateData),
       };
     } else {
-      throw new Error('Update for name value pairs is not implemented yet.');
+      let args = [data, value];
+      if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {
+        args = args.concat(moreFieldsAndValues[0]);
+      }
+      if (args.length % 1 === 1) {
+        throw new MockFirebaseValidationError(
+          'Argument count does not mach in pairs. Update must contain key value -pairs to work',
+        );
+      }
+
+      const newData = {
+        ...this.data,
+      };
+      for (let i = 0; i < args.length; i += 2) {
+        const path = args[i];
+        if (typeof path === 'string') newData[path] = args[i + 1];
+        else if (path instanceof MockFieldPath) {
+          const fieldNames = path.fieldNames;
+
+          let parent = newData;
+          for (let i = 1; i < fieldNames.length; i++) {
+            parent[fieldNames[i - 1]] = parent =
+              parent[fieldNames[i - 1]] || {};
+            if (typeof parent !== 'object') {
+              throw new MockFirebaseValidationError(
+                `Illegal path. Can not add value under field type of ${typeof parent}`,
+              );
+            }
+          }
+          parent[fieldNames[fieldNames.length - 1]] = args[i + 1];
+        } else
+          throw new MockFirebaseValidationError(
+            `Unsupported field path: typeof(${typeof path}: ${path})`,
+          );
+      }
+      this.data = newData;
     }
     fireCallbacks && this.fireDocumentChangeEvent('modified');
   };
@@ -342,17 +366,6 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public delete = async () => {
     return this._delete(true);
-    // const callbaks = this._snapshotCallbackHandler.list;
-    // const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
-    //   this.id,
-    // );
-    // // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
-
-    // this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
-
-    // // remove data after triggering events
-    // this.data = undefined;
-    // this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   };
 
   private _delete = async (fireCallbacks: boolean) => {

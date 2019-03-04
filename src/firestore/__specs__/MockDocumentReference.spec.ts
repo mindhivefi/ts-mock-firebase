@@ -2,6 +2,9 @@ import { DocumentSnapshot } from '@firebase/firestore-types';
 import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
+import MockFieldPath from 'firestore/MockFieldPath';
+
+import { MockDatabase } from '..';
 import { MockDocumentSnapshotCallback } from '../MockDocumentReference';
 
 describe('DocumentReferenceMock', () => {
@@ -285,28 +288,170 @@ describe('DocumentReferenceMock', () => {
       }
     });
 
-    // it('will alter the data wih key-value pairs', async () => {
-    //   const app = new FirebaseAppMock();
-    //   const firestore = app.firestore() as FirestoreMock;
+    it('will alter the data with simple key-value pair', async () => {
+      const database: MockDatabase = {
+        list: {
+          docs: {
+            doc: {
+              data: {
+                value: 1,
+              },
+            },
+          },
+        },
+      };
+      const firestore = new MockFirebaseApp().firestore();
+      firestore.mocker.fromMockDatabase(database);
 
-    //   const collection = new CollectionReferenceMock(firestore, 'test', null);
-    //   firestore.root.mocker.setCollection(collection);
-    //   const document = new DocumentReferenceMock(firestore, 'doc', collection);
-    //   collection.mocker.setDoc(document);
-    //   const data = {
-    //     test: 'data',
-    //   };
-    //   await document.set(data);
-    //   expect(document.data).toEqual(data);
+      const document = firestore.doc('list/doc') as MockDocumentReference;
+      await document.update('test', 'cool');
 
-    //   await document.update(
-    //     "test2", 'more', "test2.map", {
-    //       n: 3,
-    //     });
-    //   expect(document.data).toEqual({
-    //     test: 'data',
-    //     test2: 'more',
-    //   });
-    // });
+      expect(document.data).toEqual({
+        value: 1,
+        test: 'cool',
+      });
+    });
+
+    it('will alter the data with multiple key-value pairs', async () => {
+      const database: MockDatabase = {
+        list: {
+          docs: {
+            doc: {
+              data: {
+                value: 1,
+              },
+            },
+          },
+        },
+      };
+      const firestore = new MockFirebaseApp().firestore();
+      firestore.mocker.fromMockDatabase(database);
+
+      const document = firestore.doc('list/doc') as MockDocumentReference;
+      await document.update(
+        'test',
+        'cool',
+        'test2',
+        'cooler',
+        'test3',
+        'the coolest',
+      );
+
+      expect(document.data).toEqual({
+        value: 1,
+        test: 'cool',
+        test2: 'cooler',
+        test3: 'the coolest',
+      });
+    });
+  });
+
+  it('will alter the data with simple FieldPath', async () => {
+    const database: MockDatabase = {
+      list: {
+        docs: {
+          doc: {
+            data: {
+              value: 1,
+            },
+          },
+        },
+      },
+    };
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    const document = firestore.doc('list/doc') as MockDocumentReference;
+    await document.update(new MockFieldPath('test'), 'cool');
+
+    expect(document.data).toEqual({
+      value: 1,
+      test: 'cool',
+    });
+  });
+
+  it('will alter the data with FieldPath to sub object', async () => {
+    const database: MockDatabase = {
+      list: {
+        docs: {
+          doc: {
+            data: {
+              value: 1,
+            },
+          },
+        },
+      },
+    };
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    const document = firestore.doc('list/doc') as MockDocumentReference;
+    await document.update(new MockFieldPath('test', 'dive'), 'cool');
+
+    expect(document.data).toEqual({
+      value: 1,
+      test: {
+        dive: 'cool',
+      },
+    });
+  });
+
+  it('will alter the data with with multiple FieldPath value pairs', async () => {
+    const database: MockDatabase = {
+      list: {
+        docs: {
+          doc: {
+            data: {
+              value: 1,
+            },
+          },
+        },
+      },
+    };
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    const document = firestore.doc('list/doc') as MockDocumentReference;
+    await document.update(new MockFieldPath('test', 'dive'), 'cool');
+    await document.update(new MockFieldPath('test', 'another'), 6);
+    await document.update(
+      new MockFieldPath('diverse', 'paths', 'possible'),
+      true,
+    );
+
+    expect(document.data).toEqual({
+      value: 1,
+      test: {
+        dive: 'cool',
+        another: 6,
+      },
+      diverse: {
+        paths: {
+          possible: true,
+        },
+      },
+    });
+  });
+
+  it('will fail if field path points to non object field', async () => {
+    const database: MockDatabase = {
+      list: {
+        docs: {
+          doc: {
+            data: {
+              value: 1,
+            },
+          },
+        },
+      },
+    };
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    const document = firestore.doc('list/doc') as MockDocumentReference;
+
+    await expect(
+      document.update(new MockFieldPath('value', 'crash'), 'will it?'),
+    ).rejects.toThrow();
   });
 });

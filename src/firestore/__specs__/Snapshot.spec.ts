@@ -1,6 +1,6 @@
 import { DocumentChange, QuerySnapshot } from '@firebase/firestore-types';
 import { MockFirebaseApp } from 'firebaseApp';
-import { MockDatabase, MockFirebaseFirestore } from 'firestore';
+import { MockDatabase } from 'firestore';
 
 describe('Snapshot listeners', () => {
   describe('Triggering changed of documents in Collection References', () => {
@@ -27,7 +27,7 @@ describe('Snapshot listeners', () => {
     };
 
     it('will trigger update when document is changed', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
@@ -57,7 +57,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will trigger removed when document is deleted', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
@@ -85,7 +85,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will trigger added when document is set by a new reference', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
@@ -112,7 +112,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will trigger added when document is added from CollectioReference', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const collectionRef = firestore.collection('list');
@@ -172,7 +172,7 @@ describe('Snapshot listeners', () => {
     };
 
     it('will trigger update when document in query is changed', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore.collection('list').where('value', '>=', 3);
@@ -203,7 +203,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will not trigger update when document does not match the query', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore.collection('list').where('value', '>=', 3);
@@ -225,7 +225,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will trigger an added evenet, when new document is been added in a query range', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
@@ -260,7 +260,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will not trigger an added event, when new document is been added outside of the query range', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
@@ -286,7 +286,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will trigger an removed event, when a document is been deleted in a query range', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
@@ -317,7 +317,7 @@ describe('Snapshot listeners', () => {
     });
 
     it('will not trigger a removed event, when deleted document is been removed outside of the query range', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore
@@ -373,7 +373,7 @@ describe('Snapshot listeners', () => {
     };
 
     it('will trigger update to multiple query listeners, when document in query is changed', async () => {
-      const firestore = new MockFirebaseApp().firestore() as MockFirebaseFirestore;
+      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(testDb1);
 
       const queryRef = firestore.collection('list').where('value', '>=', 3);

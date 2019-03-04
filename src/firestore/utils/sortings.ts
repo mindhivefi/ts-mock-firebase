@@ -11,7 +11,10 @@ export type SortFunction = (a: any, b: any) => number;
  * @param fieldPath Name of a single field or a path object pointing to field to be used for ordering
  * @param directionStr {'asc' | 'desc' | undefined} Sorting direction. Default is `'asc'`.
  */
-export function querySortFunction(fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): SortFunction {
+export function querySortFunction(
+  fieldPath: string | FieldPath,
+  directionStr: OrderByDirection = 'asc',
+): SortFunction {
   if (typeof fieldPath === 'string') {
     return (a: MockDocumentReference, b: MockDocumentReference) => {
       const first = a.data[fieldPath];
@@ -20,17 +23,23 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
       if (first && second) {
         switch (typeof first) {
           case 'string':
-            return directionStr === 'asc' ? first.localeCompare(second) : second.localeCompare(first);
+            return directionStr === 'asc'
+              ? first.localeCompare(second)
+              : second.localeCompare(first);
           case 'number':
             return directionStr === 'asc' ? first - second : second - first;
           default:
-            throw new NotImplementedYet(`Query sorting for data type: ${typeof first}`);
+            throw new NotImplementedYet(
+              `Query sorting for data type: ${typeof first}`,
+            );
         }
       }
       return -1;
     };
   }
-  throw new NotImplementedYet(`querySortFunction support for field path listing`);
+  throw new NotImplementedYet(
+    `querySortFunction support for field path listing`,
+  );
 }
 
 export function sortDocumentsByRules(
@@ -53,14 +62,18 @@ export function sortDocumentsByRules(
           if (first && second) {
             switch (typeof first) {
               case 'string': {
-                const value = rule.directionStr === 'asc' ? first.localeCompare(second) : second.localeCompare(first);
+                const value =
+                  rule.directionStr === 'asc'
+                    ? first.localeCompare(second)
+                    : second.localeCompare(first);
                 if (value !== 0) {
                   return value;
                 }
                 continue;
               }
               case 'number': {
-                const value = rule.directionStr === 'asc' ? first - second : second - first;
+                const value =
+                  rule.directionStr === 'asc' ? first - second : second - first;
                 if (value !== 0) {
                   return value;
                 }
