@@ -8,13 +8,12 @@ import {
   UpdateData,
 } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from 'firestore';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import * as uuidv4 from 'uuid/v4';
 
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { NotImplementedYet } from './utils';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
 
 export interface MockDocumentChange extends DocumentChange {
   doc: MockQueryDocumentSnapshot;
@@ -26,8 +25,6 @@ export interface MockDocumentChange extends DocumentChange {
  * `Firestore.runTransaction()`.
  */
 export default class MockTransaction implements Transaction {
-  private _id: string;
-
   private transactionData: {
     [documentPath: string]: any;
   } = {};
@@ -35,13 +32,7 @@ export default class MockTransaction implements Transaction {
     [documentPath: string]: DocumentChangeType;
   } = {};
 
-  public get transactionId(): string {
-    return this._id;
-  }
-
-  public constructor(public firestore: MockFirebaseFirestore) {
-    this._id = uuidv4();
-  }
+  public constructor(public firestore: MockFirebaseFirestore) {}
 
   /**
    * Reads the document referenced by the provided `DocumentReference.`
@@ -162,7 +153,10 @@ export default class MockTransaction implements Transaction {
    * @return This `Transaction` instance. Used for chaining method calls.
    */
   delete = (documentRef: MockDocumentReference): Transaction => {
-    throw new NotImplementedYet('MockTransaction.get');
+    const path = documentRef.path;
+    this.transactionData[path] = undefined;
+    this.transactionOperation[path] = 'removed';
+    return this;
   };
 
   commit = async (): Promise<void> => {
@@ -189,9 +183,12 @@ export default class MockTransaction implements Transaction {
         const documentChanges = collectionChanges[collectionId];
         for (const documentId in documentChanges) {
           const document = documentChanges[documentId];
-          document.doc.ref.fireDocumentChangeEvent(document.type);
+          document.doc.ref.fireDocumentChangeEvent(
+            document.type,
+            documentChanges[documentId].oldIndex,
+            false,
+          );
         }
-
         const collection = this.firestore.collection(
           collectionId,
         ) as MockCollectionReference;

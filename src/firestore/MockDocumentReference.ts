@@ -13,14 +13,13 @@ import {
   UpdateData,
 } from '@firebase/firestore-types';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import { resolveReference, MockFirebaseValidationError } from 'firestore/utils';
+import { MockFirebaseValidationError, resolveReference } from 'firestore/utils';
 import MockCallbackHandler from 'firestore/utils/CallbackHandler';
 
 import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockTransaction, { MockDocumentChange } from './MockTransaction';
-import { NotImplementedYet } from './utils';
 
 export interface SnapshotObserver {
   next?: (snapshot: DocumentSnapshot) => void;
@@ -195,7 +194,7 @@ export default class MockDocumentReference implements DocumentReference {
     // } else {
     //   this.data = { ...data };
     // }
-    this._set(data, options);
+    await this._set(data, options);
 
     const documentSnapshot = new MockDocumentSnapshot(
       this,
@@ -262,7 +261,7 @@ export default class MockDocumentReference implements DocumentReference {
       // TODO change to use actual exception
       throw new MockFirebaseValidationError('No entity to update');
     }
-    this._update(true, data, value, moreFieldsAndValues);
+    await this._update(true, data, value, moreFieldsAndValues);
   };
 
   private _update = async (
@@ -342,17 +341,33 @@ export default class MockDocumentReference implements DocumentReference {
    * offline).
    */
   public delete = async () => {
+    return this._delete(true);
+    // const callbaks = this._snapshotCallbackHandler.list;
+    // const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
+    //   this.id,
+    // );
+    // // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
+
+    // this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
+
+    // // remove data after triggering events
+    // this.data = undefined;
+    // this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
+  };
+
+  private _delete = async (fireCallbacks: boolean) => {
     const callbaks = this._snapshotCallbackHandler.list;
     const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
       this.id,
     );
     // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
 
-    this.fireDocumentChangeEvent('removed', oldIndex, callbaks);
+    fireCallbacks &&
+      this.fireDocumentChangeEvent('removed', oldIndex, true, callbaks);
 
     // remove data after triggering events
     this.data = undefined;
-    this.mocker.reset();
+    this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   };
 
   /**
@@ -414,17 +429,20 @@ export default class MockDocumentReference implements DocumentReference {
   public fireDocumentChangeEvent = (
     changeType: DocumentChangeType,
     oldIndex: number = -1,
+    cascade: boolean = true,
     callbacks?: MockDocumentSnapshotCallback[],
   ) => {
     const snapshot = new MockDocumentSnapshot(
       this,
       this.data,
     ) as DocumentSnapshot;
-    (this.parent as MockCollectionReference).fireSubDocumentChange(
-      changeType,
-      snapshot,
-      oldIndex,
-    );
+
+    cascade &&
+      (this.parent as MockCollectionReference).fireSubDocumentChange(
+        changeType,
+        snapshot,
+        oldIndex,
+      );
     this._snapshotCallbackHandler.fire(snapshot, callbacks);
   };
 
@@ -455,18 +473,18 @@ export default class MockDocumentReference implements DocumentReference {
           oldIndex: -1,
         } as any; // TODO typing
 
-      // case 'removed':
-      // await this._update(false, value); // TODO FIeld paths etc
-      // return {
-      //   type,
-      //   doc: new MockDocumentSnapshot(this, {
-      //     ...value,
-      //   }),
-      //   newIndex: -1,
-      //   oldIndex: -1,
-      // } as any; // TODO typing
+      case 'removed':
+        await this._delete(false); // TODO FIeld paths etc
+        return {
+          type,
+          doc: new MockDocumentSnapshot(this, {
+            ...value,
+          }),
+          newIndex: -1,
+          oldIndex: -1,
+        } as any; // TODO typing
       default:
-        throw new NotImplementedYet('commitChange');
+        throw new Error(`Unidentified change type ${type}.`);
     }
   };
 }
