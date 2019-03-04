@@ -43,7 +43,8 @@ export default class MockTransaction implements Transaction {
   public get = (
     documentRef: MockDocumentReference,
   ): Promise<MockDocumentSnapshot> => {
-    throw new NotImplementedYet('MockTransaction.get');
+    const path = documentRef.path;
+    return this.transactionData[path] || documentRef.data;
   };
 
   /**

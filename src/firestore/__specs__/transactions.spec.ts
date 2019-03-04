@@ -140,4 +140,43 @@ describe('Transaction handling', () => {
     expect(docChanges[1].type).toMatch('added');
     expect(onRef2CollectionSnapshot.mock.calls.length).toBe(1);
   });
+
+  it('will get value updated inside the transaction', async () => {
+    expect(true).toBeTruthy();
+
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    let result = undefined;
+
+    await firestore.runTransaction(async transaction => {
+      const ref = firestore.doc('a/first');
+
+      transaction.set(ref, { test: 'modified' });
+      result = await transaction.get(ref);
+    });
+    expect(result).toEqual({ test: 'modified' });
+  });
+
+  it('will get value from document ref if value is not defined in transaction', async () => {
+    expect(true).toBeTruthy();
+
+    const firestore = new MockFirebaseApp().firestore();
+    firestore.mocker.fromMockDatabase(database);
+
+    let result = undefined;
+
+    await firestore.runTransaction(async transaction => {
+      const ref = firestore.doc('b/A');
+
+      result = await transaction.get(ref);
+    });
+    expect(result).toEqual({
+      text: 'A',
+    });
+  });
 });
+
+// TODO get
+
+// TODO oldIndex, newIndex
