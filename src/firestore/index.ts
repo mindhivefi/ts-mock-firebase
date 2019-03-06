@@ -10,6 +10,7 @@ import { Mocker } from '../index';
 import MockDocumentReference from './MockDocumentReference';
 import { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { NotImplementedYet, resolveReference } from './utils/index';
+import { MockWriteBatch } from './MockWritebatch';
 
 declare module '@firebase/app-types' {
   interface FirebaseNamespace {
@@ -233,7 +234,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * atomic operation.
    */
   public batch = (): types.WriteBatch => {
-    throw new NotImplementedYet('MockFirebaseFirestore.batch');
+    throw new MockWriteBatch(this);
   };
 
   /**

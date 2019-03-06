@@ -1,31 +1,31 @@
 import {
-  DocumentChange,
-  DocumentChangeType,
   DocumentData,
+  DocumentReference,
   FieldPath,
   SetOptions,
-  Transaction,
   UpdateData,
+  WriteBatch,
+  DocumentChangeType,
 } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from 'firestore';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import MockDocumentReference from 'firestore/MockDocumentReference';
-import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import { MockFirebaseValidationError } from 'firestore/utils';
 
-import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { NotImplementedYet } from './utils';
+import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockDocumentChange } from './MockTransaction';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
 
-export interface MockDocumentChange extends DocumentChange {
-  doc: MockQueryDocumentSnapshot;
-}
 /**
- * A reference to a transaction.
- * The `Transaction` object passed to a transaction's updateFunction provides
- * the methods to read and write data within the transaction context. See
- * `Firestore.runTransaction()`.
+ * A write batch, used to perform multiple writes as a single atomic unit.
+ *
+ * A `WriteBatch` object can be acquired by calling `Firestore.batch()`. It
+ * provides methods for adding writes to the write batch. None of the
+ * writes will be committed (or visible locally) until `WriteBatch.commit()`
+ * is called.
+ *
+ * Unlike transactions, write batches are persisted offline and therefore are
+ * preferable when you don't need to condition your writes on read data.
  */
-export default class MockTransaction implements Transaction {
+export class MockWriteBatch implements WriteBatch {
   private transactionData: {
     [documentPath: string]: any;
   } = {};
@@ -33,34 +33,7 @@ export default class MockTransaction implements Transaction {
     [documentPath: string]: DocumentChangeType;
   } = {};
 
-  /**
-   * True if any of set, update and delete -methods have been called. Firestore do not allow any reading
-   * of data after modifications are done. This field is used internally to indicate if these operations
-   * have been done.
-   *
-   * @private
-   * @memberof MockTransaction
-   */
-  private modified = false;
-
   public constructor(public firestore: MockFirebaseFirestore) {}
-
-  /**
-   * Reads the document referenced by the provided `DocumentReference.`
-   *
-   * @param documentRef A reference to the document to be read.
-   * @return A DocumentSnapshot for the read data.
-   */
-  public get = (
-    documentRef: MockDocumentReference,
-  ): Promise<MockDocumentSnapshot> => {
-    if (this.modified) {
-      throw new MockFirebaseValidationError(
-        'Read operations can only be done before write operations.',
-      );
-    }
-    return documentRef.data;
-  };
 
   /**
    * Writes to the document referred to by the provided `DocumentReference`.
@@ -70,14 +43,13 @@ export default class MockTransaction implements Transaction {
    * @param documentRef A reference to the document to be set.
    * @param data An object of the fields and values for the document.
    * @param options An object to configure the set behavior.
-   * @return This `Transaction` instance. Used for chaining method calls.
+   * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  set = (
+  set(
     documentRef: MockDocumentReference,
     data: DocumentData,
     options?: SetOptions,
-  ): Transaction => {
-    this.modified = true;
+  ): WriteBatch {
     const path = documentRef.path;
 
     let docData =
@@ -101,7 +73,7 @@ export default class MockTransaction implements Transaction {
     }
     this.transactionOperation[path] = changeType;
     return this;
-  };
+  }
 
   /**
    * Updates fields in the document referred to by the provided
@@ -110,20 +82,16 @@ export default class MockTransaction implements Transaction {
    *
    * @param documentRef A reference to the document to be updated.
    * @param data An object containing the fields and values with which to
-   * @param field The first field to update.
-   * @param value The first value.
-   * @param moreFieldsAndValues Additional key/value pairs.
    * update the document. Fields can contain dots to reference nested fields
    * within the document.
-   * @return This `Transaction` instance. Used for chaining method calls.
+   * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  update = (
+  update(
     documentRef: MockDocumentReference,
-    dataOrField?: UpdateData | string | FieldPath,
-    ...moreFieldsAndValues: any[]
-  ): Transaction => {
-    this.modified = true;
-
+    dataOrField: UpdateData | string | FieldPath,
+    value?: any,
+    ...moreFielsAndValues: any[]
+  ): WriteBatch {
     if (typeof dataOrField === 'object') {
       // TODO fieldPaths...
       const path = documentRef.path;
@@ -132,51 +100,57 @@ export default class MockTransaction implements Transaction {
       this.transactionData[path] = documentRef.updateInTransaction(
         data,
         dataOrField,
-        moreFieldsAndValues,
+        moreFielsAndValues,
       );
       this.transactionOperation[path] = 'modified';
       return this;
     }
     throw new NotImplementedYet('MockTransaction.get');
-  };
+  }
 
-  // /**
-  //  * Updates fields in the document referred to by the provided
-  //  * `DocumentReference`. The update will fail if applied to a document that
-  //  * does not exist.
-  //  *
-  //  * Nested fields can be updated by providing dot-separated field path
-  //  * strings or by providing FieldPath objects.
-  //  *
-  //  * @param documentRef A reference to the document to be updated.
-  //  * @param field The first field to update.
-  //  * @param value The first value.
-  //  * @param moreFieldsAndValues Additional key/value pairs.
-  //  * @return A Promise resolved once the data has been successfully written
-  //  * to the backend (Note that it won't resolve while you're offline).
-  //  */
+  /**
+   * Updates fields in the document referred to by this `DocumentReference`.
+   * The update will fail if applied to a document that does not exist.
+   *
+   * Nested fields can be update by providing dot-separated field path strings
+   * or by providing FieldPath objects.
+   *
+   * @param documentRef A reference to the document to be updated.
+   * @param field The first field to update.
+   * @param value The first value.
+   * @param moreFieldsAndValues Additional key value pairs.
+   * @return A Promise resolved once the data has been successfully written
+   * to the backend (Note that it won't resolve while you're offline).
+   */
   // update(
   //   documentRef: DocumentReference,
   //   field: string | FieldPath,
   //   value: any,
   //   ...moreFieldsAndValues: any[]
-  // ): Transaction;
+  // ): WriteBatch {
+  //   throw new NotImplementedYet('MockWriteBatch.update')
+  // }
 
   /**
    * Deletes the document referred to by the provided `DocumentReference`.
    *
    * @param documentRef A reference to the document to be deleted.
-   * @return This `Transaction` instance. Used for chaining method calls.
+   * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  delete = (documentRef: MockDocumentReference): Transaction => {
-    this.modified = true;
-
+  delete(documentRef: DocumentReference): WriteBatch {
     const path = documentRef.path;
     this.transactionData[path] = undefined;
     this.transactionOperation[path] = 'removed';
     return this;
-  };
+  }
 
+  /**
+   * Commits all of the writes in this write batch as a single atomic unit.
+   *
+   * @return A Promise resolved once all of the writes in the batch have been
+   * successfully written to the backend as an atomic unit. Note that it won't
+   * resolve while you're offline.
+   */
   commit = async (): Promise<void> => {
     const collectionChanges: {
       [collectionId: string]: MockDocumentChange[];
@@ -213,12 +187,8 @@ export default class MockTransaction implements Transaction {
         collection.fireBatchDocumentChange(documentChanges);
       }
     } catch (error) {
-      this.rollback();
+      // this.rollback();
       throw error;
     }
-  };
-
-  rollback = (): void => {
-    console.log('rollback');
   };
 }

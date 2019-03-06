@@ -20,7 +20,7 @@ import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
-import MockTransaction, { MockDocumentChange } from './MockTransaction';
+import { MockDocumentChange } from './MockTransaction';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
 
@@ -217,7 +217,6 @@ export default class MockDocumentReference implements DocumentReference {
   };
 
   public setInTransaction = async (
-    transaction: MockTransaction,
     transactioData: DocumentData,
     setData: DocumentData,
     options?: SetOptions,
@@ -317,7 +316,6 @@ export default class MockDocumentReference implements DocumentReference {
    * to the backend (Note that it won't resolve while you're offline).
    */
   public updateInTransaction = (
-    transaction: MockTransaction,
     transactionData: DocumentData,
     data: UpdateData | string | FieldPath,
     value?: any,
