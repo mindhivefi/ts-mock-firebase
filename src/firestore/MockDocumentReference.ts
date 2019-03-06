@@ -22,6 +22,8 @@ import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
 import MockTransaction, { MockDocumentChange } from './MockTransaction';
 
+const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
+
 export type MockFirestoreFieldPair = [string | FieldPath, any];
 
 export interface SnapshotObserver {
@@ -192,11 +194,7 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public set = async (data: DocumentData, options?: SetOptions) => {
     const changeType: DocumentChangeType = this.data ? 'modified' : 'added';
-    // if (options && options.merge) {
-    //   this.data = { ...this.data, ...data };
-    // } else {
-    //   this.data = { ...data };
-    // }
+
     await this._set(data, options);
 
     const documentSnapshot = new MockDocumentSnapshot(
@@ -224,11 +222,9 @@ export default class MockDocumentReference implements DocumentReference {
     setData: DocumentData,
     options?: SetOptions,
   ): Promise<DocumentData> => {
-    const data =
-      options && options.merge
-        ? { ...transactioData, ...setData }
-        : { ...setData };
-    return data;
+    return options && options.merge
+      ? { ...transactioData, ...setData }
+      : { ...setData };
   };
 
   /**
@@ -248,7 +244,7 @@ export default class MockDocumentReference implements DocumentReference {
   ) => {
     if (!this.data) {
       // TODO change to use actual exception
-      throw new MockFirebaseValidationError('No entity to update');
+      throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
     }
     await this._update(true, data, value, moreFieldsAndValues);
   };
@@ -261,7 +257,7 @@ export default class MockDocumentReference implements DocumentReference {
   ) => {
     if (!this.data) {
       // TODO change to use actual exception
-      throw new MockFirebaseValidationError('No entity to update');
+      throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
@@ -373,7 +369,6 @@ export default class MockDocumentReference implements DocumentReference {
     const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
       this.id,
     );
-    // this._snapshotCallbackHandler.fire(new MockDocumentSnapshot(this, this.data) as DocumentSnapshot, listeners);
 
     fireCallbacks &&
       this.fireDocumentChangeEvent('removed', oldIndex, true, callbaks);

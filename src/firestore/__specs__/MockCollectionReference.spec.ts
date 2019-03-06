@@ -1,9 +1,11 @@
 import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
-import { MockFirebaseValidationError } from '../utils/index';
-import { MockDatabase } from '../index';
 
+import { MockDatabase } from '..';
+import { MockFirebaseValidationError } from '../utils';
+
+/* tslint:disable:no-big-function no-identical-functions */
 describe('CollectionReferenceMock', () => {
   describe('References', () => {
     it('doc() returns a document by id', () => {
@@ -192,6 +194,7 @@ describe('CollectionReferenceMock', () => {
       });
     });
 
+    /* tslint:disable:no-identical-functions */
     it('will return documents in descending order explicitly', async () => {
       const app = new MockFirebaseApp();
       const firestore = app.firestore();
@@ -480,7 +483,7 @@ describe('CollectionReferenceMock', () => {
       });
     });
 
-    describe('paging', () => {
+    describe('paging with a simple fields', () => {
       const database: MockDatabase = {
         list: {
           docs: {
@@ -530,6 +533,79 @@ describe('CollectionReferenceMock', () => {
 
         expect(result.size).toBe(3);
         expect(result.docs[0].data()).toEqual({
+          name: 'Rasberry',
+          value: 3,
+        });
+      });
+
+      it('will limit the result to startAfter cursor', async () => {
+        const firestore = new MockFirebaseApp().firestore();
+        firestore.mocker.fromMockDatabase(database);
+
+        const result = await firestore
+          .collection('list')
+          .orderBy('value')
+          .startAfter(2)
+          .get();
+
+        expect(result.size).toBe(3);
+        expect(result.docs[0].data()).toEqual({
+          name: 'Rasberry',
+          value: 3,
+        });
+      });
+
+      it('will limit the result to endBefore cursor', async () => {
+        const firestore = new MockFirebaseApp().firestore();
+        firestore.mocker.fromMockDatabase(database);
+
+        const result = await firestore
+          .collection('list')
+          .orderBy('value')
+          .endBefore(3)
+          .get();
+
+        expect(result.size).toBe(2);
+        expect(result.docs[0].data()).toEqual({
+          name: 'Blueberry',
+          value: 1,
+        });
+      });
+
+      it('will limit the result to endAt cursor', async () => {
+        const firestore = new MockFirebaseApp().firestore();
+        firestore.mocker.fromMockDatabase(database);
+
+        const result = await firestore
+          .collection('list')
+          .orderBy('value')
+          .endAt(3)
+          .get();
+
+        expect(result.size).toBe(3);
+        expect(result.docs[0].data()).toEqual({
+          name: 'Blueberry',
+          value: 1,
+        });
+      });
+
+      it('will limit the result between set start and end cursor', async () => {
+        const firestore = new MockFirebaseApp().firestore();
+        firestore.mocker.fromMockDatabase(database);
+
+        const result = await firestore
+          .collection('list')
+          .orderBy('value')
+          .startAfter(1)
+          .endAt(3)
+          .get();
+
+        expect(result.size).toBe(2);
+        expect(result.docs[0].data()).toEqual({
+          name: 'Strowberry',
+          value: 2,
+        });
+        expect(result.docs[1].data()).toEqual({
           name: 'Rasberry',
           value: 3,
         });

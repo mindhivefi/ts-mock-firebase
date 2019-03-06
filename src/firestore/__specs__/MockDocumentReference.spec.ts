@@ -7,6 +7,9 @@ import MockFieldPath from 'firestore/MockFieldPath';
 import { MockDatabase } from '..';
 import { MockDocumentSnapshotCallback } from '../MockDocumentReference';
 
+const documentPath = 'company/mindhive/skills/coding/technologies';
+
+/* tslint:disable:no-big-function no-identical-functions */
 describe('DocumentReferenceMock', () => {
   describe('Paths', () => {
     it('Will return a path to a document', () => {
@@ -14,11 +17,10 @@ describe('DocumentReferenceMock', () => {
       const document = firestore.collection('company').doc('mindhive');
       expect(document.path).toMatch('company/mindhive');
     });
+
     it('Will return a path to a collection', () => {
       const firestore = new MockFirebaseApp().firestore();
-      const collection = firestore.collection(
-        'company/mindhive/skills/coding/technologies',
-      );
+      const collection = firestore.collection(documentPath);
       expect(collection.path).toMatch(
         'company/mindhive/skills/coding/technologies',
       );
@@ -271,11 +273,6 @@ describe('DocumentReferenceMock', () => {
 
     it('will fail if document do not exist', async () => {
       const firestore = new MockFirebaseApp().firestore();
-
-      // const collection = new MockCollectionReference(firestore, 'test', null);
-      // firestore.root.mocker.setCollection(collection);
-      // const document = new MockDocumentReference(firestore, 'doc', collection);
-      // collection.mocker.setDoc(document);
       const document = firestore.doc('test/doc');
 
       expect.assertions(1);

@@ -20,15 +20,10 @@ import MockQuery, {
   MockQuerySnapshotObserver,
 } from 'firestore/MockQuery';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import {
-  generateDocumentId,
-  NotImplementedYet,
-  resolveReference,
-} from 'firestore/utils';
+import { generateDocumentId, resolveReference } from 'firestore/utils';
 import { Mocker } from 'index';
 
-import { MockDocuments, MockFirebaseFirestore } from '.';
-import { MockCollection } from '.';
+import { MockCollection, MockDocuments, MockFirebaseFirestore } from '.';
 import {
   ErrorFunction,
   MockSubscriptionFunction,
@@ -254,7 +249,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAt(snapshot: DocumentSnapshot): Query;
   // public startAt(...fieldValues: any[]): Query  {
   public startAt = (args: DocumentSnapshot | any[]) => {
-    throw new NotImplementedYet('MockCollectionReference.startAt');
+    throw new MockQuery(this, this.getDocs()).startAt(args);
   };
 
   /**
@@ -279,7 +274,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAfter(...fieldValues: any[]): Query;
   // public startAfter = (snapshot: DocumentSnapshot): Query=> {
   public startAfter = (args: DocumentSnapshot | any[]) => {
-    throw new NotImplementedYet('MockCollectionReference.startAfter');
+    throw new MockQuery(this, this.getDocs()).startAfter(args);
   };
 
   /**
@@ -314,7 +309,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endBefore(...fieldValues: any[]): Query;
   public endBefore = (args: DocumentSnapshot | any[]) => {
-    throw new NotImplementedYet('MockCollectionReference.endBefore');
+    throw new MockQuery(this, this.getDocs()).endBefore(args);
   };
   /**
    * Creates and returns a new Query that ends at the provided document
@@ -338,7 +333,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endAt(...fieldValues: any[]): Query;
   public endAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet('MockCollectionReference.endAt');
+    throw new MockQuery(this, this.getDocs()).endAt(fieldValues);
   };
 
   /**
@@ -363,9 +358,7 @@ export class MockCollectionReference implements CollectionReference {
    * @return A Promise that will be resolved with the results of the Query.
    */
   public get = async (options?: GetOptions): Promise<QuerySnapshot> => {
-    return new Promise<QuerySnapshot>((resolve, reject) => {
-      resolve(new MockQuery(this, this.getDocs()).get());
-    });
+    return Promise.resolve(new MockQuery(this, this.getDocs()).get());
   };
 
   /**
@@ -385,7 +378,6 @@ export class MockCollectionReference implements CollectionReference {
    * @return An unsubscribe function that can be called to cancel
    * the snapshot listener.
    */
-
   public onSnapshot = (
     optionsOrObserverOrOnNext:
       | SnapshotListenOptions
@@ -399,7 +391,6 @@ export class MockCollectionReference implements CollectionReference {
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
-
       return () => {
         this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
       };

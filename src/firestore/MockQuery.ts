@@ -16,7 +16,6 @@ import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
 import MockQuerySnapshot from 'firestore/MockQuerySnapshot';
-import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
 import { NotImplementedYet } from 'firestore/utils';
 
 import {
@@ -27,6 +26,7 @@ import { findIndexForDocument, MockFirebaseValidationError } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
+import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -40,17 +40,60 @@ export interface MockQueryWhereRule {
 
 export interface MockQueryStartRule {
   fieldValues: any[];
-  startAt: boolean;
+  startAt: 'at' | 'after';
+}
+
+export interface MockQueryEndRule {
+  fieldValues: any[];
+  endAt: 'before' | 'at';
 }
 
 interface MockQueryRules {
-  // orderBy?: QueryOperationFunction[];
+  /**
+   * An array of order rules to define the sorting order of documents. Each rule
+   * defines the field for sorting and ascending or descending order to do so. Sorting
+   * is read from the left to right.
+   *
+   * @type {MockQueryOrderRule[]}
+   * @memberof MockQueryRules
+   */
   order?: MockQueryOrderRule[];
 
+  /**
+   * Where rules defines the sub set of the documents that query will fetch. Each
+   * where rule will define a field, operation and value to match documents to be
+   * be part of query result.
+   *
+   * @type {MockQueryWhereRule[]}
+   * @memberof MockQueryRules
+   */
   where?: MockQueryWhereRule[];
 
+  /**
+   * Define the set of field values to define the first document ot a document before the
+   * the first document to be filtered on result set. Field values define matches for fields
+   * defined in order fields.
+   *
+   * @type {MockQueryStartRule}
+   * @memberof MockQueryRules
+   */
   start?: MockQueryStartRule;
 
+  /**
+   * Define the set of field values to define the last document or document before the last to
+   * be filtered on result set. Field values define matches for fields defined in order fields.
+   *
+   * @type {MockQueryStartRule}
+   * @memberof MockQueryRules
+   */
+  end?: MockQueryEndRule;
+
+  /**
+   * Limit the lenght of the result set to be in result set.
+   *
+   * @type {number}
+   * @memberof MockQueryRules
+   */
   limit?: number;
 }
 
@@ -171,13 +214,7 @@ export default class MockQuery implements Query {
    */
   startAt = (...fieldValues: any[]): Query => {
     // TODO startAt / startAfter called multiple times?
-    this.rules = {
-      ...this.rules,
-      start: {
-        fieldValues: fieldValues,
-        startAt: true,
-      },
-    };
+    this.rules = this.createStartRule(fieldValues, 'at');
     return this;
   };
 
@@ -203,7 +240,8 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   startAfter = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet('MockQuery.startAfter');
+    this.rules = this.createStartRule(fieldValues, 'after');
+    return this;
   };
 
   /**
@@ -228,7 +266,8 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   endBefore = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet('MockQuery.endBefore');
+    this.rules = this.createEndRule(fieldValues, 'before');
+    return this;
   };
 
   /**
@@ -253,7 +292,8 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   endAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet('MockQuery.endAt');
+    this.rules = this.createEndRule(fieldValues, 'at');
+    return this;
   };
 
   /**
@@ -397,7 +437,7 @@ export default class MockQuery implements Query {
 
   private getFilterDocumentReferences = () => {
     let docs = this.docRefs;
-    const { limit, where, order, start } = this.rules;
+    const { limit, where, order, start, end } = this.rules;
 
     docs = filterDocumentsByRules(docs, where);
     docs = sortDocumentsByRules(docs, order);
@@ -416,7 +456,25 @@ export default class MockQuery implements Query {
         start.fieldValues,
       );
       if (index >= 0) {
-        docs = docs.slice(index);
+        docs = docs.slice(start.startAt === 'at' ? index : index + 1);
+      }
+    }
+
+    if (end) {
+      if (!order) {
+        throw new MockFirebaseValidationError(
+          `${
+            end.endAt ? 'beforeAt' : 'at'
+          } needs to match with query order but order is not defined.`,
+        );
+      }
+      const index = findIndexForDocument(
+        docs,
+        order.map(field => field.fieldPath),
+        end.fieldValues,
+      );
+      if (index >= 0) {
+        docs = docs.slice(0, end.endAt === 'at' ? index + 1 : index);
       }
     }
 
@@ -424,6 +482,29 @@ export default class MockQuery implements Query {
       docs = docs.slice(0, Math.min(docs.length, limit));
     }
     return docs;
+  };
+
+  private createStartRule = (fieldValues: any[], startAt: 'at' | 'after') => {
+    return {
+      ...this.rules,
+      start: {
+        fieldValues,
+        startAt,
+      },
+    };
+  };
+
+  private createEndRule = (
+    fieldValues: any[],
+    endAt: 'before' | 'at',
+  ): MockQueryRules => {
+    return {
+      ...this.rules,
+      end: {
+        fieldValues,
+        endAt,
+      },
+    };
   };
 }
 
