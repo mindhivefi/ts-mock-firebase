@@ -26,7 +26,6 @@ import { findIndexForDocument, MockFirebaseValidationError } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
-import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -331,7 +330,7 @@ export default class MockQuery implements Query {
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     const docs = this.getFilterDocumentReferences();
     return Promise.resolve<QuerySnapshot>(
-      new QuerySnapshotMock(this, this.getDocumentSnapshots(docs), []),
+      new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []),
     );
   };
 

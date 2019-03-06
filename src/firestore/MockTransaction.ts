@@ -221,5 +221,7 @@ export default class MockTransaction implements Transaction {
     }
   };
 
-  rollback = (): void => {};
+  rollback = (): void => {
+    console.log('rollback');
+  };
 }

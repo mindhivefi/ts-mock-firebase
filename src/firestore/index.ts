@@ -5,9 +5,9 @@ import {
 } from '@firebase/firestore-types';
 import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import MockTransaction from 'firestore/MockTransaction';
 import { Mocker } from '../index';
 import MockDocumentReference from './MockDocumentReference';
-import MockTransaction from 'firestore/MockTransaction';
 import { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { NotImplementedYet, resolveReference } from './utils/index';
 
@@ -117,8 +117,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
       },
 
       toMockDatabase: (): MockDatabase => {
-        const database: MockDatabase = this.root.mocker.saveCollections();
-        return database;
+        return this.root.mocker.saveCollections();
       },
 
       fromJson: (json: string) => {
