@@ -11,10 +11,10 @@ import { MockFirebaseFirestore } from 'firestore';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
+import { MockFirebaseValidationError } from 'firestore/utils';
 
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { NotImplementedYet } from './utils';
-import { MockFirebaseValidationError } from 'firestore/utils';
 
 export interface MockDocumentChange extends DocumentChange {
   doc: MockQueryDocumentSnapshot;

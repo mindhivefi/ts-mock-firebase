@@ -14,7 +14,7 @@ describe('Simple field sorting', () => {
         },
       ];
       const fun = querySortFunction('a');
-      const result = data.sort(fun);
+      const result = sortData(data, fun);
       expect(result[0].data.a).toBe(1);
     });
     it('will sort number fields in ascending order when direction is explicitly set', () => {
@@ -30,7 +30,7 @@ describe('Simple field sorting', () => {
         },
       ];
       const fun = querySortFunction('a', 'asc');
-      const result = data.sort(fun);
+      const result = sortData(data, fun);
       expect(result[0].data.a).toBe(1);
     });
     it('will sort number fields in descending order when direction is explicitly set', () => {
@@ -46,7 +46,7 @@ describe('Simple field sorting', () => {
         },
       ];
       const fun = querySortFunction('a', 'desc');
-      const result = data.sort(fun);
+      const result = sortData(data, fun);
       expect(result[0].data.a).toBe(3);
     });
   });
@@ -59,7 +59,7 @@ describe('Simple field sorting', () => {
         { data: { a: 'Cat' } },
       ];
       const fun = querySortFunction('a');
-      const result = data.sort(fun);
+      const result = sortData(data, fun);
       expect(result[0].data.a).toBe('Cat');
     });
     it('will sort string fields in ascending order when direction is explicitly set', () => {
@@ -69,7 +69,7 @@ describe('Simple field sorting', () => {
         { data: { a: 'Cat' } },
       ];
       const fun = querySortFunction('a', 'asc');
-      const result = data.sort(fun);
+      const result = sortData(data, fun);
       expect(result[0].data.a).toBe('Cat');
     });
     it('will sort string fields in descending order when direction is explicitly set', () => {
@@ -78,9 +78,15 @@ describe('Simple field sorting', () => {
         { data: { a: 'Dog' } },
         { data: { a: 'Horse' } },
       ];
-      const fun = querySortFunction('a', 'desc');
-      const result = data.sort(fun);
+      const result = sortData(data, querySortFunction('a', 'desc'));
       expect(result[0].data.a).toBe('Horse');
     });
   });
 });
+
+function sortData(
+  data: any[],
+  fun: import('/Users/villevenalainen/react_src/mock-firebase/src/firestore/utils/sortings').SortFunction,
+) {
+  return data.sort(fun);
+}

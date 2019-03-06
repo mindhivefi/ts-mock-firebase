@@ -290,9 +290,9 @@ export default class MockDocumentReference implements DocumentReference {
           const fieldNames = path.fieldNames;
 
           let parent = newData;
-          for (let i = 1; i < fieldNames.length; i++) {
-            parent[fieldNames[i - 1]] = parent =
-              parent[fieldNames[i - 1]] || {};
+          for (let j = 1; j < fieldNames.length; j++) {
+            parent[fieldNames[j - 1]] = parent =
+              parent[fieldNames[j - 1]] || {};
             if (typeof parent !== 'object') {
               throw new MockFirebaseValidationError(
                 `Illegal path. Can not add value under field type of ${typeof parent}`,

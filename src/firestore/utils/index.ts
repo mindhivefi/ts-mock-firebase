@@ -1,7 +1,10 @@
+import { FieldPath } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from 'firestore';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import * as uuidv4 from 'uuid/v4';
+
+import MockFieldPath from '../MockFieldPath';
 
 export class NotImplementedYet extends Error {
   constructor(label?: string) {
@@ -81,8 +84,10 @@ function isValidPathReference(path: string, parity: 0 | 1): boolean {
   return true;
 }
 
-const FIRESTORE_FIELD_PATH_VALID_CHARACTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
-const FIRESTORE_FIELD_NAME_VALID_CHARACTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.';
+const FIRESTORE_FIELD_PATH_VALID_CHARACTERS =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
+const FIRESTORE_FIELD_NAME_VALID_CHARACTERS =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.';
 const NUMBERS = '0123456789';
 
 /**
@@ -129,7 +134,12 @@ export function isValidFirestoreFieldName(name: string): boolean {
  * @param name
  */
 export function isValidFirestoreFieldPath(name: string): boolean {
-  if (name === '' || name.indexOf('..') >= 0 || NUMBERS.indexOf(name[0]) >= 0 || name.length > 1500) {
+  if (
+    name === '' ||
+    name.indexOf('..') >= 0 ||
+    NUMBERS.indexOf(name[0]) >= 0 ||
+    name.length > 1500
+  ) {
     return false;
   }
   if (name[0] === '`') {
@@ -189,8 +199,16 @@ export function resolveReference(
      */
     testPath = 'collection/' + path;
   }
-  if (!(isCollectionPath ? isValidCollectionReference(testPath) : isValidDocumentReference(testPath))) {
-    throw Error(`Not a valid ${isCollectionPath ? 'collection' : 'document'} reference: ${path}`);
+  if (
+    !(isCollectionPath
+      ? isValidCollectionReference(testPath)
+      : isValidDocumentReference(testPath))
+  ) {
+    throw Error(
+      `Not a valid ${
+        isCollectionPath ? 'collection' : 'document'
+      } reference: ${path}`,
+    );
   }
 
   const elements = path.split('/');
@@ -203,7 +221,11 @@ export function resolveReference(
     if (parity) {
       collection = doc.mocker.collection(id);
       if (!collection) {
-        collection = new MockCollectionReference(firestore, id, doc !== firestore.root ? doc : null);
+        collection = new MockCollectionReference(
+          firestore,
+          id,
+          doc !== firestore.root ? doc : null,
+        );
         doc.mocker.setCollection(collection);
       }
     } else {
@@ -222,4 +244,73 @@ export function resolveReference(
   }
 
   return isCollectionPath ? collection : doc;
+}
+
+/**
+ * Find the first index matching field value -pair match in a document array
+ *
+ * @export
+ * @param {MockDocumentReference[]} docs
+ * @param {((string | FieldPath)[])} fieldNames
+ * @param {any[]} fieldValues
+ * @returns {number}
+ */
+export function findIndexForDocument(
+  docs: MockDocumentReference[],
+  fieldNames: (string | FieldPath)[],
+  fieldValues: any[],
+): number {
+  for (let i = 0; i < docs.length; i++) {
+    if (matchFields(docs[i], fieldNames, fieldValues)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Test for field value name match
+ *
+ * @export
+ * @param {MockDocumentReference} doc Document containing fields and values to be compared
+ * @param {((string | FieldPath)[])} fieldNames Field names or paths to names
+ * @param {any[]} fieldValues Counter pair value for field pointed at fieldNames list with the same index
+ * @returns {boolean} True if all name-value -pairs match
+ */
+export function matchFields(
+  doc: MockDocumentReference,
+  fieldNames: (string | FieldPath)[],
+  fieldValues: any[],
+): boolean {
+  if (fieldNames.length !== fieldValues.length) {
+    throw new Error(
+      'Field names and values count differ, you must give value for each name',
+    );
+  }
+  for (let i = 0; i < fieldNames.length; i++) {
+    if (getFieldValue(doc, fieldNames[i]) !== fieldValues[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function getFieldValue(
+  doc: MockDocumentReference,
+  fieldName: string | FieldPath,
+): any {
+  if (typeof fieldName === 'string') {
+    return doc.data[fieldName];
+  } else if (fieldName instanceof MockFieldPath) {
+    let parent = doc.data;
+    for (const field of fieldName.fieldNames) {
+      parent = parent[field];
+      if (!parent) {
+        return undefined;
+      }
+    }
+    return parent;
+  }
+  // TODO support for actual FieldPaths
+  return undefined;
 }

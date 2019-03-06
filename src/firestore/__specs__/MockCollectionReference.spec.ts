@@ -2,6 +2,7 @@ import { MockFirebaseApp } from 'firebaseApp';
 import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import { MockFirebaseValidationError } from '../utils/index';
+import { MockDatabase } from '../index';
 
 describe('CollectionReferenceMock', () => {
   describe('References', () => {
@@ -241,8 +242,7 @@ describe('CollectionReferenceMock', () => {
   describe('where()', () => {
     describe('equality', () => {
       it('will return fields with a equal match', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.fromMockDatabase(testData2);
         const query = await firestore
           .collection('list')
@@ -480,19 +480,60 @@ describe('CollectionReferenceMock', () => {
       });
     });
 
-    // TODO snapshot unsubscribe (others will be in a different module)
+    describe('paging', () => {
+      const database: MockDatabase = {
+        list: {
+          docs: {
+            a: {
+              data: {
+                name: 'Blueberry',
+                value: 1,
+              },
+            },
+            b: {
+              data: {
+                name: 'Strowberry',
+                value: 2,
+              },
+            },
+            c: {
+              data: {
+                name: 'Rasberry',
+                value: 3,
+              },
+            },
+            d: {
+              data: {
+                name: 'Cloudberry',
+                value: 4,
+              },
+            },
+            e: {
+              data: {
+                name: 'Lingonberry',
+                value: 4,
+              },
+            },
+          },
+        },
+      };
 
-    //   describe('misuse', () => {
-    //     it('will raise mock validity error when trying to use where -clause twice', async () => {
-    //       const app = new FirebaseAppMock();
-    //       const firestore = app.firestore() as FirestoreMock;
+      it('will limit the result to startAt cursor', async () => {
+        const firestore = new MockFirebaseApp().firestore();
+        firestore.mocker.fromMockDatabase(database);
 
-    //       expect.assertions(1);
-    //       const ref = firestore.collection('list');
+        const result = await firestore
+          .collection('list')
+          .orderBy('value')
+          .startAt(3)
+          .get();
 
-    //       await expect(ref.where('name', '==', 'a').where('name', '')).toBeDefined();
-    //       expect(query.size).toBe(0);
-    //     })
-    //   })
+        expect(result.size).toBe(3);
+        expect(result.docs[0].data()).toEqual({
+          name: 'Rasberry',
+          value: 3,
+        });
+      });
+    });
   });
 });

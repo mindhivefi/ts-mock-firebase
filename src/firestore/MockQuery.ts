@@ -1,5 +1,6 @@
 import {
   CollectionReference,
+  DocumentChange,
   FieldPath,
   FirebaseFirestore,
   FirestoreError,
@@ -11,21 +12,21 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
+import { MockCollectionReference } from 'firestore/MockCollectionReference';
 import MockDocumentReference from 'firestore/MockDocumentReference';
 import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
+import MockQuerySnapshot from 'firestore/MockQuerySnapshot';
 import QuerySnapshotMock from 'firestore/MockQuerySnapshot';
-import { NotImplementedYet } from 'firestore/utils/index';
+import { NotImplementedYet } from 'firestore/utils';
+
 import {
   ErrorFunction,
   MockSubscriptionFunction,
 } from './MockDocumentReference';
+import { findIndexForDocument, MockFirebaseValidationError } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
-import { MockFirebaseValidationError } from './utils/index';
 import { filterDocumentsByRules } from './utils/matching';
 import { sortDocumentsByRules } from './utils/sortings';
-import { DocumentChange } from '@firebase/firestore-types';
-import MockQuerySnapshot from 'firestore/MockQuerySnapshot';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
 
 export interface MockQueryOrderRule {
   fieldPath: string | FieldPath;
@@ -37,11 +38,18 @@ export interface MockQueryWhereRule {
   value: any;
 }
 
+export interface MockQueryStartRule {
+  fieldValues: any[];
+  startAt: boolean;
+}
+
 interface MockQueryRules {
   // orderBy?: QueryOperationFunction[];
   order?: MockQueryOrderRule[];
 
   where?: MockQueryWhereRule[];
+
+  start?: MockQueryStartRule;
 
   limit?: number;
 }
@@ -162,7 +170,15 @@ export default class MockQuery implements Query {
    * @return The created Query.
    */
   startAt = (...fieldValues: any[]): Query => {
-    throw new NotImplementedYet('MockQuery.startAt');
+    // TODO startAt / startAfter called multiple times?
+    this.rules = {
+      ...this.rules,
+      start: {
+        fieldValues: fieldValues,
+        startAt: true,
+      },
+    };
+    return this;
   };
 
   // /**
@@ -274,8 +290,8 @@ export default class MockQuery implements Query {
    */
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     const docs = this.getFilterDocumentReferences();
-    return new Promise<QuerySnapshot>(resolve =>
-      resolve(new QuerySnapshotMock(this, this.getDocumentSnapshots(docs), [])),
+    return Promise.resolve<QuerySnapshot>(
+      new QuerySnapshotMock(this, this.getDocumentSnapshots(docs), []),
     );
   };
 
@@ -355,16 +371,7 @@ export default class MockQuery implements Query {
           }
           break;
         }
-        // case 'removed': {
-        //   if (oldIndex >= 0) {
-        //     docChanges.push({
-        //       ...change,
-        //       oldIndex,
-        //       newIndex,
-        //     });
-        //   }
-        //   break;
-        // }
+
         default:
           throw new Error(`Unexpected change type: ${change.type}`);
       }
@@ -390,10 +397,29 @@ export default class MockQuery implements Query {
 
   private getFilterDocumentReferences = () => {
     let docs = this.docRefs;
-    const { limit, where, order } = this.rules;
+    const { limit, where, order, start } = this.rules;
 
     docs = filterDocumentsByRules(docs, where);
     docs = sortDocumentsByRules(docs, order);
+
+    if (start) {
+      if (!order) {
+        throw new MockFirebaseValidationError(
+          `${
+            start.startAt ? 'StartAt' : 'StartBefore'
+          } needs to match with query order but order is not defined.`,
+        );
+      }
+      const index = findIndexForDocument(
+        docs,
+        order.map(field => field.fieldPath),
+        start.fieldValues,
+      );
+      if (index >= 0) {
+        docs = docs.slice(index);
+      }
+    }
+
     if (limit) {
       docs = docs.slice(0, Math.min(docs.length, limit));
     }
