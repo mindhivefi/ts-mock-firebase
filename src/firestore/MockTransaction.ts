@@ -140,27 +140,6 @@ export default class MockTransaction implements Transaction {
     throw new NotImplementedYet('MockTransaction.get');
   };
 
-  // /**
-  //  * Updates fields in the document referred to by the provided
-  //  * `DocumentReference`. The update will fail if applied to a document that
-  //  * does not exist.
-  //  *
-  //  * Nested fields can be updated by providing dot-separated field path
-  //  * strings or by providing FieldPath objects.
-  //  *
-  //  * @param documentRef A reference to the document to be updated.
-  //  * @param field The first field to update.
-  //  * @param value The first value.
-  //  * @param moreFieldsAndValues Additional key/value pairs.
-  //  * @return A Promise resolved once the data has been successfully written
-  //  * to the backend (Note that it won't resolve while you're offline).
-  //  */
-  // update(
-  //   documentRef: DocumentReference,
-  //   field: string | FieldPath,
-  //   value: any,
-  //   ...moreFieldsAndValues: any[]
-  // ): Transaction;
 
   /**
    * Deletes the document referred to by the provided `DocumentReference`.

@@ -1,8 +1,9 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
 import { MockFirebaseApp } from 'firebaseApp';
-import { MockDatabase } from 'firestore';
 
-describe('Transaction handling', () => {
+import { MockDatabase } from '..';
+
+describe('Write batch functionality', () => {
   const database: MockDatabase = {
     a: {
       docs: {
@@ -29,8 +30,7 @@ describe('Transaction handling', () => {
     },
   };
 
-  it('will update operations atomically', async () => {
-
+  it('will update changes in a batch', async () => {
     const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
@@ -47,14 +47,15 @@ describe('Transaction handling', () => {
     firestore.doc('b/A').onSnapshot(onRef2DocumentSnapshot);
     firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('a/first');
-      const ref2 = firestore.doc('b/A');
+    const batch = firestore.batch();
 
-      transaction.update(ref, { test: 'modified' });
-      transaction.update(ref2, { text: 'altered' });
-      transaction.update(ref2, { value: 3 });
-    });
+    const ref = firestore.doc('a/first');
+    const ref2 = firestore.doc('b/A');
+
+    batch.update(ref, { test: 'modified' });
+    batch.update(ref2, { text: 'altered' });
+    batch.update(ref2, { value: 3 });
+    await batch.commit();
 
     expect(ref2CollectionSnap).toBeDefined();
     const docChanges = ref2CollectionSnap!.docChanges();
@@ -65,8 +66,6 @@ describe('Transaction handling', () => {
   });
 
   it('will add and update operations atomically', async () => {
-    expect(true).toBeTruthy();
-
     const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
@@ -83,18 +82,19 @@ describe('Transaction handling', () => {
     firestore.doc('b/A').onSnapshot(onRef2DocumentSnapshot);
     firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('a/first');
-      const ref2 = firestore.doc('b/A');
-      const ref3 = firestore.doc('b/C');
+    const batch = firestore.batch();
 
-      transaction.update(ref, { test: 'modified' });
-      transaction.set(ref2, { modified: 'field' }, { merge: true });
-      transaction.set(ref3, {
-        text: 'added',
-        value: 3,
-      });
+    const ref = firestore.doc('a/first');
+    const ref2 = firestore.doc('b/A');
+    const ref3 = firestore.doc('b/C');
+
+    batch.update(ref, { test: 'modified' });
+    batch.set(ref2, { modified: 'field' }, { merge: true });
+    batch.set(ref3, {
+      text: 'added',
+      value: 3,
     });
+    await batch.commit();
 
     expect(ref2CollectionSnap).toBeDefined();
     const docChanges = ref2CollectionSnap!.docChanges();
@@ -106,8 +106,6 @@ describe('Transaction handling', () => {
   });
 
   it('will add, update and delete operations atomically', async () => {
-    expect(true).toBeTruthy();
-
     const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
@@ -119,18 +117,19 @@ describe('Transaction handling', () => {
 
     firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('a/first');
-      const ref2 = firestore.doc('b/A');
-      const ref3 = firestore.doc('b/C');
+    const batch = firestore.batch();
 
-      transaction.update(ref, { test: 'modified' });
-      transaction.delete(ref2);
-      transaction.set(ref3, {
-        text: 'added',
-        value: 3,
-      });
+    const ref = firestore.doc('a/first');
+    const ref2 = firestore.doc('b/A');
+    const ref3 = firestore.doc('b/C');
+
+    batch.update(ref, { test: 'modified' });
+    batch.delete(ref2);
+    batch.set(ref3, {
+      text: 'added',
+      value: 3,
     });
+    await batch.commit();
 
     expect(ref2CollectionSnap).toBeDefined();
     const docChanges = ref2CollectionSnap!.docChanges();
@@ -139,43 +138,4 @@ describe('Transaction handling', () => {
     expect(docChanges[1].type).toMatch('added');
     expect(onRef2CollectionSnapshot.mock.calls.length).toBe(1);
   });
-
-  it('will get value from document ref if value is not defined in transaction', async () => {
-    expect(true).toBeTruthy();
-
-    const firestore = new MockFirebaseApp().firestore();
-    firestore.mocker.fromMockDatabase(database);
-
-    let result = undefined;
-
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('b/A');
-
-      result = await transaction.get(ref);
-    });
-    expect(result).toEqual({
-      text: 'A',
-    });
-  });
-
-  it('will give an error if get is called after updating operations', async () => {
-    expect(true).toBeTruthy();
-
-    const firestore = new MockFirebaseApp().firestore();
-    firestore.mocker.fromMockDatabase(database);
-
-    await firestore.runTransaction(async transaction => {
-      const ref = firestore.doc('b/A');
-      transaction.set(ref, { test: 'value' });
-
-      expect(async () => transaction.get(ref)).toThrow();
-    });
-  });
 });
-
-// TODO oldIndex, newIndex
-
-/*
- * TODO The transaction read a document that was modified outside of the transaction. In this case, the transaction automatically runs again. The transaction is retried a finite number of times.
- * TODO The transaction exceeded the maximum request size of 10 MiB.
- */

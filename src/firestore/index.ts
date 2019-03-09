@@ -234,7 +234,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * atomic operation.
    */
   public batch = (): types.WriteBatch => {
-    throw new MockWriteBatch(this);
+    return new MockWriteBatch(this);
   };
 
   /**

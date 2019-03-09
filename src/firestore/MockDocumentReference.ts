@@ -216,11 +216,11 @@ export default class MockDocumentReference implements DocumentReference {
     }
   };
 
-  public setInTransaction = async (
+  public setInTransaction = (
     transactioData: DocumentData,
     setData: DocumentData,
     options?: SetOptions,
-  ): Promise<DocumentData> => {
+  ): DocumentData => {
     return options && options.merge
       ? { ...transactioData, ...setData }
       : { ...setData };
