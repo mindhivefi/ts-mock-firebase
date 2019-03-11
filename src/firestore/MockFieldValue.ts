@@ -1,11 +1,14 @@
-import { FieldValue, DocumentData } from '@firebase/firestore-types';
+import { DocumentData, FieldValue } from '@firebase/firestore-types';
+
 import { NotImplementedYet } from './utils';
+import { MockFirebaseFirestore } from 'firestore';
+import MockTimestamp from './MockTimestamp';
 
 enum MockFieldValueType {
   DELETE = 'delete',
   TIMESTAMP = 'timestamp',
   ARRAY_UNION = 'array_union',
-  ARRAU_REMOVE = 'array_remove',
+  ARRAT_REMOVE = 'array_remove',
 }
 /**
  * Sentinel values that can be used when writing document fields with set()
@@ -89,7 +92,10 @@ export default class MockFieldValue implements FieldValue {
  * @param {DocumentData} data
  * @returns {DocumentData}
  */
-export function preprocessData(data: DocumentData): DocumentData {
+export function preprocessData(
+  firestore: MockFirebaseFirestore,
+  data: DocumentData,
+): DocumentData {
   const result = { ...data };
   for (const key in result) {
     const value = result[key];
@@ -99,6 +105,13 @@ export function preprocessData(data: DocumentData): DocumentData {
           delete result[key];
           break;
 
+        case MockFieldValueType.TIMESTAMP:
+          const serverTime = firestore.mocker.serverTime;
+          result[key] = serverTime
+            ? typeof serverTime === 'function'
+              ? serverTime()
+              : serverTime
+            : MockTimestamp.now();
           break;
 
         default:
@@ -106,7 +119,7 @@ export function preprocessData(data: DocumentData): DocumentData {
       }
     } else {
       if (typeof value === 'object') {
-        result[key] = preprocessData(value);
+        result[key] = preprocessData(firestore, value);
       }
     }
   }

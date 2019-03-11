@@ -6,7 +6,7 @@ export default class MockTimestamp implements Timestamp {
    *
    * @return a new timestamp representing the current date.
    */
-  static now(): Timestamp {
+  static now(): MockTimestamp {
     return MockTimestamp.fromDate(new Date());
   }
 
@@ -17,7 +17,7 @@ export default class MockTimestamp implements Timestamp {
    * @return A new `Timestamp` representing the same point in time as the given
    *     date.
    */
-  static fromDate(date: Date): Timestamp {
+  static fromDate(date: Date): MockTimestamp {
     return MockTimestamp.fromMillis(date.getTime());
   }
 
@@ -29,7 +29,7 @@ export default class MockTimestamp implements Timestamp {
    * @return A new `Timestamp` representing the same point in time as the given
    *     number of milliseconds.
    */
-  static fromMillis(milliseconds: number): Timestamp {
+  static fromMillis(milliseconds: number): MockTimestamp {
     const seconds = Math.floor(milliseconds / 1000);
     const nanoseconds = (milliseconds - seconds * 1000) * 1000000;
     return new MockTimestamp(seconds, nanoseconds);

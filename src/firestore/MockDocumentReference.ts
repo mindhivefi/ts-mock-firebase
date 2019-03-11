@@ -5,7 +5,6 @@ import {
   DocumentReference,
   DocumentSnapshot,
   FieldPath,
-  FirebaseFirestore,
   FirestoreError,
   GetOptions,
   SetOptions,
@@ -73,7 +72,7 @@ export default class MockDocumentReference implements DocumentReference {
    * @param parent A reference to the Collection to which this DocumentReference belongs.
    */
   public constructor(
-    public firestore: FirebaseFirestore,
+    public firestore: MockFirebaseFirestore,
     public id: string,
     public parent: CollectionReference,
   ) {
@@ -167,7 +166,7 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public collection = (collectionPath: string): CollectionReference => {
     return resolveReference(
-      this.firestore as MockFirebaseFirestore,
+      this.firestore,
       this,
       true,
       collectionPath,
@@ -212,9 +211,9 @@ export default class MockDocumentReference implements DocumentReference {
 
   private _set = async (data: DocumentData, options?: SetOptions) => {
     if (options && options.merge) {
-      this.data = preprocessData(deepExtend(this.data, data));
+      this.data = preprocessData(this.firestore, deepExtend(this.data, data));
     } else {
-      this.data = preprocessData(data);
+      this.data = preprocessData(this.firestore, data);
     }
   };
 
@@ -224,8 +223,8 @@ export default class MockDocumentReference implements DocumentReference {
     options?: SetOptions,
   ): DocumentData => {
     return options && options.merge
-      ? preprocessData({ ...transactioData, ...setData })
-      : preprocessData(setData);
+      ? preprocessData(this.firestore, { ...transactioData, ...setData })
+      : preprocessData(this.firestore, setData);
   };
 
   /**
@@ -262,7 +261,7 @@ export default class MockDocumentReference implements DocumentReference {
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
-      this.data = preprocessData(deepExtend(this.data, data));
+      this.data = preprocessData(this.firestore, deepExtend(this.data, data));
     } else {
       let args = [data, value];
       if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {

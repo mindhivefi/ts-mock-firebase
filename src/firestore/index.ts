@@ -11,6 +11,7 @@ import MockDocumentReference from './MockDocumentReference';
 import { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { NotImplementedYet, resolveReference } from './utils/index';
 import { MockWriteBatch } from './MockWritebatch';
+import MockTimestamp from './MockTimestamp';
 
 declare module '@firebase/app-types' {
   interface FirebaseNamespace {
@@ -63,6 +64,8 @@ export interface MockCollections {
 
 export type MockDatabase = MockCollections;
 
+export type TimestampFunction = () => MockTimestamp;
+
 export interface FirestoreMocker extends Mocker {
   /**
    * Load the whole database from MockDatabase -object
@@ -80,6 +83,16 @@ export interface FirestoreMocker extends Mocker {
   toMockDatabase(): MockDatabase;
   fromJson(json: string): void;
   toJson(): string;
+
+  /**
+   * Defines a mocked server time used with FieldValue.timestamp. Time can be constant set to property or a function
+   * that will return a MockTimestamp value. If the value is not defined, MockFirebase will generate a timestamp from
+   * current machine time.
+   *
+   * @type {(MockTimestamp | TimestampFunction)}
+   * @memberof FirestoreMocker
+   */
+  serverTime: MockTimestamp | TimestampFunction | undefined;
 }
 
 /**
@@ -102,6 +115,8 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
     };
 
     this.mocker = {
+      serverTime: undefined,
+
       fromMockDatabase: (database: MockDatabase) => {
         this.root.mocker.reset();
         for (const collectionId in database) {
