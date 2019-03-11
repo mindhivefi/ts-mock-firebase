@@ -21,6 +21,7 @@ import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
+import { preprocessData } from './MockFieldValue';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
 
@@ -210,9 +211,9 @@ export default class MockDocumentReference implements DocumentReference {
 
   private _set = async (data: DocumentData, options?: SetOptions) => {
     if (options && options.merge) {
-      this.data = { ...this.data, ...data };
+      this.data = preprocessData({ ...this.data, ...data });
     } else {
-      this.data = { ...data };
+      this.data = preprocessData(data);
     }
   };
 
@@ -222,8 +223,8 @@ export default class MockDocumentReference implements DocumentReference {
     options?: SetOptions,
   ): DocumentData => {
     return options && options.merge
-      ? { ...transactioData, ...setData }
-      : { ...setData };
+      ? preprocessData({ ...transactioData, ...setData })
+      : preprocessData(setData);
   };
 
   /**
@@ -260,10 +261,10 @@ export default class MockDocumentReference implements DocumentReference {
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
-      this.data = {
+      this.data = preprocessData({
         ...this.data,
         ...(data as UpdateData),
-      };
+      });
     } else {
       let args = [data, value];
       if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {
