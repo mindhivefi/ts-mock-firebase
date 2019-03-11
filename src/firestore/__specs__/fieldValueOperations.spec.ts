@@ -33,37 +33,46 @@ describe('FieldValue', () => {
       });
     });
 
-    // it('will delete field from sub object', async () => {
-    //   const firestore = new MockFirebaseApp().firestore();
+    it('will delete field from sub object', async () => {
+      const firestore = new MockFirebaseApp().firestore();
 
-    //   firestore.mocker.fromMockDatabase(database);
-    //   const ref = firestore.doc('list/a') as MockDocumentReference;
+      firestore.mocker.fromMockDatabase(database);
+      const ref = firestore.doc('list/a') as MockDocumentReference;
 
-    //   await ref.set({
-    //     c: {
-    //       sub: {
-    //         A: 1,
-    //         B: 2,
-    //         C: 3,
-    //       },
-    //     },
-    //   });
-    //   await ref.update({
-    //     c: {
-    //       B: MockFieldValue.delete(),
-    //     },
-    //   });
+      await ref.set(
+        {
+          third: {
+            sub: {
+              A: 1,
+              B: 2,
+              C: 3,
+            },
+          },
+        },
+        {
+          merge: true,
+        },
+      );
+      await ref.update({
+        third: {
+          sub: {
+            B: MockFieldValue.delete(),
+          },
+        },
+      });
 
-    //   expect(ref.data).toEqual({
-    //     first: 1,
-    //     second: 2,
-    //     c: {
-    //       sub: {
-    //         A: 1,
-    //         C: 3,
-    //       },
-    //     },
-    //   });
-    // });
+      expect(ref.data).toEqual({
+        first: 1,
+        second: 2,
+        third: {
+          sub: {
+            A: 1,
+            C: 3,
+          },
+        },
+      });
+    });
+
+    // TODO fieldPath updates and sets with field values
   });
 });

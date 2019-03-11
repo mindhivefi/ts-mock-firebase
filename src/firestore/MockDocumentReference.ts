@@ -20,8 +20,9 @@ import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
-import { MockDocumentChange } from './MockTransaction';
 import { preprocessData } from './MockFieldValue';
+import { MockDocumentChange } from './MockTransaction';
+import { deepExtend } from './utils/manipulation';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
 
@@ -211,7 +212,7 @@ export default class MockDocumentReference implements DocumentReference {
 
   private _set = async (data: DocumentData, options?: SetOptions) => {
     if (options && options.merge) {
-      this.data = preprocessData({ ...this.data, ...data });
+      this.data = preprocessData(deepExtend(this.data, data));
     } else {
       this.data = preprocessData(data);
     }
@@ -261,10 +262,7 @@ export default class MockDocumentReference implements DocumentReference {
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
-      this.data = preprocessData({
-        ...this.data,
-        ...(data as UpdateData),
-      });
+      this.data = preprocessData(deepExtend(this.data, data));
     } else {
       let args = [data, value];
       if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {
