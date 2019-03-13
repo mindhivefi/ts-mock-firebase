@@ -520,7 +520,7 @@
     parse-github-url "^1.0.1"
     url-join "^4.0.0"
 
-"@semantic-release/npm@^5.0.5":
+"@semantic-release/npm@5.1.4", "@semantic-release/npm@^5.0.5":
   version "5.1.4"
   resolved "https://registry.yarnpkg.com/@semantic-release/npm/-/npm-5.1.4.tgz#970b62765e6c5d51f94e1c14d3bc1f5a224e2ed0"
   dependencies:
