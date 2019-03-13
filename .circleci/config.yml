@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  deploy-version:
+  test-version:
     docker:
       # specify the version you desire here
       - image: circleci/node:8.9.4
@@ -36,6 +36,14 @@ jobs:
       # run tests!
       - run: yarn test
 
+  release:
+    docker:
+      - image: circleci/node:8.9.4
+    steps:
+      - checkout
+      - run: npm install
+      # Run optional required steps before releasing
+      # - run: npm run build-script
       - run: yarn semantic-release || true
 
 workflows:
@@ -43,7 +51,10 @@ workflows:
 
   deploy-master-to-npm:
     jobs:
-      - deploy-version:
+      - test-version
+      - release:
+          requires:
+            - test-version
           filters:
             branches:
               only: master
