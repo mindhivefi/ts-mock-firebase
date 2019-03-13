@@ -1,3 +1,11 @@
+## [1.1.3](https://github.com/mindhivefi/mock-firebase/compare/v1.1.2...v1.1.3) (2019-03-13)
+
+
+### Bug Fixes
+
+* branch-name-with-correct-syntax ([64c3826](https://github.com/mindhivefi/mock-firebase/commit/64c3826))
+* fix-master-filtering ([181a87c](https://github.com/mindhivefi/mock-firebase/commit/181a87c))
+
 ## [1.1.2](https://github.com/mindhivefi/mock-firebase/compare/v1.1.1...v1.1.2) (2019-03-13)
 
 
