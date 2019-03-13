@@ -70,8 +70,7 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will only update defined fields if merge options set to true', async () => {
-      const app = new MockFirebaseApp();
-      const firestore = app.firestore();
+      const firestore = new MockFirebaseApp().firestore();
 
       const collection = new MockCollectionReference(firestore, 'test', null);
       firestore.root.mocker.setCollection(collection);
