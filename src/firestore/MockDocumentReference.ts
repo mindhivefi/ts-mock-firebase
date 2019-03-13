@@ -19,7 +19,10 @@ import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
-import { preprocessData } from './MockFieldValue';
+import MockFieldValue, {
+  preprocessData,
+  processFieldValue,
+} from './MockFieldValue';
 import { MockDocumentChange } from './MockTransaction';
 import { processAndDeepMerge } from './utils/manipulation';
 
@@ -284,8 +287,20 @@ export default class MockDocumentReference implements DocumentReference {
       };
       for (let i = 0; i < args.length; i += 2) {
         const path = args[i];
-        if (typeof path === 'string') newData[path] = args[i + 1];
-        else if (path instanceof MockFieldPath) {
+        const fieldValue = args[i + 1];
+        if (typeof path === 'string') {
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(
+              this.firestore,
+              this.data,
+              newData,
+              path,
+              fieldValue,
+            );
+          } else {
+            newData[path] = fieldValue;
+          }
+        } else if (path instanceof MockFieldPath) {
           const fieldNames = path.fieldNames;
 
           let parent = newData;
@@ -298,7 +313,19 @@ export default class MockDocumentReference implements DocumentReference {
               );
             }
           }
-          parent[fieldNames[fieldNames.length - 1]] = args[i + 1];
+          const propPath = fieldNames[fieldNames.length - 1];
+
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(
+              this.firestore,
+              this.data,
+              parent,
+              propPath,
+              fieldValue,
+            );
+          } else {
+            parent[propPath] = fieldValue;
+          }
         } else
           throw new MockFirebaseValidationError(
             `Unsupported field path: typeof(${typeof path}: ${path})`,
