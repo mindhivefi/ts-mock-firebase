@@ -3,58 +3,60 @@
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
 version: 2
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:8.9.4
+
 jobs:
-  test-version:
-    docker:
-      # specify the version you desire here
-      - image: circleci/node:8.9.4
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
-
-    working_directory: ~/repo
-
+  build:
+    <<: *defaults
     steps:
       - checkout
-
-      # Download and cache dependencies
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-
-      - run: yarn install
-
+      - run: npm install
+      - run:
+          name: Run build
+          command: npm build
       - save_cache:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
-
-      # run tests!
-      - run: yarn test
-
-  release:
-    docker:
-      - image: circleci/node:8.9.4
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+  test:
+    <<: *defaults
     steps:
-      - checkout
-      - run: npm install
-      # Run optional required steps before releasing
-      - run: npm run build
-      - run: yarn semantic-release || true
-
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Run Tests
+          command: npm test
+  deploy:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Publish package
+          command: npx semantic-release --gh-token=$GITHUB_TOKEN --npm-token=$npm_TOKEN --gh-username=mindhivefi --npm-username=villevenalainen
 workflows:
   version: 2
-
   deploy-master-to-npm:
     jobs:
-      - test-version
-      - release:
+      - build
+      - test:
           requires:
-            - test-version
+            - build
+      - deploy:
+          requires:
+            - test
           filters:
             branches:
               only: master
