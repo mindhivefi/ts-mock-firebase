@@ -52,5 +52,11 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "include": ["src"],
-  "exclude": ["lib", "coverage", "node_modules", "jest.config.js"]
+  "exclude": [
+    "commitlint.config.js",
+    "coverage",
+    "jest.config.js",
+    "lib",
+    "node_modules"
+  ]
 }
