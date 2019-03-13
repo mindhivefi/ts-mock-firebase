@@ -43,7 +43,7 @@ jobs:
       - checkout
       - run: npm install
       # Run optional required steps before releasing
-      # - run: npm run build-script
+      - run: npm run build
       - run: yarn semantic-release || true
 
 workflows:
