@@ -1,16 +1,17 @@
 {
   "name": "mock-firebase",
-  "version": "0.1.0",
+  "version": "0.0.0-development",
   "description": "Mock objects for Firebase",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --verbose --watch",
-    "lint": "tslint --fix ."
+    "lint": "tslint --fix .",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mindhivefi/mock-firebase.git"
+    "url": "https://github.com/mindhivefi/mock-firebase.git"
   },
   "keywords": [
     "firebase",
@@ -41,7 +42,8 @@
     "ts-jest": "24.0.0",
     "tslint": "5.13.1",
     "tslint-sonarts": "1.9.0",
-    "typescript": "3.3.3333"
+    "typescript": "3.3.3333",
+    "semantic-release": "^15.13.3"
   },
   "dependencies": {
     "uuid": "3.3.2"
