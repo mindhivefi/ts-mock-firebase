@@ -15,7 +15,31 @@
     "url": "https://github.com/mindhivefi/mock-firebase.git"
   },
   "release": {
-    "verifyConditions": "condition-circle"
+    "verifyConditions": "condition-circle",
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
+      "@semantic-release/github"
+    ],
+    "prepare": [
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      {
+        "path": "@semantic-release/git",
+        "assets": [
+          "package.json",
+          "package-lock.json",
+          "CHANGELOG.md"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ]
   },
   "keywords": [
     "firebase",
@@ -36,12 +60,14 @@
   },
   "homepage": "https://github.com/mindhivefi/mock-firebase#readme",
   "devDependencies": {
-    "@commitlint/cli": "^7.5.2",
-    "@commitlint/config-conventional": "^7.5.0",
+    "@commitlint/cli": "7.5.2",
+    "@commitlint/config-conventional": "7.5.0",
     "@firebase/app-types": "0.3.5",
     "@firebase/firestore": "1.0.6",
     "@firebase/firestore-types": "1.0.3",
     "@firebase/util": "0.2.9",
+    "@semantic-release/changelog": "3.0.2",
+    "@semantic-release/git": "7.0.8",
     "@types/jest": "24.0.11",
     "@types/uuid": "3.4.4",
     "commitizen": "3.0.7",
