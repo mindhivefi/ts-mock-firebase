@@ -21,7 +21,7 @@ import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
 import { preprocessData } from './MockFieldValue';
 import { MockDocumentChange } from './MockTransaction';
-import { deepExtend } from './utils/manipulation';
+import { processAndDeepMerge } from './utils/manipulation';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
 
@@ -209,9 +209,15 @@ export default class MockDocumentReference implements DocumentReference {
     );
   };
 
+  /**
+   * Private set -method used inside and outside of transaction
+   *
+   * @private
+   * @memberof MockDocumentReference
+   */
   private _set = async (data: DocumentData, options?: SetOptions) => {
     if (options && options.merge) {
-      this.data = preprocessData(this.firestore, deepExtend(this.data, data));
+      this.data = processAndDeepMerge(this.firestore, this.data, data);
     } else {
       this.data = preprocessData(this.firestore, data);
     }
@@ -261,7 +267,7 @@ export default class MockDocumentReference implements DocumentReference {
     }
     if (!value) {
       // only one parameter, so we treat it as UpdateData
-      this.data = preprocessData(this.firestore, deepExtend(this.data, data));
+      this.data = processAndDeepMerge(this.firestore, this.data, data);
     } else {
       let args = [data, value];
       if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {

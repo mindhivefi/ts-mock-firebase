@@ -164,4 +164,196 @@ describe('FieldValue', () => {
       });
     });
   });
+
+  describe('Array sentinels', () => {
+    describe('arrayUnion', () => {
+      it('will add a new value to the end of an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  table: [1, 2],
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            table: MockFieldValue.arrayUnion([3]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          table: [1, 2, 3],
+        });
+      });
+
+      it('will add only values that does not already exist in an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  table: [1, 2],
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            table: MockFieldValue.arrayUnion([2, 3, 4]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          table: [1, 2, 3, 4],
+        });
+      });
+
+      it('will override fieldvalue if it is not an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  nottable: 1,
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            nottable: MockFieldValue.arrayUnion([3, 4, 5]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          nottable: [3, 4, 5],
+        });
+      });
+    });
+
+    describe('arrayRemove', () => {
+      it('will remove a value from an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  table: [1, 2],
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            table: MockFieldValue.arrayRemove([1]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          table: [2],
+        });
+      });
+
+      it('will remove all values that does exist in an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  table: [1, 2],
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            table: MockFieldValue.arrayRemove([1, 2, 3, 4]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          table: [],
+        });
+      });
+
+      it('will override field value with an empty array if it is not an array', async () => {
+        const database: MockDatabase = {
+          list: {
+            docs: {
+              a: {
+                data: {
+                  nottable: 1,
+                },
+              },
+            },
+          },
+        };
+        const firestore = new MockFirebaseApp().firestore();
+
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a') as MockDocumentReference;
+
+        await ref.set(
+          {
+            nottable: MockFieldValue.arrayRemove([3, 4, 5]),
+          },
+          {
+            merge: true,
+          },
+        );
+
+        expect(ref.data).toEqual({
+          nottable: [],
+        });
+      });
+    });
+  });
 });
