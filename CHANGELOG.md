@@ -1,3 +1,11 @@
+## [1.1.2](https://github.com/mindhivefi/mock-firebase/compare/v1.1.1...v1.1.2) (2019-03-13)
+
+
+### Bug Fixes
+
+* circleci-script-refactored ([5eaa5cf](https://github.com/mindhivefi/mock-firebase/commit/5eaa5cf))
+* fixed-typo ([21ad811](https://github.com/mindhivefi/mock-firebase/commit/21ad811))
+
 ## [1.1.1](https://github.com/mindhivefi/mock-firebase/compare/v1.1.0...v1.1.1) (2019-03-13)
 
 
