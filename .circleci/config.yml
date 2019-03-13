@@ -4,7 +4,6 @@
 #
 version: 2
 
-
 defaults: &defaults
   working_directory: ~/repo
   docker:
@@ -58,10 +57,9 @@ workflows:
   deploy-master-to-npm:
     jobs:
       - build
-    
       - test:
           requires:
-	    - build
+	        - build
       - deploy:
           requires:
             - test
