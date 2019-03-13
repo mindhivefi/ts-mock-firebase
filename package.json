@@ -53,5 +53,10 @@
   },
   "dependencies": {
     "uuid": "3.3.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
