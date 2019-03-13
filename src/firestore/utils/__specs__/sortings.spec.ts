@@ -53,9 +53,6 @@ describe('Simple field sorting', () => {
   });
 });
 
-function sortData(
-  data: any[],
-  fun: import('/Users/villevenalainen/react_src/mock-firebase/src/firestore/utils/sortings').SortFunction,
-) {
+function sortData(data: any[], fun: import('../sortings').SortFunction) {
   return data.sort(fun);
 }
