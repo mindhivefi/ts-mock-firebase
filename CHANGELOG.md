@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.1.4...v1.1.5) (2019-03-13)
+
+
+### Bug Fixes
+
+* renamed-project- ([8f88b5c](https://github.com/mindhivefi/ts-mock-firebase/commit/8f88b5c))
+
 ## [1.1.4](https://github.com/mindhivefi/mock-firebase/compare/v1.1.3...v1.1.4) (2019-03-13)
 
 
