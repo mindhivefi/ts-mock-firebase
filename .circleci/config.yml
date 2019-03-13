@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  build:
+  deploy-version:
     docker:
       # specify the version you desire here
       - image: circleci/node:7.10
@@ -35,3 +35,15 @@ jobs:
 
       # run tests!
       - run: yarn test
+
+      - run: yarn semantic-release || true
+
+workflows:
+  version: 2
+
+  deploy-master-to-npm:
+    jobs:
+      - deploy-version:
+          filters:
+            branches:
+              only: master

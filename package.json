@@ -13,6 +13,9 @@
     "type": "git",
     "url": "https://github.com/mindhivefi/mock-firebase.git"
   },
+  "release": {
+    "verifyConditions": "condition-circle"
+  },
   "keywords": [
     "firebase",
     "mock",
@@ -38,12 +41,13 @@
     "@firebase/util": "0.2.8",
     "@types/jest": "24.0.9",
     "@types/uuid": "3.4.4",
+    "condition-circle": "2.0.2",
     "jest": "24.1.0",
+    "semantic-release": "^15.13.3",
     "ts-jest": "24.0.0",
     "tslint": "5.13.1",
     "tslint-sonarts": "1.9.0",
-    "typescript": "3.3.3333",
-    "semantic-release": "^15.13.3"
+    "typescript": "3.3.3333"
   },
   "dependencies": {
     "uuid": "3.3.2"
