@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/mindhivefi/mock-firebase/compare/v1.1.3...v1.1.4) (2019-03-13)
+
+
+### Bug Fixes
+
+* missing-release-package-included ([8ca2a25](https://github.com/mindhivefi/mock-firebase/commit/8ca2a25))
+
 ## [1.1.3](https://github.com/mindhivefi/mock-firebase/compare/v1.1.2...v1.1.3) (2019-03-13)
 
 
