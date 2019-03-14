@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.1...v1.2.2) (2019-03-14)
+
+
+### Bug Fixes
+
+* lib-include ([9d3fdcb](https://github.com/mindhivefi/ts-mock-firebase/commit/9d3fdcb))
+
 ## [1.2.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.0...v1.2.1) (2019-03-14)
 
 
