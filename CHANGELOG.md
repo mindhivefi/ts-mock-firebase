@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.1.5...v1.2.0) (2019-03-14)
+
+
+### Features
+
+* lib-folder-removed-from-ignore-list ([92ac20c](https://github.com/mindhivefi/ts-mock-firebase/commit/92ac20c))
+
 ## [1.1.5](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.1.4...v1.1.5) (2019-03-13)
 
 
