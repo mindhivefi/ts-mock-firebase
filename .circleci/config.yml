@@ -44,6 +44,9 @@ jobs:
       - attach_workspace:
           at: ~/repo
       - run:
+          name: Evaluate the package content
+          command: yarn check-package
+      - run:
           name: Publish package
           command: npx semantic-release --gh-token=$GITHUB_TOKEN --npm-token=$npm_TOKEN --gh-username=mindhivefi --npm-username=villevenalainen
 workflows:
