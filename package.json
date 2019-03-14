@@ -98,7 +98,7 @@
       "precommit": "yarn lint && yarn test && yarn clean"
     }
   },
-  "directories": {
-    "lib": "lib"
-  }
+  "files": [
+    "lib/**/*"
+  ]
 }
