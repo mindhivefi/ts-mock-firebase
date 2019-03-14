@@ -15,7 +15,8 @@
     "predeploy": "yarn build",
     "deploy": "npm deploy",
     "commit": "npx git-cz",
-    "check-package": "tar tvf $(npm pack)"
+    "check-package": "tar tvf $(npm pack)",
+    "dir": "ls"
   },
   "repository": {
     "type": "git",
