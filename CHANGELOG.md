@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.0...v1.2.1) (2019-03-14)
+
+
+### Bug Fixes
+
+* whitelisted-lib-files ([3fbeea8](https://github.com/mindhivefi/ts-mock-firebase/commit/3fbeea8))
+
 # [1.2.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.1.5...v1.2.0) (2019-03-14)
 
 
