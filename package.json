@@ -14,7 +14,8 @@
     "semantic-release": "semantic-release",
     "predeploy": "yarn build",
     "deploy": "npm deploy",
-    "commit": "npx git-cz"
+    "commit": "npx git-cz",
+    "check-package": "tar tvf $(npm pack)"
   },
   "repository": {
     "type": "git",
