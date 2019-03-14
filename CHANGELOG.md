@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.3...v1.2.4) (2019-03-14)
+
+
+### Bug Fixes
+
+* direct-pointing-to-tsc ([d689224](https://github.com/mindhivefi/ts-mock-firebase/commit/d689224))
+
 ## [1.2.3](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.2...v1.2.3) (2019-03-14)
 
 
