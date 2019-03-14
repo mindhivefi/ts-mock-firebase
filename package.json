@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rimraf -f -r -d lib",
     "prebuild": "yarn clean",
-    "build": "tsc",
+    "build": "./node_modules/.bin/tsc",
     "test": "jest",
     "test:watch": "jest --verbose --watch",
     "lint": "tslint --fix ./src/**/*.ts*",
