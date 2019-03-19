@@ -17,9 +17,11 @@ describe('Document id validation', () => {
     const string = new Array(1502).join('a');
     expect(isValidDocumentId(string)).toBeFalsy();
   });
+
   it('Cannot contain a forward slash (/)', () => {
     expect(isValidDocumentId('a/a')).toBeFalsy();
   });
+
   it('Cannot solely consist of a single period (.) or double periods (..)', () => {
     expect(isValidDocumentId('.')).toBeFalsy();
     expect(isValidDocumentId('..')).toBeFalsy();
@@ -27,6 +29,10 @@ describe('Document id validation', () => {
 
   it('Cannot match the regular expression __.*__', () => {
     expect(isValidDocumentId('__.ab__')).toBeFalsy();
+  });
+
+  it('Will allow email addresses', () => {
+    expect(isValidDocumentId('matti.meikalainen@gmail.com')).toBeTruthy();
   });
 });
 
@@ -97,7 +103,9 @@ describe('Firestore document reference path validation', () => {
     expect(isValidDocumentReference('collection')).toBeFalsy();
     expect(isValidDocumentReference('collection/document')).toBeTruthy();
     expect(isValidDocumentReference('collection/doc/subcollection')).toBeFalsy();
-    expect(isValidDocumentReference('collection/doc/subcollection/do')).toBeTruthy();
+    expect(
+      isValidDocumentReference('collection/doc/subcollection/do')
+    ).toBeTruthy();
   });
   it('the path is not empty', () => {
     expect(isValidDocumentReference('')).toBeFalsy();
@@ -109,7 +117,9 @@ describe('Firestore document reference path validation', () => {
   it('will make sure that path elements are valid', () => {
     expect(isValidDocumentReference('.')).toBeFalsy();
     expect(isValidDocumentReference('..')).toBeFalsy();
-    expect(isValidDocumentReference('collection/document\x0000error')).toBeFalsy();
+    expect(
+      isValidDocumentReference('collection/document\x0000error')
+    ).toBeFalsy();
   });
   it('paths max length is set to 1500', () => {
     expect(isValidDocumentReference(new Array(1502).join('a'))).toBeFalsy();
@@ -120,8 +130,12 @@ describe('Firestore collection refence path validation', () => {
   it('will have a path with odd count of elements', () => {
     expect(isValidCollectionReference('collection')).toBeTruthy();
     expect(isValidCollectionReference('collection/document')).toBeFalsy();
-    expect(isValidCollectionReference('collection/doc/subcollection')).toBeTruthy();
-    expect(isValidCollectionReference('collection/doc/subcollection/do')).toBeFalsy();
+    expect(
+      isValidCollectionReference('collection/doc/subcollection')
+    ).toBeTruthy();
+    expect(
+      isValidCollectionReference('collection/doc/subcollection/do')
+    ).toBeFalsy();
   });
   it('the path is not empty', () => {
     expect(isValidCollectionReference('')).toBeFalsy();

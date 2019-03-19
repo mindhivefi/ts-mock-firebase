@@ -1,8 +1,8 @@
 import { FieldPath } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from 'firestore';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import MockDocumentReference from 'firestore/MockDocumentReference';
 import * as uuidv4 from 'uuid/v4';
+import { MockFirebaseFirestore } from '..';
+import { MockCollectionReference } from '../MockCollectionReference';
+import MockDocumentReference from '../MockDocumentReference';
 
 import MockFieldPath from '../MockFieldPath';
 
@@ -38,7 +38,14 @@ export function generateDocumentId(): string {
  * @param path Constraints on document IDs
  */
 export function isValidDocumentId(id: string): boolean {
-  if (id === '' || id === '.' || id === '..' || id.length > 1500) {
+  if (
+    id === '' ||
+    id === '.' ||
+    id.length > 1500 ||
+    id.indexOf('..') >= 0 ||
+    id.indexOf('//') >= 0 ||
+    id.match(/__.*__/)
+  ) {
     return false;
   }
   return isValidUnicodeString(id);
@@ -169,7 +176,7 @@ function validateBacktickedField(name: string): boolean {
 // const unicodeRegEx = /^[a-zA-Z0-9u0080-u00FFu0100-u017Fu0180-u024Fu0250-u02AFu0300-u036Fu0370-u03FFu0400-u04FFu0500-u052Fu0530-u058Fu0590-u05FFu0600-u06FFu0700-u074Fu0750-u077Fu0780-u07BFu07C0-u07FFu0900-u097Fu0980-u09FFu0A00-u0A7Fu0A80-u0AFFu0B00-u0B7Fu0B80-u0BFFu0C00-u0C7Fu0C80-u0CFFu0D00-u0D7Fu0D80-u0DFFu0E00-u0E7Fu0E80-u0EFFu0F00-u0FFFu1000-u109Fu10A0-u10FFu1100-u11FFu1200-u137Fu1380-u139Fu13A0-u13FFu1400-u167Fu1680-u169Fu16A0-u16FFu1700-u171Fu1720-u173Fu1740-u175Fu1760-u177Fu1780-u17FFu1800-u18AFu1900-u194Fu1950-u197Fu1980-u19DFu19E0-u19FFu1A00-u1A1Fu1B00-u1B7Fu1D00-u1D7Fu1D80-u1DBFu1DC0-u1DFFu1E00-u1EFFu1F00-u1FFFu20D0-u20FFu2100-u214Fu2C00-u2C5Fu2C60-u2C7Fu2C80-u2CFFu2D00-u2D2Fu2D30-u2D7Fu2D80-u2DDFu2F00-u2FDFu2FF0-u2FFFu3040-u309Fu30A0-u30FFu3100-u312Fu3130-u318Fu3190-u319Fu31C0-u31EFu31F0-u31FFu3200-u32FFu3300-u33FFu3400-u4DBFu4DC0-u4DFFu4E00-u9FFFuA000-uA48FuA490-uA4CFuA700-uA71FuA800-uA82FuA840-uA87FuAC00-uD7AFuF900-uFAFF\._!\b]{1,}$/i;
 
 // TODO the whole range of unicode characters
-const unicodeRegEx = /[u2010-u2015a-zA-Z0-9\u0040-\u007f\u0080-\u02AF\u0300-\u07FF\u0900-\u18AF\u1900-\u1A1F\u1B00-\u1B7F\u1D00-\u1FFFu20D0-\u20FF\u2100-\u214F\u2C00-\u2C5F\u2C60-\u2C7F\u2C80-\u2CFF\u2D00-\u2D2F\u2D30-\u2D7F\u2D80-\u2DDF\u2F00-\u2FDF\u2FF0-\u2FFF\u3040-\u309F\u30A0-\u30FF\u3100-\u312F\u3130-\u318F\u3190-\u319F\u31C0-\u31EF\u31F0-\u31FF\u3200-\u32FF\u3300-\u33FF\u3400-\u4DBF\u4DC0-\u4DFF\u4E00-\u9FFF\uA000-\uA48F\uA490-\uA4CF\uA700-\uA71F\uA800-\uA82F\uA840-\uA87F\uAC00-\uD7AF\uF900-\uFAFF]{1,}/u;
+const unicodeRegEx = /[\u2010-\u2015a-zA-Z0-9\u002B-\u002E"\u0040-\u007f\u0080-\u02AF\u0300-\u07FF\u0900-\u18AF\u1900-\u1A1F\u1B00-\u1B7F\u1D00-\u1FFFu20D0-\u20FF\u2100-\u214F\u2C00-\u2C5F\u2C60-\u2C7F\u2C80-\u2CFF\u2D00-\u2D2F\u2D30-\u2D7F\u2D80-\u2DDF\u2F00-\u2FDF\u2FF0-\u2FFF\u3040-\u309F\u30A0-\u30FF\u3100-\u312F\u3130-\u318F\u3190-\u319F\u31C0-\u31EF\u31F0-\u31FF\u3200-\u32FF\u3300-\u33FF\u3400-\u4DBF\u4DC0-\u4DFF\u4E00-\u9FFF\uA000-\uA48F\uA490-\uA4CF\uA700-\uA71F\uA800-\uA82F\uA840-\uA87F\uAC00-\uD7AF\uF900-\uFAFF]{1,}/u;
 
 export function isValidUnicodeCharacter(c: string): boolean {
   return unicodeRegEx.test(c);
@@ -184,13 +191,14 @@ function isValidUnicodeString(s: string): boolean {
   return true;
 }
 
+// tslint:disable-next-line
 export function resolveReference(
   firestore: MockFirebaseFirestore,
   root: MockDocumentReference | null,
   isCollectionPath: boolean,
   path: string,
   startParity: boolean = true,
-  rootCollection?: MockCollectionReference,
+  rootCollection?: MockCollectionReference
 ): MockCollectionReference | MockDocumentReference {
   let testPath = path;
   if (!startParity) {
@@ -207,7 +215,7 @@ export function resolveReference(
     throw Error(
       `Not a valid ${
         isCollectionPath ? 'collection' : 'document'
-      } reference: ${path}`,
+      } reference: ${path}`
     );
   }
 
@@ -224,7 +232,7 @@ export function resolveReference(
         collection = new MockCollectionReference(
           firestore,
           id,
-          doc !== firestore.root ? doc : null,
+          doc !== firestore.root ? doc : null
         );
         doc.mocker.setCollection(collection);
       }
@@ -258,7 +266,7 @@ export function resolveReference(
 export function findIndexForDocument(
   docs: MockDocumentReference[],
   fieldNames: (string | FieldPath)[],
-  fieldValues: any[],
+  fieldValues: any[]
 ): number {
   for (let i = 0; i < docs.length; i++) {
     if (matchFields(docs[i], fieldNames, fieldValues)) {
@@ -280,11 +288,11 @@ export function findIndexForDocument(
 export function matchFields(
   doc: MockDocumentReference,
   fieldNames: (string | FieldPath)[],
-  fieldValues: any[],
+  fieldValues: any[]
 ): boolean {
   if (fieldNames.length !== fieldValues.length) {
     throw new Error(
-      'Field names and values count differ, you must give value for each name',
+      'Field names and values count differ, you must give value for each name'
     );
   }
   for (let i = 0; i < fieldNames.length; i++) {
@@ -297,7 +305,7 @@ export function matchFields(
 
 export function getFieldValue(
   doc: MockDocumentReference,
-  fieldName: string | FieldPath,
+  fieldName: string | FieldPath
 ): any {
   if (typeof fieldName === 'string') {
     return doc.data[fieldName];
