@@ -1,6 +1,7 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from 'firebaseApp';
-import { MockDatabase } from 'firestore';
+import { MockDatabase } from '..';
+import { MockFirebaseApp } from '../../firebaseApp';
+import MockDocumentSnapshot from '../MockDocumentSnapshot';
 
 describe('Transaction handling', () => {
   const database: MockDatabase = {
@@ -30,7 +31,6 @@ describe('Transaction handling', () => {
   };
 
   it('will update operations atomically', async () => {
-
     const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
@@ -146,14 +146,14 @@ describe('Transaction handling', () => {
     const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
-    let result = undefined;
+    let result: MockDocumentSnapshot | undefined = undefined;
 
     await firestore.runTransaction(async transaction => {
       const ref = firestore.doc('b/A');
 
-      result = await transaction.get(ref);
+      result = (await transaction.get(ref)) as MockDocumentSnapshot;
     });
-    expect(result).toEqual({
+    expect(result!.data()).toEqual({
       text: 'A',
     });
   });

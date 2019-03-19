@@ -7,11 +7,11 @@ import {
   Transaction,
   UpdateData,
 } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from 'firestore';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import MockDocumentReference from 'firestore/MockDocumentReference';
-import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import { MockFirebaseValidationError } from 'firestore/utils';
+import { MockFirebaseFirestore } from '.';
+import { MockCollectionReference } from './MockCollectionReference';
+import MockDocumentReference from './MockDocumentReference';
+import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
+import { MockFirebaseValidationError } from './utils';
 
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { NotImplementedYet } from './utils';
@@ -27,10 +27,10 @@ export interface MockDocumentChange extends DocumentChange {
  */
 export default class MockTransaction implements Transaction {
   private transactionData: {
-    [documentPath: string]: any;
+    [documentPath: string]: any,
   } = {};
   private transactionOperation: {
-    [documentPath: string]: DocumentChangeType;
+    [documentPath: string]: DocumentChangeType,
   } = {};
 
   /**
@@ -51,16 +51,16 @@ export default class MockTransaction implements Transaction {
    * @param documentRef A reference to the document to be read.
    * @return A DocumentSnapshot for the read data.
    */
-  public get = (
-    documentRef: MockDocumentReference,
+  public get = async (
+    documentRef: MockDocumentReference
   ): Promise<MockDocumentSnapshot> => {
     if (this.modified) {
       throw new MockFirebaseValidationError(
-        'Read operations can only be done before write operations.',
+        'Read operations can only be done before write operations.'
       );
     }
-    return documentRef.data;
-  };
+    return new MockDocumentSnapshot(documentRef, { ...documentRef.data }); // TODO deep copy
+  }
 
   /**
    * Writes to the document referred to by the provided `DocumentReference`.
@@ -75,7 +75,7 @@ export default class MockTransaction implements Transaction {
   set = (
     documentRef: MockDocumentReference,
     data: DocumentData,
-    options?: SetOptions,
+    options?: SetOptions
   ): Transaction => {
     this.modified = true;
     const path = documentRef.path;
@@ -89,19 +89,19 @@ export default class MockTransaction implements Transaction {
       docData = { ...docData, ...data };
       this.transactionData[path] = documentRef.updateInTransaction(
         docData,
-        data,
+        data
       );
     } else {
       docData = { ...data };
       this.transactionData[path] = documentRef.setInTransaction(
         docData,
         data,
-        options,
+        options
       );
     }
     this.transactionOperation[path] = changeType;
     return this;
-  };
+  }
 
   /**
    * Updates fields in the document referred to by the provided
@@ -132,14 +132,13 @@ export default class MockTransaction implements Transaction {
       this.transactionData[path] = documentRef.updateInTransaction(
         data,
         dataOrField,
-        moreFieldsAndValues,
+        moreFieldsAndValues
       );
       this.transactionOperation[path] = 'modified';
       return this;
     }
     throw new NotImplementedYet('MockTransaction.get');
-  };
-
+  }
 
   /**
    * Deletes the document referred to by the provided `DocumentReference`.
@@ -154,11 +153,11 @@ export default class MockTransaction implements Transaction {
     this.transactionData[path] = undefined;
     this.transactionOperation[path] = 'removed';
     return this;
-  };
+  }
 
   commit = async (): Promise<void> => {
     const collectionChanges: {
-      [collectionId: string]: MockDocumentChange[];
+      [collectionId: string]: MockDocumentChange[],
     } = {};
     try {
       for (const path in this.transactionOperation) {
@@ -167,7 +166,7 @@ export default class MockTransaction implements Transaction {
 
         const documentChange = await doc.commitChange(
           operation,
-          this.transactionData[path],
+          this.transactionData[path]
         );
         const collectionPath = path.substr(0, path.lastIndexOf('/'));
         const changes: MockDocumentChange[] =
@@ -183,11 +182,11 @@ export default class MockTransaction implements Transaction {
           document.doc.ref.fireDocumentChangeEvent(
             document.type,
             documentChanges[documentId].oldIndex,
-            false,
+            false
           );
         }
         const collection = this.firestore.collection(
-          collectionId,
+          collectionId
         ) as MockCollectionReference;
         collection.fireBatchDocumentChange(documentChanges);
       }
@@ -195,9 +194,9 @@ export default class MockTransaction implements Transaction {
       this.rollback();
       throw error;
     }
-  };
+  }
 
   rollback = (): void => {
     console.log('rollback');
-  };
+  }
 }
