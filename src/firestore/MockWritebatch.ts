@@ -1,18 +1,18 @@
 import {
+  DocumentChangeType,
   DocumentData,
   DocumentReference,
   FieldPath,
   SetOptions,
   UpdateData,
   WriteBatch,
-  DocumentChangeType,
 } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from 'firestore';
+import { MockFirebaseFirestore } from '.';
 
-import { NotImplementedYet } from './utils';
-import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockCollectionReference } from './MockCollectionReference';
+import MockDocumentReference from './MockDocumentReference';
 import { MockDocumentChange } from './MockTransaction';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
+import { NotImplementedYet } from './utils';
 
 /**
  * A write batch, used to perform multiple writes as a single atomic unit.
@@ -27,10 +27,10 @@ import { MockCollectionReference } from 'firestore/MockCollectionReference';
  */
 export class MockWriteBatch implements WriteBatch {
   private transactionData: {
-    [documentPath: string]: any;
+    [documentPath: string]: any,
   } = {};
   private transactionOperation: {
-    [documentPath: string]: DocumentChangeType;
+    [documentPath: string]: DocumentChangeType,
   } = {};
 
   public constructor(public firestore: MockFirebaseFirestore) {}
@@ -48,7 +48,7 @@ export class MockWriteBatch implements WriteBatch {
   set(
     documentRef: MockDocumentReference,
     data: DocumentData,
-    options?: SetOptions,
+    options?: SetOptions
   ): WriteBatch {
     const path = documentRef.path;
 
@@ -61,14 +61,14 @@ export class MockWriteBatch implements WriteBatch {
       docData = { ...docData, ...data };
       this.transactionData[path] = documentRef.updateInTransaction(
         docData,
-        data,
+        data
       );
     } else {
       docData = { ...data };
       this.transactionData[path] = documentRef.setInTransaction(
         docData,
         data,
-        options,
+        options
       );
     }
     this.transactionOperation[path] = changeType;
@@ -100,7 +100,7 @@ export class MockWriteBatch implements WriteBatch {
       this.transactionData[path] = documentRef.updateInTransaction(
         data,
         dataOrField,
-        moreFielsAndValues,
+        moreFielsAndValues
       );
       this.transactionOperation[path] = 'modified';
       return this;
@@ -153,7 +153,7 @@ export class MockWriteBatch implements WriteBatch {
    */
   commit = async (): Promise<void> => {
     const collectionChanges: {
-      [collectionId: string]: MockDocumentChange[];
+      [collectionId: string]: MockDocumentChange[],
     } = {};
     try {
       for (const path in this.transactionOperation) {
@@ -162,7 +162,7 @@ export class MockWriteBatch implements WriteBatch {
 
         const documentChange = await doc.commitChange(
           operation,
-          this.transactionData[path],
+          this.transactionData[path]
         );
         const collectionPath = path.substr(0, path.lastIndexOf('/'));
         const changes: MockDocumentChange[] =
@@ -178,17 +178,18 @@ export class MockWriteBatch implements WriteBatch {
           document.doc.ref.fireDocumentChangeEvent(
             document.type,
             documentChanges[documentId].oldIndex,
-            false,
+            false
           );
         }
         const collection = this.firestore.collection(
-          collectionId,
+          collectionId
         ) as MockCollectionReference;
         collection.fireBatchDocumentChange(documentChanges);
       }
+      // tslint:disable-next-line
     } catch (error) {
-      // this.rollback();
+      // TODO this.rollback();
       throw error;
     }
-  };
+  }
 }

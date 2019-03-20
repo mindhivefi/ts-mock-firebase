@@ -1,7 +1,7 @@
 import { FieldPath, WhereFilterOp } from '@firebase/firestore-types';
-import MockDocumentReference from 'firestore/MockDocumentReference';
-import { MockQueryWhereRule } from 'firestore/MockQuery';
-import { NotImplementedYet } from 'firestore/utils/index';
+import MockDocumentReference from '../MockDocumentReference';
+import { MockQueryWhereRule } from '../MockQuery';
+import { NotImplementedYet } from '../utils/index';
 import { MockFirebaseValidationError } from './index';
 
 export type MatchFunction = (doc: MockDocumentReference) => boolean;
@@ -9,7 +9,7 @@ export type MatchFunction = (doc: MockDocumentReference) => boolean;
 export function createFirestoreMatchRuleFunction(
   fieldPath: string | FieldPath,
   opStr: WhereFilterOp,
-  value: any,
+  value: any
 ): MatchFunction {
   if (typeof fieldPath === 'string') {
     return (doc: MockDocumentReference) => {
@@ -33,7 +33,7 @@ export function createFirestoreMatchRuleFunction(
           case 'array-contains': {
             if (!Array.isArray(field)) {
               throw new MockFirebaseValidationError(
-                `Field ${fieldPath} is not an array.`,
+                `Field ${fieldPath} is not an array.`
               );
             }
             return field.indexOf(value) >= 0;
@@ -50,7 +50,7 @@ export function createFirestoreMatchRuleFunction(
 
 export function filterDocumentsByRules(
   docs: MockDocumentReference[],
-  rules?: MockQueryWhereRule[],
+  rules?: MockQueryWhereRule[]
 ): MockDocumentReference[] {
   if (!rules) {
     return docs.filter(d => d.data !== undefined);
@@ -98,7 +98,7 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
       case 'array-contains': {
         if (!Array.isArray(field))
           throw new MockFirebaseValidationError(
-            `Field ${fieldPath} is not an array.`,
+            `Field ${fieldPath} is not an array.`
           );
 
         if (field.indexOf(value) < 0) return false;

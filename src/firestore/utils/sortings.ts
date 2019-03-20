@@ -1,7 +1,7 @@
 import { FieldPath, OrderByDirection } from '@firebase/firestore-types';
-import MockDocumentReference from 'firestore/MockDocumentReference';
-import { MockQueryOrderRule } from 'firestore/MockQuery';
-import { NotImplementedYet } from 'firestore/utils/index';
+import MockDocumentReference from '../MockDocumentReference';
+import { MockQueryOrderRule } from '../MockQuery';
+import { NotImplementedYet } from '../utils/index';
 
 export type SortFunction = (a: any, b: any) => number;
 
@@ -13,7 +13,7 @@ export type SortFunction = (a: any, b: any) => number;
  */
 export function querySortFunction(
   fieldPath: string | FieldPath,
-  directionStr: OrderByDirection = 'asc',
+  directionStr: OrderByDirection = 'asc'
 ): SortFunction {
   if (typeof fieldPath === 'string') {
     return (a: MockDocumentReference, b: MockDocumentReference) => {
@@ -30,7 +30,7 @@ export function querySortFunction(
             return directionStr === 'asc' ? first - second : second - first;
           default:
             throw new NotImplementedYet(
-              `Query sorting for data type: ${typeof first}`,
+              `Query sorting for data type: ${typeof first}`
             );
         }
       }
@@ -38,13 +38,13 @@ export function querySortFunction(
     };
   }
   throw new NotImplementedYet(
-    `querySortFunction support for field path listing`,
+    `querySortFunction support for field path listing`
   );
 }
 
 export function sortDocumentsByRules(
   docs: MockDocumentReference[],
-  rules?: MockQueryOrderRule[],
+  rules?: MockQueryOrderRule[]
 ): MockDocumentReference[] {
   if (!rules) {
     return docs;

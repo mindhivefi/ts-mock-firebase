@@ -1,5 +1,5 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from 'firebaseApp';
+import { MockFirebaseApp } from '../../firebaseApp';
 
 import { MockDatabase } from '..';
 

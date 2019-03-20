@@ -3,34 +3,40 @@ import {
   CollectionReference,
   DocumentReference,
 } from '@firebase/firestore-types';
-import { MockFirebaseApp } from 'firebaseApp';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import MockTransaction from 'firestore/MockTransaction';
+import { MockFirebaseApp } from '../firebaseApp';
 import { Mocker } from '../index';
+import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import { MockDocumentSnapshotCallback } from './MockDocumentReference';
-import { NotImplementedYet, resolveReference } from './utils/index';
-import { MockWriteBatch } from './MockWritebatch';
+import MockDocumentSnapshot from './MockDocumentSnapshot';
+import MockFieldPath from './MockFieldPath';
+import MockFieldValue from './MockFieldValue';
+import MockQuery from './MockQuery';
+import MockQuerySnapshot from './MockQuerySnapshot';
 import MockTimestamp from './MockTimestamp';
+import MockTransaction from './MockTransaction';
+import { MockWriteBatch } from './MockWritebatch';
+import { NotImplementedYet, resolveReference } from './utils/index';
 
 declare module '@firebase/app-types' {
   interface FirebaseNamespace {
     firestore?: {
-      (app?: FirebaseApp): types.FirebaseFirestore;
-      Blob: typeof types.Blob;
-      CollectionReference: typeof types.CollectionReference;
-      DocumentReference: typeof types.DocumentReference;
-      DocumentSnapshot: typeof types.DocumentSnapshot;
-      FieldPath: typeof types.FieldPath;
-      FieldValue: typeof types.FieldValue;
-      Firestore: typeof types.FirebaseFirestore;
-      GeoPoint: typeof types.GeoPoint;
-      Query: typeof types.Query;
-      QuerySnapshot: typeof types.QuerySnapshot;
-      Timestamp: typeof types.Timestamp;
-      Transaction: typeof types.Transaction;
-      WriteBatch: typeof types.WriteBatch;
-      setLogLevel: typeof types.setLogLevel;
+      (app?: MockFirebaseApp): MockFirebaseFirestore
+      Blob: typeof types.Blob
+      CollectionReference: typeof MockCollectionReference
+      DocumentReference: typeof MockDocumentReference
+      DocumentSnapshot: typeof MockDocumentSnapshot
+      FieldPath: typeof MockFieldPath
+      FieldValue: typeof MockFieldValue
+      // tslint:disable-next-line: no-use-before-declare
+      Firestore: typeof MockFirebaseFirestore
+      GeoPoint: typeof types.GeoPoint
+      Query: typeof MockQuery
+      QuerySnapshot: typeof MockQuerySnapshot
+      Timestamp: typeof MockTimestamp
+      Transaction: typeof MockTransaction
+      WriteBatch: typeof MockWriteBatch
+      setLogLevel: typeof types.setLogLevel,
     };
   }
   interface FirebaseApp {
@@ -92,7 +98,7 @@ export interface FirestoreMocker extends Mocker {
    * @type {(MockTimestamp | TimestampFunction)}
    * @memberof FirestoreMocker
    */
-  serverTime: MockTimestamp | TimestampFunction | undefined;
+  serverTime?: MockTimestamp | TimestampFunction;
 }
 
 /**
@@ -103,11 +109,16 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
   public readonly root: MockDocumentReference = new MockDocumentReference(
     this,
     '',
-    null as any,
+    null as any
   );
 
   public mocker: FirestoreMocker;
 
+  private _settings?: types.Settings;
+
+  public readSettings = (): types.Settings | undefined => {
+    return this._settings;
+  }
   public constructor(app: MockFirebaseApp) {
     this.app = app;
     this.INTERNAL = {
@@ -125,7 +136,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
           const collection = new MockCollectionReference(
             this,
             collectionId,
-            this.root,
+            this.root
           );
           this.root.mocker.setCollection(collection);
           collection.mocker.load(collectionData);
@@ -156,8 +167,8 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @param settings The settings to use.
    */
   public settings = (settings: types.Settings): void => {
-    throw new NotImplementedYet('MockFirebaseFirestore.settings');
-  };
+    this._settings = settings;
+  }
 
   /**
    * Attempts to enable persistent storage, if possible.
@@ -181,7 +192,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    */
   public enablePersistence = async (settings?: types.PersistenceSettings) => {
     throw new NotImplementedYet('MockFirebaseFirestore.enablePersistence');
-  };
+  }
 
   /**
    * Gets a `CollectionReference` instance that refers to the collection at
@@ -195,9 +206,9 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
       this,
       this.root,
       true,
-      collectionPath,
+      collectionPath
     ) as CollectionReference;
-  };
+  }
 
   /**
    * Gets a `DocumentReference` instance that refers to the document at the
@@ -211,9 +222,9 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
       this,
       this.root,
       false,
-      documentPath,
+      documentPath
     ) as DocumentReference;
-  };
+  }
 
   /**
    * Executes the given updateFunction and then attempts to commit the
@@ -230,19 +241,18 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * error will be returned.
    */
   public runTransaction = async <T>(
-    updateFunction: (transaction: types.Transaction) => Promise<T>,
+    updateFunction: (transaction: types.Transaction) => Promise<T>
   ): Promise<T> => {
     const transaction = new MockTransaction(this);
     try {
       const result = await updateFunction(transaction);
-
       await transaction.commit();
       return result;
     } catch (error) {
       transaction.rollback();
       return error;
     }
-  };
+  }
 
   /**
    * Creates a write batch, used for performing multiple writes as a single
@@ -250,7 +260,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    */
   public batch = (): types.WriteBatch => {
     return new MockWriteBatch(this);
-  };
+  }
 
   /**
    * The `FirebaseApp` associated with this `Firestore` instance.
@@ -265,7 +275,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    */
   public enableNetwork = async () => {
     throw new NotImplementedYet('MockFirebaseFirestore.enableNetwork');
-  };
+  }
 
   /**
    * Disables network usage for this instance. It can be re-enabled via
@@ -277,7 +287,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    */
   public disableNetwork = async () => {
     throw new NotImplementedYet('MockFirebaseFirestore.disableNetwork');
-  };
+  }
 
   public INTERNAL: any;
 }

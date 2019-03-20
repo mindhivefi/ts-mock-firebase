@@ -30,7 +30,7 @@ export default class MockFieldPath implements FieldPath {
     // TODO validation
     this._fieldNames = fieldNames;
     this._path = fieldNames.reduce((path = '', value, index) =>
-      path ? `${path}.${value}` : value,
+      path ? `${path}.${value}` : value
     );
   }
   /**
@@ -39,7 +39,7 @@ export default class MockFieldPath implements FieldPath {
    */
   static documentId = (): FieldPath => {
     throw new NotImplementedYet('MockFieldPath.documentId()');
-  };
+  }
 
   /**
    * Returns true if this `FieldPath` is equal to the provided one.
@@ -49,5 +49,5 @@ export default class MockFieldPath implements FieldPath {
    */
   isEqual = (other: FieldPath): boolean => {
     return (other as MockFieldPath).path === this.path;
-  };
+  }
 }

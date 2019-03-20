@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {
   FirebaseApp,
   FirebaseAppConfig,
@@ -22,7 +21,6 @@ import {
   FirebaseOptions,
 } from '@firebase/app-types';
 import {
-  _FirebaseApp,
   _FirebaseNamespace,
   AppHook,
   FirebaseAppInternals,
@@ -37,6 +35,7 @@ import {
   ErrorFactory,
   patchProperty,
 } from '@firebase/util';
+
 import { MockFirebaseFirestore } from '../firestore';
 
 const contains = function(obj: object, key: string) {
@@ -59,8 +58,8 @@ export class MockFirebaseApp implements FirebaseApp {
   private isDeleted_ = false;
   private services_: {
     [name: string]: {
-      [serviceName: string]: FirebaseService;
-    };
+      [serviceName: string]: FirebaseService,
+    },
   } = {};
 
   private _firestore: MockFirebaseFirestore;
@@ -72,7 +71,8 @@ export class MockFirebaseApp implements FirebaseApp {
   constructor(
     options: FirebaseOptions = {},
     config: FirebaseAppConfig = {},
-    private firebase_: FirebaseNamespace = firebaseNamespace,
+    // tslint:disable-next-line
+    private firebase_: FirebaseNamespace = firebaseNamespace
   ) {
     this.name_ = config.name!;
     this._automaticDataCollectionEnabled =
@@ -88,7 +88,7 @@ export class MockFirebaseApp implements FirebaseApp {
       },
       removeAuthTokenListener: (callback: (token: string | null) => void) => {
         tokenListeners = tokenListeners.filter(
-          listener => listener !== callback,
+          listener => listener !== callback
         );
       },
     };
@@ -119,6 +119,7 @@ export class MockFirebaseApp implements FirebaseApp {
   public firestore() {
     return this._firestore;
   }
+
   delete(): Promise<void> {
     return new Promise(resolve => {
       this.checkDestroyed_();
@@ -135,14 +136,14 @@ export class MockFirebaseApp implements FirebaseApp {
         return Promise.all(
           services.map(service => {
             return service.INTERNAL!.delete();
-          }),
+          })
         );
       })
       .then(
         (): void => {
           this.isDeleted_ = true;
           this.services_ = {};
-        },
+        }
       );
   }
 
@@ -162,7 +163,7 @@ export class MockFirebaseApp implements FirebaseApp {
    */
   _getService(
     name: string,
-    instanceIdentifier: string = DEFAULT_ENTRY_NAME,
+    instanceIdentifier: string = DEFAULT_ENTRY_NAME
   ): FirebaseService {
     this.checkDestroyed_();
 
@@ -219,7 +220,8 @@ export class MockFirebaseApp implements FirebaseApp {
    */
   private checkDestroyed_(): void {
     if (this.isDeleted_) {
-      error('app-deleted', { name: this.name_ });
+      // tslint:disable-next-line
+      error('app-deleted', { name: this.name_ })
     }
   }
 }
@@ -237,6 +239,7 @@ export class MockFirebaseApp implements FirebaseApp {
  * assigned to the 'firebase' global.  It may be called multiple times
  * in unit tests.
  */
+// tslint:disable-next-line
 export function createFirebaseNamespace(): FirebaseNamespace {
   const apps_: { [name: string]: FirebaseApp } = {};
   const factories: { [service: string]: FirebaseServiceFactory } = {};
@@ -311,7 +314,7 @@ export function createFirebaseNamespace(): FirebaseNamespace {
    */
   function initializeApp(
     options: FirebaseOptions,
-    configOrName?: FirebaseAppConfig | string,
+    configOrName?: FirebaseAppConfig | string
   ): FirebaseApp {
     const config: FirebaseAppConfig =
       typeof configOrName === 'object' ? configOrName : { name: configOrName };
@@ -323,22 +326,23 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     const { name } = config;
 
     if (typeof name !== 'string' || !name) {
-      error('bad-app-name', { name: name + '' });
+      // tslint:disable-next-line
+      error('bad-app-name', { name: name + '' })
     }
 
     if (contains(apps_, name)) {
-      error('duplicate-app', { name: name });
+      // tslint:disable-next-line
+      error('duplicate-app', { name: name })
     }
 
     const newApp = new MockFirebaseApp(
       options,
       config,
-      namespace as FirebaseNamespace,
+      namespace as FirebaseNamespace
     );
 
     apps_[name] = newApp;
     callAppHooks(newApp, 'create');
-
     return newApp;
   }
 
@@ -362,11 +366,13 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     createService: FirebaseServiceFactory,
     serviceProperties?: { [prop: string]: any },
     appHook?: AppHook,
-    allowMultipleInstances?: boolean,
+    // tslint:disable-next-line
+    allowMultipleInstances?: boolean
   ): FirebaseServiceNamespace<FirebaseService> {
     // Cannot re-register a service that already exists
     if (factories[name]) {
-      error('duplicate-service', { name: name });
+      // tslint:disable-next-line
+      error('duplicate-service', { name: name })
     }
 
     // Capture the service factory for later service instantiation
@@ -387,7 +393,8 @@ export function createFirebaseNamespace(): FirebaseNamespace {
       if (typeof (appArg as any)[name] !== 'function') {
         // Invalid argument.
         // This happens in the following case: firebase.storage('gs:/')
-        error('invalid-app-argument', { name: name });
+        // tslint:disable-next-line
+        error('invalid-app-argument', { name: name })
       }
 
       // Forward service instance lookup to the FirebaseApp.
@@ -399,9 +406,9 @@ export function createFirebaseNamespace(): FirebaseNamespace {
       deepExtend(serviceNamespace, serviceProperties);
     }
 
-    // // Monkey-patch the serviceNamespace onto the firebase namespace
+    // tslint:disable-next-line
+    // Monkey-patch the serviceNamespace onto the firebase namespace
     // (namespace as any)[name] = serviceNamespace;
-
     // // Patch the FirebaseAppImpl prototype
     // (FirebaseAppMock.prototype as any)[name] = (...args: any[]) => {
     //   // tslint:disable-next-line
@@ -442,9 +449,12 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     if (name === 'serverAuth') {
       return null;
     }
-    const useService = name;
-    // const options = targetApp.options;
-    return useService;
+
+    // tslint:disable-next-line
+    // const useService = name
+    // tslint:disable-next-line
+    // const options = targetApp.options
+    return name;
   }
 
   return (namespace as any) as FirebaseNamespace;

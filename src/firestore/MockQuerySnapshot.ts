@@ -19,7 +19,7 @@ export default class MockQuerySnapshot implements QuerySnapshot {
   public constructor(
     public query: Query,
     private _docs: QueryDocumentSnapshot[],
-    private _docChanges: DocumentChange[],
+    private _docChanges: DocumentChange[]
   ) {}
 
   /**
@@ -64,7 +64,7 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    */
   public docChanges = (options?: SnapshotListenOptions): DocumentChange[] => {
     return this._docChanges;
-  };
+  }
 
   /**
    * Enumerates all of the documents in the QuerySnapshot.
@@ -73,9 +73,12 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    * each document in the snapshot.
    * @param thisArg The `this` binding for the callback.
    */
-  public forEach = (callback: (result: QueryDocumentSnapshot) => void, thisArg?: any): void => {
+  public forEach = (
+    callback: (result: QueryDocumentSnapshot) => void,
+    thisArg?: any
+  ): void => {
     throw new NotImplementedYet('MockQuerySnapshot.forEach');
-  };
+  }
 
   /**
    * Returns true if this `QuerySnapshot` is equal to the provided one.
@@ -85,5 +88,5 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    */
   public isEqual = (other: QuerySnapshot): boolean => {
     return this === other;
-  };
+  }
 }

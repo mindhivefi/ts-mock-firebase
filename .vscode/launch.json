@@ -8,10 +8,17 @@
       "name": "Debug Tests",
       "type": "node",
       "request": "launch",
-      "args": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "--coverage", "false"],
+      "args": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
+      ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**", "node_modules/jest*/**"]
     },
     {
       "type": "node",

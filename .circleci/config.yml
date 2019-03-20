@@ -22,7 +22,7 @@ jobs:
       - run: npm install
       - run:
           name: Run build
-          command: npm build
+          command: yarn build
       - save_cache:
           paths:
             - node_modules

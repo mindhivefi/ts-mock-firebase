@@ -12,11 +12,11 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import { MockCollectionReference } from 'firestore/MockCollectionReference';
-import MockDocumentReference from 'firestore/MockDocumentReference';
-import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import MockQuerySnapshot from 'firestore/MockQuerySnapshot';
-import { NotImplementedYet } from 'firestore/utils';
+import { MockCollectionReference } from './MockCollectionReference';
+import MockDocumentReference from './MockDocumentReference';
+import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
+import MockQuerySnapshot from './MockQuerySnapshot';
+import { NotImplementedYet } from './utils';
 
 import {
   ErrorFunction,
@@ -108,24 +108,24 @@ export default class MockQuery implements Query {
   public constructor(
     public collectionRef: CollectionReference,
     docRefs: MockDocumentReference[],
-    private rules: MockQueryRules = {},
+    private rules: MockQueryRules = {}
   ) {
     this.firestore = collectionRef.firestore;
     this.docRefs = docRefs.slice();
     this.unsubscribeCollection = this.collectionRef.onSnapshot(
-      this.handleCollectionSnapshotChange,
+      this.handleCollectionSnapshotChange
     );
   }
 
   private createClone = (): MockQuery => {
     return new MockQuery(this.collectionRef, this.docRefs, this.rules);
-  };
+  }
 
   public docRefs: MockDocumentReference[];
 
   public reset = () => {
     this.unsubscribeCollection();
-  };
+  }
   /**
    * The `Firestore` for the Firestore database (useful for performing
    * transactions, etc.).
@@ -145,7 +145,7 @@ export default class MockQuery implements Query {
   public where = (
     fieldPath: string | FieldPath,
     opStr: WhereFilterOp,
-    value: any,
+    value: any
   ): Query => {
     const result = this.createClone();
     const where: MockQueryWhereRule[] = result.rules.where || [];
@@ -156,7 +156,7 @@ export default class MockQuery implements Query {
     });
     result.rules.where = where;
     return result;
-  };
+  }
 
   /**
    * Creates and returns a new Query that's additionally sorted by the
@@ -169,7 +169,7 @@ export default class MockQuery implements Query {
    */
   orderBy = (
     fieldPath: string | FieldPath,
-    directionStr: OrderByDirection = 'asc',
+    directionStr: OrderByDirection = 'asc'
   ): Query => {
     const result = this.createClone();
     const rules = result.rules.order || ([] as MockQueryOrderRule[]);
@@ -179,7 +179,7 @@ export default class MockQuery implements Query {
     });
     result.rules.order = rules;
     return result;
-  };
+  }
 
   /**
    * Creates and returns a new Query that's additionally limited to only
@@ -191,13 +191,13 @@ export default class MockQuery implements Query {
   limit = (limit: number): Query => {
     if (limit <= 0) {
       throw new MockFirebaseValidationError(
-        'Query limit value must be greater than zero',
+        'Query limit value must be greater than zero'
       );
     }
     const result = this.createClone();
     result.rules.limit = limit;
     return result;
-  };
+  }
 
   /**
    * Creates and returns a new Query that starts at the provided document
@@ -215,7 +215,7 @@ export default class MockQuery implements Query {
     // TODO startAt / startAfter called multiple times?
     this.rules = this.createStartRule(fieldValues, 'at');
     return this;
-  };
+  }
 
   // /**
   //  * Creates and returns a new Query that starts at the provided fields
@@ -241,7 +241,7 @@ export default class MockQuery implements Query {
   startAfter = (...fieldValues: any[]): Query => {
     this.rules = this.createStartRule(fieldValues, 'after');
     return this;
-  };
+  }
 
   /**
    * Creates and returns a new Query that starts after the provided fields
@@ -267,7 +267,7 @@ export default class MockQuery implements Query {
   endBefore = (...fieldValues: any[]): Query => {
     this.rules = this.createEndRule(fieldValues, 'before');
     return this;
-  };
+  }
 
   /**
    * Creates and returns a new Query that ends before the provided fields
@@ -293,7 +293,7 @@ export default class MockQuery implements Query {
   endAt = (...fieldValues: any[]): Query => {
     this.rules = this.createEndRule(fieldValues, 'at');
     return this;
-  };
+  }
 
   /**
    * Creates and returns a new Query that ends at the provided fields
@@ -314,7 +314,7 @@ export default class MockQuery implements Query {
    */
   isEqual = (other: Query): boolean => {
     return this === other;
-  };
+  }
 
   /**
    * Executes the query and returns the results as a QuerySnapshot.
@@ -330,9 +330,9 @@ export default class MockQuery implements Query {
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     const docs = this.getFilterDocumentReferences();
     return Promise.resolve<QuerySnapshot>(
-      new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []),
+      new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), [])
     );
-  };
+  }
 
   /**
    * Attaches a listener for QuerySnapshot events. You may either pass
@@ -360,7 +360,7 @@ export default class MockQuery implements Query {
       | MockQuerySnapshotObserver
       | MockQuerySnapshotCallback
       | ErrorFunction,
-    onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction,
+    onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
@@ -369,7 +369,7 @@ export default class MockQuery implements Query {
         this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
     }
     throw new NotImplementedYet('MockQuery.onSnapshot');
-  };
+  }
 
   /**
    * Handle onSnapshot callbacks for document changes that have impact on this query.
@@ -420,19 +420,19 @@ export default class MockQuery implements Query {
         new MockQuerySnapshot(
           snapshot.query,
           this.getDocumentSnapshots(newDocs),
-          docChanges,
-        ),
+          docChanges
+        )
       );
     }
-  };
+  }
 
   private getDocumentSnapshots = (
-    docRefs: MockDocumentReference[] = this.docRefs,
+    docRefs: MockDocumentReference[] = this.docRefs
   ): QueryDocumentSnapshot[] => {
     return docRefs.map(
-      doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot,
+      doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot
     );
-  };
+  }
 
   private getFilterDocumentReferences = () => {
     let docs = this.docRefs;
@@ -446,13 +446,13 @@ export default class MockQuery implements Query {
         throw new MockFirebaseValidationError(
           `${
             start.startAt ? 'StartAt' : 'StartBefore'
-          } needs to match with query order but order is not defined.`,
+          } needs to match with query order but order is not defined.`
         );
       }
       const index = findIndexForDocument(
         docs,
         order.map(field => field.fieldPath),
-        start.fieldValues,
+        start.fieldValues
       );
       if (index >= 0) {
         docs = docs.slice(start.startAt === 'at' ? index : index + 1);
@@ -464,13 +464,13 @@ export default class MockQuery implements Query {
         throw new MockFirebaseValidationError(
           `${
             end.endAt ? 'beforeAt' : 'at'
-          } needs to match with query order but order is not defined.`,
+          } needs to match with query order but order is not defined.`
         );
       }
       const index = findIndexForDocument(
         docs,
         order.map(field => field.fieldPath),
-        end.fieldValues,
+        end.fieldValues
       );
       if (index >= 0) {
         docs = docs.slice(0, end.endAt === 'at' ? index + 1 : index);
@@ -481,7 +481,7 @@ export default class MockQuery implements Query {
       docs = docs.slice(0, Math.min(docs.length, limit));
     }
     return docs;
-  };
+  }
 
   private createStartRule = (fieldValues: any[], startAt: 'at' | 'after') => {
     return {
@@ -491,11 +491,11 @@ export default class MockQuery implements Query {
         startAt,
       },
     };
-  };
+  }
 
   private createEndRule = (
     fieldValues: any[],
-    endAt: 'before' | 'at',
+    endAt: 'before' | 'at'
   ): MockQueryRules => {
     return {
       ...this.rules,
@@ -504,7 +504,7 @@ export default class MockQuery implements Query {
         endAt,
       },
     };
-  };
+  }
 }
 
 export interface MockQuerySnapshotObserver {

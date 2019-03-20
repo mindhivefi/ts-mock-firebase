@@ -1,8 +1,8 @@
 import { DocumentSnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from 'firebaseApp';
+import { MockFirebaseApp } from '../../firebaseApp';
 
-import MockDocumentReference from 'firestore/MockDocumentReference';
 import { MockDatabase } from '../index';
+import MockDocumentReference from '../MockDocumentReference';
 
 describe('Database state restoring', () => {
   it('will create the database from an object model', async () => {
@@ -31,6 +31,7 @@ describe('Database state restoring', () => {
                 docs: {
                   kitten: {
                     data: {
+                      // tslint:disable-next-line: no-duplicate-string
                       photoUrl: 'https://www.cat.com/',
                     },
                   },
@@ -40,6 +41,7 @@ describe('Database state restoring', () => {
           },
           dog: {
             data: {
+              // tslint:disable-next-line: no-duplicate-string
               name: "Santa's little helper",
             },
             listerners: [dogWhisper],

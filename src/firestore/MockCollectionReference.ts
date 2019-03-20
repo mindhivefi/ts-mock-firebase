@@ -14,14 +14,14 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import MockDocumentReference from 'firestore/MockDocumentReference';
+import { Mocker } from '../index';
+import MockDocumentReference from './MockDocumentReference';
 import MockQuery, {
   MockQuerySnapshotCallback,
   MockQuerySnapshotObserver,
-} from 'firestore/MockQuery';
-import MockQueryDocumentSnapshot from 'firestore/MockQueryDocumentSnapshot';
-import { generateDocumentId, resolveReference } from 'firestore/utils';
-import { Mocker } from 'index';
+} from './MockQuery';
+import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
+import { generateDocumentId, resolveReference } from './utils';
 
 import { MockCollection, MockDocuments, MockFirebaseFirestore } from '.';
 import {
@@ -58,10 +58,11 @@ export class MockCollectionReference implements CollectionReference {
 
   private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
 
+  // tslint:disable-next-line
   public constructor(
     public firestore: MockFirebaseFirestore,
     public id: string,
-    public parent: DocumentReference | null = null,
+    public parent: DocumentReference | null = null
   ) {
     this.mocker = {
       doc: (documentId: string) => {
@@ -91,7 +92,7 @@ export class MockCollectionReference implements CollectionReference {
             const document = new MockDocumentReference(
               this.firestore,
               documentId,
-              this,
+              this
             );
             this.mocker.setDoc(document);
             document.mocker.load(documentData);
@@ -151,9 +152,9 @@ export class MockCollectionReference implements CollectionReference {
       false,
       documentPath || generateDocumentId(),
       false,
-      this,
+      this
     ) as DocumentReference;
-  };
+  }
 
   /**
    * Add a new document to this collection with the specified data, assigning
@@ -174,7 +175,7 @@ export class MockCollectionReference implements CollectionReference {
 
       resolve(document);
     });
-  };
+  }
 
   /**
    * Returns true if this `CollectionReference` is equal to the provided one.
@@ -184,7 +185,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   public isEqual = (other: CollectionReference | Query): boolean => {
     return this === other;
-  };
+  }
 
   /**
    * The `Firestore` for the Firestore database (useful for performing
@@ -205,10 +206,10 @@ export class MockCollectionReference implements CollectionReference {
   public where = (
     fieldPath: string | FieldPath,
     opStr: WhereFilterOp,
-    value: any,
+    value: any
   ): Query => {
     return new MockQuery(this, this.getDocs()).where(fieldPath, opStr, value);
-  };
+  }
 
   /**
    * Creates and returns a new Query that's additionally sorted by the
@@ -221,10 +222,10 @@ export class MockCollectionReference implements CollectionReference {
    */
   public orderBy = (
     fieldPath: string | FieldPath,
-    directionStr?: OrderByDirection,
+    directionStr?: OrderByDirection
   ): Query => {
     return new MockQuery(this, this.getDocs()).orderBy(fieldPath, directionStr);
-  };
+  }
 
   /**
    * Creates and returns a new Query that's additionally limited to only
@@ -235,7 +236,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   public limit = (limit: number): Query => {
     return new MockQuery(this, this.getDocs()).limit(limit);
-  };
+  }
   /**
    * Creates and returns a new Query that starts at the provided document
    * (inclusive). The starting position is relative to the order of the query.
@@ -250,7 +251,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAt(...fieldValues: any[]): Query  {
   public startAt = (args: DocumentSnapshot | any[]) => {
     throw new MockQuery(this, this.getDocs()).startAt(args);
-  };
+  }
 
   /**
    * Creates and returns a new Query that starts at the provided fields
@@ -275,7 +276,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAfter = (snapshot: DocumentSnapshot): Query=> {
   public startAfter = (args: DocumentSnapshot | any[]) => {
     throw new MockQuery(this, this.getDocs()).startAfter(args);
-  };
+  }
 
   /**
    * Creates and returns a new Query that starts after the provided fields
@@ -310,7 +311,7 @@ export class MockCollectionReference implements CollectionReference {
   // endBefore(...fieldValues: any[]): Query;
   public endBefore = (args: DocumentSnapshot | any[]) => {
     throw new MockQuery(this, this.getDocs()).endBefore(args);
-  };
+  }
   /**
    * Creates and returns a new Query that ends at the provided document
    * (inclusive). The end position is relative to the order of the query. The
@@ -334,7 +335,7 @@ export class MockCollectionReference implements CollectionReference {
   // endAt(...fieldValues: any[]): Query;
   public endAt = (...fieldValues: any[]): Query => {
     throw new MockQuery(this, this.getDocs()).endAt(fieldValues);
-  };
+  }
 
   /**
    * Returns true if this `Query` is equal to the provided one.
@@ -359,7 +360,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   public get = async (options?: GetOptions): Promise<QuerySnapshot> => {
     return Promise.resolve(new MockQuery(this, this.getDocs()).get());
-  };
+  }
 
   /**
    * Attaches a listener for QuerySnapshot events. You may either pass
@@ -387,7 +388,7 @@ export class MockCollectionReference implements CollectionReference {
       | MockQuerySnapshotObserver
       | MockQuerySnapshotCallback
       | ErrorFunction,
-    onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction,
+    onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
@@ -396,18 +397,18 @@ export class MockCollectionReference implements CollectionReference {
       };
     }
     throw new Error('Not implemented yet');
-  };
+  }
 
   public fireBatchDocumentChange = (documentChanges: DocumentChange[]) => {
     const docs = this.getQueryDocumentSnapshots();
     const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
     this._snapshotCallbackHandler.fire(querySnapshot);
-  };
+  }
 
   public fireSubDocumentChange = (
     type: DocumentChangeType,
     snapshot: DocumentSnapshot,
-    oldIndex: number = -1,
+    oldIndex: number = -1
   ) => {
     switch (type) {
       case 'modified':
@@ -425,7 +426,7 @@ export class MockCollectionReference implements CollectionReference {
           const querySnapshot = new MockQuerySnapshot(
             this,
             docs,
-            documentChanges,
+            documentChanges
           );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
@@ -446,7 +447,7 @@ export class MockCollectionReference implements CollectionReference {
           const querySnapshot = new MockQuerySnapshot(
             this,
             docs,
-            documentChanges,
+            documentChanges
           );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
@@ -466,7 +467,7 @@ export class MockCollectionReference implements CollectionReference {
           const querySnapshot = new MockQuerySnapshot(
             this,
             docs,
-            documentChanges,
+            documentChanges
           );
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
@@ -475,7 +476,7 @@ export class MockCollectionReference implements CollectionReference {
       default:
         throw new Error(`Unexpected change type: ${type}`);
     }
-  };
+  }
 
   private getDocs(): MockDocumentReference[] {
     return Object.getOwnPropertyNames(this._docRefs).map(docId => {
@@ -488,10 +489,10 @@ export class MockCollectionReference implements CollectionReference {
     Object.keys(this._docRefs).forEach(key => {
       if (this._docRefs[key] && this._docRefs[key].data) {
         result.push(new MockQueryDocumentSnapshot(
-          this._docRefs[key],
+          this._docRefs[key]
         ) as QueryDocumentSnapshot);
       }
     });
     return result;
-  };
+  }
 }

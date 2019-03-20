@@ -1,5 +1,5 @@
 import { DocumentData, FieldValue } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from 'firestore';
+import { MockFirebaseFirestore } from '.';
 
 import MockTimestamp from './MockTimestamp';
 import { NotImplementedYet } from './utils';
@@ -20,7 +20,7 @@ export default class MockFieldValue implements FieldValue {
 
   private static deleteSentinel = new MockFieldValue(MockFieldValueType.DELETE);
   private static timestampSentinel = new MockFieldValue(
-    MockFieldValueType.TIMESTAMP,
+    MockFieldValueType.TIMESTAMP
   );
 
   private constructor(type: MockFieldValueType, ...args: any[]) {
@@ -100,7 +100,7 @@ export default class MockFieldValue implements FieldValue {
  */
 export function preprocessData(
   firestore: MockFirebaseFirestore,
-  data: DocumentData,
+  data: DocumentData
 ): DocumentData {
   const result = { ...data };
   for (const key in result) {
@@ -127,12 +127,13 @@ export function preprocessData(
  * @param {MockFieldValue} fieldValue
  * @returns {DocumentData}
  */
+// tslint:disable-next-line
 export function processFieldValue(
   firestore: MockFirebaseFirestore,
   sourceData: DocumentData,
   targetData: DocumentData,
   key: string,
-  fieldValue: MockFieldValue,
+  fieldValue: MockFieldValue
 ) {
   switch (fieldValue.type) {
     case MockFieldValueType.DELETE:

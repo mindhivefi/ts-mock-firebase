@@ -13,3 +13,5 @@ export interface Mocker {
 }
 
 export default firebase;
+
+export * from './firebaseApp';

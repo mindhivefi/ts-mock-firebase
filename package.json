@@ -65,9 +65,11 @@
   "devDependencies": {
     "@commitlint/cli": "7.5.2",
     "@commitlint/config-conventional": "7.5.0",
-    "@firebase/app-types": "0.3.5",
+    "@firebase/app-types": "0.3.6",
+    "@firebase/auth": "0.9.5",
     "@firebase/firestore": "1.0.6",
     "@firebase/firestore-types": "1.0.3",
+    "@firebase/messaging": "0.3.14",
     "@firebase/util": "0.2.9",
     "@semantic-release/changelog": "3.0.2",
     "@semantic-release/git": "7.0.8",
@@ -97,7 +99,8 @@
   "husky": {
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "precommit": "yarn lint && yarn test && yarn clean"
+      "precommit": "yarn lint && yarn test && yarn clean",
+      "build": "yarn build"
     }
   },
   "files": [

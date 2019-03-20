@@ -1,4 +1,4 @@
-import { MockFirebaseApp } from 'firebaseApp';
+import { MockFirebaseApp } from '../../firebaseApp';
 
 describe('Firestore references', () => {
   describe('Collection References', () => {

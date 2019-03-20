@@ -1,9 +1,9 @@
-import { filterDocumentsByRules } from '../matching';
-import MockDocumentReference from 'firestore/MockDocumentReference';
+import { MockFirebaseApp } from '../../../firebaseApp';
 import { MockDatabase } from '../../index';
-import { MockFirebaseApp } from 'firebaseApp';
-import { matchFields } from '../index';
+import MockDocumentReference from '../../MockDocumentReference';
 import MockFieldPath from '../../MockFieldPath';
+import { matchFields } from '../index';
+import { filterDocumentsByRules } from '../matching';
 
 describe('Where Clauses', () => {
   describe('simple rules', () => {
@@ -91,7 +91,7 @@ describe('Where Clauses', () => {
       const doc = firestore.doc('list/a') as MockDocumentReference;
       expect(matchFields(doc, ['field3'], ['cat'])).toBeFalsy();
       expect(
-        matchFields(doc, [new MockFieldPath('field5', 'daa', 'daa')], ['cat']),
+        matchFields(doc, [new MockFieldPath('field5', 'daa', 'daa')], ['cat'])
       ).toBeFalsy();
     });
     it('will match values in sub objects pointed with FieldPath', () => {
@@ -99,7 +99,7 @@ describe('Where Clauses', () => {
       firestore.mocker.fromMockDatabase(database);
       const doc = firestore.doc('list/a') as MockDocumentReference;
       expect(
-        matchFields(doc, [new MockFieldPath('sub', 'field')], ['dog']),
+        matchFields(doc, [new MockFieldPath('sub', 'field')], ['dog'])
       ).toBeTruthy();
     });
     it('will un match values in sub objects pointed with FieldPath that contain wrong value', () => {
@@ -107,7 +107,7 @@ describe('Where Clauses', () => {
       firestore.mocker.fromMockDatabase(database);
       const doc = firestore.doc('list/a') as MockDocumentReference;
       expect(
-        matchFields(doc, [new MockFieldPath('sub', 'field')], ['chicken']),
+        matchFields(doc, [new MockFieldPath('sub', 'field')], ['chicken'])
       ).toBeFalsy();
     });
   });

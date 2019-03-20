@@ -6,7 +6,7 @@ import {
   SnapshotMetadata,
   SnapshotOptions,
 } from '@firebase/firestore-types';
-import MockDocumentReference from 'firestore/MockDocumentReference';
+import MockDocumentReference from './MockDocumentReference';
 
 /**
  * A `DocumentSnapshot` contains data read from a document in your Firestore
@@ -17,7 +17,8 @@ import MockDocumentReference from 'firestore/MockDocumentReference';
  * access will return 'undefined'. You can use the `exists` property to
  * explicitly verify a document's existence.
  */
-export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot {
+export default class MockQueryDocumentSnapshot
+  implements QueryDocumentSnapshot {
   /**
    *
    * @param _queryMock A `DocumentReference` to the document location.
@@ -71,7 +72,7 @@ export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot 
    */
   public data = (options?: SnapshotOptions): DocumentData => {
     return this._query.data;
-  };
+  }
 
   /**
    * Retrieves the field specified by `fieldPath`. Returns 'undefined' if the
@@ -90,7 +91,7 @@ export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot 
    */
   get = (fieldPath: string | FieldPath, options?: SnapshotOptions): any => {
     throw new Error('Not implemented yet');
-  };
+  }
 
   /**
    * Returns true if this `DocumentSnapshot` is equal to the provided one.
@@ -100,5 +101,5 @@ export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot 
    */
   isEqual = (other: DocumentSnapshot): boolean => {
     return (this as any) === other;
-  };
+  }
 }
