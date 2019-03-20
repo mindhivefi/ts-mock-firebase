@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.4...v1.3.0) (2019-03-20)
+
+
+### Bug Fixes
+
+* document-id-validation ([b3907ea](https://github.com/mindhivefi/ts-mock-firebase/commit/b3907ea))
+* transactino-update-fixes ([6d3a497](https://github.com/mindhivefi/ts-mock-firebase/commit/6d3a497))
+* transaction-get-fix ([b80acc8](https://github.com/mindhivefi/ts-mock-firebase/commit/b80acc8))
+* undefined-field-handling-on-deep-merge ([65660ee](https://github.com/mindhivefi/ts-mock-firebase/commit/65660ee))
+
+
+### Features
+
+* mockdocumentsnapshot-get ([8b3adb8](https://github.com/mindhivefi/ts-mock-firebase/commit/8b3adb8))
+
 ## [1.2.4](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.3...v1.2.4) (2019-03-14)
 
 
