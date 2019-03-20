@@ -14,6 +14,8 @@ import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
 import { MockFirebaseValidationError } from './utils';
 
 import MockDocumentSnapshot from './MockDocumentSnapshot';
+import MockFieldPath from './MockFieldPath';
+import MockFieldValue, { processFieldValue } from './MockFieldValue';
 import { NotImplementedYet } from './utils';
 
 export interface MockDocumentChange extends DocumentChange {
@@ -59,7 +61,10 @@ export default class MockTransaction implements Transaction {
         'Read operations can only be done before write operations.'
       );
     }
-    return new MockDocumentSnapshot(documentRef, { ...documentRef.data }); // TODO deep copy
+    return new MockDocumentSnapshot(
+      documentRef,
+      documentRef.data ? { ...documentRef.data } : undefined
+    ); // TODO deep copy
   }
 
   /**
@@ -124,11 +129,75 @@ export default class MockTransaction implements Transaction {
   ): Transaction => {
     this.modified = true;
 
+    const path = documentRef.path;
+    const data = this.transactionData[path] || { ...documentRef.data }; // TODO need to do locking for transaction
+    const newData = { ...data };
+
+    const fieldType = typeof dataOrField;
+
+    if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
+      // TODO remove repetative code
+      let args = [dataOrField];
+      if (moreFieldsAndValues && moreFieldsAndValues.length > 0) {
+        args = args.concat(moreFieldsAndValues);
+      }
+      if (args.length % 1 === 1) {
+        throw new MockFirebaseValidationError(
+          'Argument count does not mach in pairs. Update must contain key value -pairs to work'
+        );
+      }
+
+      for (let i = 0; i < args.length; i += 2) {
+        const fieldPath = args[i];
+        const fieldValue = args[i + 1];
+        if (typeof fieldPath === 'string') {
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(
+              this.firestore,
+              data,
+              newData,
+              fieldPath,
+              fieldValue
+            );
+          } else {
+            newData[fieldPath] = fieldValue;
+          }
+        } else if (fieldPath instanceof MockFieldPath) {
+          const fieldNames = fieldPath.fieldNames;
+
+          let parent = newData;
+          for (let j = 1; j < fieldNames.length; j++) {
+            parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
+            if (typeof parent !== 'object') {
+              throw new MockFirebaseValidationError(
+                `Illegal path. Can not add value under field type of ${typeof parent}`
+              );
+            }
+          }
+          const propPath = fieldNames[fieldNames.length - 1];
+
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(
+              this.firestore,
+              data,
+              parent,
+              propPath,
+              fieldValue
+            );
+          } else {
+            parent[propPath] = fieldValue;
+          }
+        } else
+          throw new MockFirebaseValidationError(
+            `Unsupported field path: typeof(${typeof fieldPath}: ${fieldPath})`
+          );
+      }
+      this.transactionData[path] = newData;
+      this.transactionOperation[path] = 'modified';
+      return this;
+    }
     if (typeof dataOrField === 'object') {
       // TODO fieldPaths...
-      const path = documentRef.path;
-
-      const data = this.transactionData[path] || { ...documentRef.data }; // TODO need to do locking for transaction
       this.transactionData[path] = documentRef.updateInTransaction(
         data,
         dataOrField,
