@@ -1,5 +1,5 @@
-import { MockFirebaseFirestore } from 'firestore';
-import MockFieldValue, { processFieldValue } from 'firestore/MockFieldValue';
+import { MockFirebaseFirestore } from '..';
+import MockFieldValue, { processFieldValue } from '../MockFieldValue';
 
 /**
  * Copy properties from source to target (recursively allows extension
@@ -16,9 +16,9 @@ import MockFieldValue, { processFieldValue } from 'firestore/MockFieldValue';
 export function processAndDeepMerge(
   firestore: MockFirebaseFirestore,
   target: any,
-  source: any,
+  source: any
 ) {
-  if (!(source instanceof Object)) {
+  if (!source || !(source instanceof Object)) {
     return source;
   }
   let result: any;
@@ -47,6 +47,11 @@ export function processAndDeepMerge(
     }
     const sourceValue = source[prop];
     const targetValue = target ? target[prop] : undefined;
+
+    if (!sourceValue) {
+      result[prop] = targetValue;
+      continue;
+    }
     switch (sourceValue.constructor) {
       case Date:
         // Treat Dates like scalars; if the target date object had any child
@@ -63,7 +68,7 @@ export function processAndDeepMerge(
         result[prop] = processAndDeepMerge(
           firestore,
           targetValue ? targetValue.slice() : [],
-          sourceValue,
+          sourceValue
         );
         break;
       case MockFieldValue:
