@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.3.0...v1.3.1) (2019-03-21)
+
+
+### Bug Fixes
+
+* better-fieldpath-updates ([e8f1958](https://github.com/mindhivefi/ts-mock-firebase/commit/e8f1958))
+* writebatch-triggers-fix ([3568c2c](https://github.com/mindhivefi/ts-mock-firebase/commit/3568c2c))
+
 # [1.3.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.2.4...v1.3.0) (2019-03-20)
 
 
