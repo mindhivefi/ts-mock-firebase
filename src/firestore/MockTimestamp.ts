@@ -6,7 +6,7 @@ export default class MockTimestamp implements Timestamp {
    *
    * @return a new timestamp representing the current date.
    */
-  static now(): MockTimestamp {
+  public static now(): MockTimestamp {
     return MockTimestamp.fromDate(new Date());
   }
 
@@ -17,7 +17,7 @@ export default class MockTimestamp implements Timestamp {
    * @return A new `Timestamp` representing the same point in time as the given
    *     date.
    */
-  static fromDate(date: Date): MockTimestamp {
+  public static fromDate(date: Date): MockTimestamp {
     return MockTimestamp.fromMillis(date.getTime());
   }
 
@@ -29,7 +29,7 @@ export default class MockTimestamp implements Timestamp {
    * @return A new `Timestamp` representing the same point in time as the given
    *     number of milliseconds.
    */
-  static fromMillis(milliseconds: number): MockTimestamp {
+  public static fromMillis(milliseconds: number): MockTimestamp {
     const seconds = Math.floor(milliseconds / 1000);
     const nanoseconds = (milliseconds - seconds * 1000) * 1000000;
     return new MockTimestamp(seconds, nanoseconds);
@@ -69,7 +69,7 @@ export default class MockTimestamp implements Timestamp {
    * @return JavaScript `Date` object representing the same point in time as
    *     this `Timestamp`, with millisecond precision.
    */
-  toDate(): Date {
+  public toDate(): Date {
     return new Date(this.toMillis());
   }
 
@@ -79,7 +79,7 @@ export default class MockTimestamp implements Timestamp {
    * @return The point in time corresponding to this timestamp, represented as
    *     the number of milliseconds since Unix epoch 1970-01-01T00:00:00Z.
    */
-  toMillis(): number {
+  public toMillis(): number {
     return this._seconds * 1000 + this._nanoseconds / 1000000;
   }
 
@@ -89,7 +89,7 @@ export default class MockTimestamp implements Timestamp {
    * @param other The `Timestamp` to compare against.
    * @return true if this `Timestamp` is equal to the provided one.
    */
-  isEqual(other: Timestamp): boolean {
+  public isEqual(other: Timestamp): boolean {
     return (
       other.seconds === this._seconds && other.nanoseconds === this._nanoseconds
     );

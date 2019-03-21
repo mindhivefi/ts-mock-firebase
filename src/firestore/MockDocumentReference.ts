@@ -11,19 +11,21 @@ import {
   SnapshotListenOptions,
   UpdateData,
 } from '@firebase/firestore-types';
-import { MockCollectionReference } from './MockCollectionReference';
-import { MockFirebaseValidationError, resolveReference } from './utils';
-import MockCallbackHandler from './utils/CallbackHandler';
 
 import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
 import { Mocker } from '..';
+import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
-import MockFieldValue, {
-  preprocessData,
-  processFieldValue,
-} from './MockFieldValue';
+import { preprocessData } from './MockFieldValue';
 import { MockDocumentChange } from './MockTransaction';
+import {
+  MockFirebaseValidationError,
+  parseFieldValuePairsFromArgs,
+  resolveReference,
+  setFieldValuePairs,
+} from './utils';
+import MockCallbackHandler from './utils/CallbackHandler';
 import { processAndDeepMerge } from './utils/manipulation';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
@@ -55,16 +57,23 @@ export interface DocumentMocker extends Mocker {
 }
 
 export default class MockDocumentReference implements DocumentReference {
+  /**
+   * A string representing the path of the referenced document (relative
+   * to the root of the database).
+   */
+  public get path(): string {
+    return this.parent ? `${this.parent.path}/${this.id}` : this.id;
+  }
   // if data does not exists, the document will be treated is if it does not exists
   public data: any = undefined;
 
+  public mocker: DocumentMocker;
+
   private _collections: {
-    [id: string]: MockCollectionReference,
+    [id: string]: MockCollectionReference;
   } = {};
 
   private _snapshotCallbackHandler = new MockCallbackHandler<DocumentSnapshot>();
-
-  public mocker: DocumentMocker;
 
   /**
    *
@@ -73,11 +82,7 @@ export default class MockDocumentReference implements DocumentReference {
    * @param parent A reference to the Collection to which this DocumentReference belongs.
    */
   // tslint:disable-next-line
-  public constructor(
-    public firestore: MockFirebaseFirestore,
-    public id: string,
-    public parent: CollectionReference
-  ) {
+  public constructor(public firestore: MockFirebaseFirestore, public id: string, public parent: CollectionReference) {
     this.mocker = {
       collection: (collectionId: string) => {
         return this._collections[collectionId];
@@ -89,8 +94,10 @@ export default class MockDocumentReference implements DocumentReference {
 
       reset: () => {
         for (const collectionId in this._collections) {
-          const collection = this._collections[collectionId];
-          collection.mocker.reset();
+          if (this._collections.hasOwnProperty(collectionId)) {
+            const collection = this._collections[collectionId];
+            collection.mocker.reset();
+          }
         }
         this._collections = {};
         this._snapshotCallbackHandler.reset();
@@ -105,15 +112,13 @@ export default class MockDocumentReference implements DocumentReference {
 
         if (collections) {
           for (const collectionId in collections) {
-            const collectionData = collections[collectionId];
+            if (collections.hasOwnProperty(collectionId)) {
+              const collectionData = collections[collectionId];
 
-            const collection = new MockCollectionReference(
-              this.firestore,
-              collectionId,
-              this
-            );
-            this.mocker.setCollection(collection);
-            collection.mocker.load(collectionData);
+              const collection = new MockCollectionReference(this.firestore, collectionId, this);
+              this.mocker.setCollection(collection);
+              collection.mocker.load(collectionData);
+            }
           }
         }
 
@@ -126,8 +131,10 @@ export default class MockDocumentReference implements DocumentReference {
       saveCollections: (): MockCollections => {
         const result: MockCollections = {};
         for (const collectionId in this._collections) {
-          const collection = this._collections[collectionId];
-          result[collectionId] = collection.mocker.saveCollection();
+          if (this._collections.hasOwnProperty(collectionId)) {
+            const collection = this._collections[collectionId];
+            result[collectionId] = collection.mocker.saveCollection();
+          }
         }
         return result;
       },
@@ -151,14 +158,6 @@ export default class MockDocumentReference implements DocumentReference {
       },
     };
   }
-
-  /**
-   * A string representing the path of the referenced document (relative
-   * to the root of the database).
-   */
-  public get path(): string {
-    return this.parent ? `${this.parent.path}/${this.id}` : this.id;
-  }
   /**
    * Gets a `CollectionReference` instance that refers to the collection at
    * the specified path.
@@ -167,12 +166,7 @@ export default class MockDocumentReference implements DocumentReference {
    * @return The `CollectionReference` instance.
    */
   public collection = (collectionPath: string): CollectionReference => {
-    return resolveReference(
-      this.firestore,
-      this,
-      true,
-      collectionPath
-    ) as CollectionReference;
+    return resolveReference(this.firestore, this, true, collectionPath) as CollectionReference;
   }
 
   /**
@@ -200,29 +194,9 @@ export default class MockDocumentReference implements DocumentReference {
 
     await this._set(data, options);
 
-    const documentSnapshot = new MockDocumentSnapshot(
-      this,
-      this.data
-    ) as DocumentSnapshot;
-    this._snapshotCallbackHandler.fire(documentSnapshot)
-    ;(this.parent as MockCollectionReference).fireSubDocumentChange(
-      changeType,
-      documentSnapshot
-    );
-  }
-
-  /**
-   * Private set -method used inside and outside of transaction
-   *
-   * @private
-   * @memberof MockDocumentReference
-   */
-  private _set = async (data: DocumentData, options?: SetOptions) => {
-    if (options && options.merge) {
-      this.data = processAndDeepMerge(this.firestore, this.data, data);
-    } else {
-      this.data = preprocessData(this.firestore, data);
-    }
+    const documentSnapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    this._snapshotCallbackHandler.fire(documentSnapshot);
+    (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, documentSnapshot);
   }
 
   public setInTransaction = (
@@ -258,83 +232,6 @@ export default class MockDocumentReference implements DocumentReference {
     await this._update(true, data, value, moreFieldsAndValues);
   }
 
-  private _update = async (
-    fireCallbacks: boolean,
-    data: UpdateData | string | FieldPath,
-    value?: any,
-    ...moreFieldsAndValues: any[]
-  ) => {
-    if (!this.data) {
-      // TODO change to use actual exception
-      throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
-    }
-    if (!value) {
-      // only one parameter, so we treat it as UpdateData
-      this.data = processAndDeepMerge(this.firestore, this.data, data);
-    } else {
-      let args = [data, value];
-      if (moreFieldsAndValues && moreFieldsAndValues[0].length > 1) {
-        args = args.concat(moreFieldsAndValues[0]);
-      }
-      if (args.length % 1 === 1) {
-        throw new MockFirebaseValidationError(
-          'Argument count does not mach in pairs. Update must contain key value -pairs to work'
-        );
-      }
-
-      const newData = {
-        ...this.data,
-      };
-      for (let i = 0; i < args.length; i += 2) {
-        const path = args[i];
-        const fieldValue = args[i + 1];
-        if (typeof path === 'string') {
-          if (fieldValue instanceof MockFieldValue) {
-            processFieldValue(
-              this.firestore,
-              this.data,
-              newData,
-              path,
-              fieldValue
-            );
-          } else {
-            newData[path] = fieldValue;
-          }
-        } else if (path instanceof MockFieldPath) {
-          const fieldNames = path.fieldNames;
-
-          let parent = newData;
-          for (let j = 1; j < fieldNames.length; j++) {
-            parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
-            if (typeof parent !== 'object') {
-              throw new MockFirebaseValidationError(
-                `Illegal path. Can not add value under field type of ${typeof parent}`
-              );
-            }
-          }
-          const propPath = fieldNames[fieldNames.length - 1];
-
-          if (fieldValue instanceof MockFieldValue) {
-            processFieldValue(
-              this.firestore,
-              this.data,
-              parent,
-              propPath,
-              fieldValue
-            );
-          } else {
-            parent[propPath] = fieldValue;
-          }
-        } else
-          throw new MockFirebaseValidationError(
-            `Unsupported field path: typeof(${typeof path}: ${path})`
-          );
-      }
-      this.data = newData;
-    }
-    fireCallbacks && this.fireDocumentChangeEvent('modified');
-  }
-
   /**
    * Updates fields in the document referred to by this `DocumentReference`.
    * The update will fail if applied to a document that does not exist.
@@ -355,14 +252,15 @@ export default class MockDocumentReference implements DocumentReference {
       // TODO change to use actual exception
       throw new Error('No entity to update');
     }
-    if (data) {
+    if (typeof data === 'string' || data instanceof MockFieldPath) {
+      const args = parseFieldValuePairsFromArgs([data, value], moreFieldsAndValues);
+      return setFieldValuePairs(this.firestore, transactionData, args);
+    } else {
       // only one parameter, so we treat it as UpdateData
       return {
         ...transactionData,
         ...(data as UpdateData),
       } as DocumentData;
-    } else {
-      throw new Error('Update for name value pairs is not implemented yet.');
     }
   }
 
@@ -390,20 +288,6 @@ export default class MockDocumentReference implements DocumentReference {
    */
   public delete = async () => {
     return this._delete(true);
-  }
-
-  private _delete = async (fireCallbacks: boolean) => {
-    const callbaks = this._snapshotCallbackHandler.list;
-    const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(
-      this.id
-    );
-
-    fireCallbacks &&
-      this.fireDocumentChangeEvent('removed', oldIndex, true, callbaks);
-
-    // remove data after triggering events
-    this.data = undefined;
-    this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   }
 
   /**
@@ -439,15 +323,9 @@ export default class MockDocumentReference implements DocumentReference {
    * @return An unsubscribe function that can be called to cancel
    * the snapshot listener.
    */
-  onSnapshot = (
-    nextObservationOrOptions:
-      | SnapshotObserver
-      | SnapshotListenOptions
-      | MockDocumentSnapshotCallback,
-    ObserverErrorOrNext?:
-      | SnapshotObserver
-      | ErrorFunction
-      | MockDocumentSnapshotCallback,
+  public onSnapshot = (
+    nextObservationOrOptions: SnapshotObserver | SnapshotListenOptions | MockDocumentSnapshotCallback,
+    ObserverErrorOrNext?: SnapshotObserver | ErrorFunction | MockDocumentSnapshotCallback,
     completeOrError?: MockSubscriptionFunction | ErrorFunction,
     onComplete?: MockSubscriptionFunction
   ): MockSubscriptionFunction => {
@@ -468,24 +346,13 @@ export default class MockDocumentReference implements DocumentReference {
     cascade: boolean = true,
     callbacks?: MockDocumentSnapshotCallback[]
   ) => {
-    const snapshot = new MockDocumentSnapshot(
-      this,
-      this.data
-    ) as DocumentSnapshot;
+    const snapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
 
-    cascade &&
-      (this.parent as MockCollectionReference).fireSubDocumentChange(
-        changeType,
-        snapshot,
-        oldIndex
-      );
+    cascade && (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, snapshot, oldIndex);
     this._snapshotCallbackHandler.fire(snapshot, callbacks);
   }
 
-  public commitChange = async (
-    type: DocumentChangeType,
-    value: any
-  ): Promise<MockDocumentChange> => {
+  public commitChange = async (type: DocumentChangeType, value: any): Promise<MockDocumentChange> => {
     switch (type) {
       case 'added':
         await this._set(value); // TODO options
@@ -522,6 +389,51 @@ export default class MockDocumentReference implements DocumentReference {
       default:
         throw new Error(`Unidentified change type ${type}.`);
     }
+  }
+
+  /**
+   * Private set -method used inside and outside of transaction
+   *
+   * @private
+   * @memberof MockDocumentReference
+   */
+  private _set = async (data: DocumentData, options?: SetOptions) => {
+    if (options && options.merge) {
+      this.data = processAndDeepMerge(this.firestore, this.data, data);
+    } else {
+      this.data = preprocessData(this.firestore, data);
+    }
+  }
+
+  private _update = async (
+    fireCallbacks: boolean,
+    data: UpdateData | string | FieldPath,
+    value?: any,
+    ...moreFieldsAndValues: any[]
+  ) => {
+    if (!this.data) {
+      // TODO change to use actual exception
+      throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
+    }
+    if (typeof data === 'string' || data instanceof MockFieldPath) {
+      const args = parseFieldValuePairsFromArgs([data, value], moreFieldsAndValues);
+      this.data = setFieldValuePairs(this.firestore, this.data, args);
+    } else {
+      // only one parameter, so we treat it as UpdateData
+      this.data = processAndDeepMerge(this.firestore, this.data, data);
+    }
+    fireCallbacks && this.fireDocumentChangeEvent('modified');
+  }
+
+  private _delete = async (fireCallbacks: boolean) => {
+    const callbaks = this._snapshotCallbackHandler.list;
+    const oldIndex = (this.parent as MockCollectionReference).mocker.deleteDoc(this.id);
+
+    fireCallbacks && this.fireDocumentChangeEvent('removed', oldIndex, true, callbaks);
+
+    // remove data after triggering events
+    this.data = undefined;
+    this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   }
 }
 

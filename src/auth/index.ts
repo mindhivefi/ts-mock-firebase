@@ -17,50 +17,7 @@ import { MockFirebaseApp } from '../firebaseApp';
 import { NotImplementedYet } from '../firestore/utils';
 
 export default class MockFirebaseAuth implements FirebaseAuth {
-  public constructor(public app: MockFirebaseApp) {}
-
-  static Persistence: {
-    LOCAL: Persistence
-    NONE: Persistence
-    SESSION: Persistence,
-  };
-
-  public applyActionCode = (code: string): Promise<void> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-
-  public checkActionCode = (code: string): Promise<ActionCodeInfo> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  confirmPasswordReset = (code: string, newPassword: string): Promise<void> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  createUserWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  createUserAndRetrieveDataWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
   public get currentUser(): User | null {
-    throw new NotImplementedYet('applyActionCode');
-  }
-
-  fetchProvidersForEmail = (email: string): Promise<Array<string>> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  fetchSignInMethodsForEmail = (email: string): Promise<Array<string>> => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  isSignInWithEmailLink = (emailLink: string): boolean => {
-    throw new NotImplementedYet('applyActionCode');
-  }
-  getRedirectResult = (): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
   public get languageCode(): string | null {
@@ -69,97 +26,140 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   public get settings(): AuthSettings {
     throw new NotImplementedYet('applyActionCode');
   }
-  onAuthStateChanged = (
+
+  public static Persistence: {
+    LOCAL: Persistence
+    NONE: Persistence
+    SESSION: Persistence,
+  };
+  public constructor(public app: MockFirebaseApp) {}
+
+  public applyActionCode = (code: string): Promise<void> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+
+  public checkActionCode = (code: string): Promise<ActionCodeInfo> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public confirmPasswordReset = (code: string, newPassword: string): Promise<void> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public createUserWithEmailAndPassword = (
+    email: string,
+    password: string
+  ): Promise<UserCredential> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public createUserAndRetrieveDataWithEmailAndPassword = (
+    email: string,
+    password: string
+  ): Promise<UserCredential> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+
+  public fetchProvidersForEmail = (email: string): Promise<string[]> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public fetchSignInMethodsForEmail = (email: string): Promise<string[]> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public isSignInWithEmailLink = (emailLink: string): boolean => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public getRedirectResult = (): Promise<UserCredential> => {
+    throw new NotImplementedYet('applyActionCode');
+  }
+  public onAuthStateChanged = (
     nextOrObserver: Observer<any> | ((a: User | null) => any),
     error?: (a: Error) => any,
     completed?: Unsubscribe
   ): Unsubscribe => {
     throw new NotImplementedYet('applyActionCode');
   }
-  onIdTokenChanged = (
+  public onIdTokenChanged = (
     nextOrObserver: Observer<any> | ((a: User | null) => any),
     error?: (a: Error) => any,
     completed?: Unsubscribe
   ): Unsubscribe => {
     throw new NotImplementedYet('applyActionCode');
   }
-  sendSignInLinkToEmail = (
+  public sendSignInLinkToEmail = (
     email: string,
     actionCodeSettings: ActionCodeSettings
   ): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  sendPasswordResetEmail = (
+  public sendPasswordResetEmail = (
     email: string,
     actionCodeSettings?: ActionCodeSettings | null
   ): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  setPersistence = (persistence: Persistence): Promise<void> => {
+  public setPersistence = (persistence: Persistence): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInAndRetrieveDataWithCredential = (
+  public signInAndRetrieveDataWithCredential = (
     credential: AuthCredential
   ): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInAnonymously = (): Promise<UserCredential> => {
+  public signInAnonymously = (): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInAnonymouslyAndRetrieveData = (): Promise<UserCredential> => {
+  public signInAnonymouslyAndRetrieveData = (): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithCredential = (credential: AuthCredential): Promise<User> => {
+  public signInWithCredential = (credential: AuthCredential): Promise<User> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithCustomToken = (token: string): Promise<UserCredential> => {
+  public signInWithCustomToken = (token: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInAndRetrieveDataWithCustomToken = (
+  public signInAndRetrieveDataWithCustomToken = (
     token: string
   ): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithEmailAndPassword = (
+  public signInWithEmailAndPassword = (
     email: string,
     password: string
   ): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInAndRetrieveDataWithEmailAndPassword = (
+  public signInAndRetrieveDataWithEmailAndPassword = (
     email: string,
     password: string
   ): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithEmailLink = (
+  public signInWithEmailLink = (
     email: string,
     emailLink?: string
   ): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithPhoneNumber = (
+  public signInWithPhoneNumber = (
     phoneNumber: string,
     applicationVerifier: ApplicationVerifier
   ): Promise<ConfirmationResult> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithPopup = (provider: AuthProvider): Promise<UserCredential> => {
+  public signInWithPopup = (provider: AuthProvider): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signInWithRedirect = (provider: AuthProvider): Promise<void> => {
+  public signInWithRedirect = (provider: AuthProvider): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  signOut = (): Promise<void> => {
+  public signOut = (): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  updateCurrentUser = (user: User | null): Promise<void> => {
+  public updateCurrentUser = (user: User | null): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  useDeviceLanguage = (): void => {
+  public useDeviceLanguage = (): void => {
     throw new NotImplementedYet('applyActionCode');
   }
-  verifyPasswordResetCode = (code: string): Promise<string> => {
+  public verifyPasswordResetCode = (code: string): Promise<string> => {
     throw new NotImplementedYet('applyActionCode');
   }
 }

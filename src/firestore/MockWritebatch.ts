@@ -9,10 +9,12 @@ import {
 } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from '.';
 
+import { deepCopy } from '@firebase/util';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
+import MockFieldPath from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
-import { NotImplementedYet } from './utils';
+import { NotImplementedYet, parseFieldValuePairsFromArgs, setFieldValuePairs } from './utils';
 
 /**
  * A write batch, used to perform multiple writes as a single atomic unit.
@@ -77,42 +79,27 @@ export class MockWriteBatch implements WriteBatch {
     documentRef: MockDocumentReference,
     dataOrField: UpdateData | string | FieldPath,
     value?: any,
-    ...moreFielsAndValues: any[]
+    ...moreFieldsAndValues: any[]
   ): WriteBatch {
-    if (typeof dataOrField === 'object') {
-      // TODO fieldPaths...
-      const path = documentRef.path;
+    const path = documentRef.path;
+    const data = this.transactionData[path] || deepCopy(documentRef.data);
 
-      const data = this.transactionData[path] || { ...documentRef.data }; // TODO need to do locking for transaction
-      this.transactionData[path] = documentRef.updateInTransaction(data, dataOrField, moreFielsAndValues);
+    const fieldType = typeof dataOrField;
+    if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
+      // TODO remove repetative code
+      const args = parseFieldValuePairsFromArgs([dataOrField, value], moreFieldsAndValues[0]);
+
+      this.transactionData[path] = setFieldValuePairs(this.firestore, data, args);
+      this.transactionOperation[path] = 'modified';
+      return this;
+    }
+    if (typeof dataOrField === 'object') {
+      this.transactionData[path] = documentRef.updateInTransaction(data, dataOrField, value, moreFieldsAndValues);
       this.transactionOperation[path] = 'modified';
       return this;
     }
     throw new NotImplementedYet('MockTransaction.get');
   }
-
-  /**
-   * Updates fields in the document referred to by this `DocumentReference`.
-   * The update will fail if applied to a document that does not exist.
-   *
-   * Nested fields can be update by providing dot-separated field path strings
-   * or by providing FieldPath objects.
-   *
-   * @param documentRef A reference to the document to be updated.
-   * @param field The first field to update.
-   * @param value The first value.
-   * @param moreFieldsAndValues Additional key value pairs.
-   * @return A Promise resolved once the data has been successfully written
-   * to the backend (Note that it won't resolve while you're offline).
-   */
-  // update(
-  //   documentRef: DocumentReference,
-  //   field: string | FieldPath,
-  //   value: any,
-  //   ...moreFieldsAndValues: any[]
-  // ): WriteBatch {
-  //   throw new NotImplementedYet('MockWriteBatch.update')
-  // }
 
   /**
    * Deletes the document referred to by the provided `DocumentReference`.
@@ -182,7 +169,9 @@ export class MockWriteBatch implements WriteBatch {
 
       // fire triggers
       for (const trigger in triggers) {
-        triggers.hasOwnProperty(trigger) && triggers[trigger]();
+        if (triggers.hasOwnProperty(trigger)) {
+          triggers.hasOwnProperty(trigger) && triggers[trigger]();
+        }
       }
     } catch (error) {
       this.rollback();

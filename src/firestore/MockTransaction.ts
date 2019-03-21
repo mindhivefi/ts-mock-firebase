@@ -7,16 +7,16 @@ import {
   Transaction,
   UpdateData,
 } from '@firebase/firestore-types';
+
+import { deepCopy } from '@firebase/util';
 import { MockFirebaseFirestore } from '.';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
-import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
-import { MockFirebaseValidationError } from './utils';
-
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import MockFieldPath from './MockFieldPath';
 import MockFieldValue, { processFieldValue } from './MockFieldValue';
-import { NotImplementedYet } from './utils';
+import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
+import { MockFirebaseValidationError, NotImplementedYet, parseFieldValuePairsFromArgs } from './utils';
 
 export interface MockDocumentChange extends DocumentChange {
   doc: MockQueryDocumentSnapshot;
@@ -29,10 +29,10 @@ export interface MockDocumentChange extends DocumentChange {
  */
 export default class MockTransaction implements Transaction {
   private transactionData: {
-    [documentPath: string]: any,
+    [documentPath: string]: any;
   } = {};
   private transactionOperation: {
-    [documentPath: string]: DocumentChangeType,
+    [documentPath: string]: DocumentChangeType;
   } = {};
 
   /**
@@ -53,18 +53,11 @@ export default class MockTransaction implements Transaction {
    * @param documentRef A reference to the document to be read.
    * @return A DocumentSnapshot for the read data.
    */
-  public get = async (
-    documentRef: MockDocumentReference
-  ): Promise<MockDocumentSnapshot> => {
+  public get = async (documentRef: MockDocumentReference): Promise<MockDocumentSnapshot> => {
     if (this.modified) {
-      throw new MockFirebaseValidationError(
-        'Read operations can only be done before write operations.'
-      );
+      throw new MockFirebaseValidationError('Read operations can only be done before write operations.');
     }
-    return new MockDocumentSnapshot(
-      documentRef,
-      documentRef.data ? { ...documentRef.data } : undefined
-    ); // TODO deep copy
+    return new MockDocumentSnapshot(documentRef, documentRef.data ? { ...documentRef.data } : undefined); // TODO deep copy
   }
 
   /**
@@ -77,32 +70,19 @@ export default class MockTransaction implements Transaction {
    * @param options An object to configure the set behavior.
    * @return This `Transaction` instance. Used for chaining method calls.
    */
-  set = (
-    documentRef: MockDocumentReference,
-    data: DocumentData,
-    options?: SetOptions
-  ): Transaction => {
+  public set = (documentRef: MockDocumentReference, data: DocumentData, options?: SetOptions): Transaction => {
     this.modified = true;
     const path = documentRef.path;
 
-    let docData =
-      this.transactionData[path] ||
-      (documentRef.data && { ...documentRef.data }); // TODO need to do locking for transaction
+    let docData = this.transactionData[path] || (documentRef.data && { ...documentRef.data }); // TODO need to do locking for transaction
     const changeType: DocumentChangeType = docData ? 'modified' : 'added';
 
     if (options && options.merge) {
       docData = { ...docData, ...data };
-      this.transactionData[path] = documentRef.updateInTransaction(
-        docData,
-        data
-      );
+      this.transactionData[path] = documentRef.updateInTransaction(docData, data);
     } else {
       docData = { ...data };
-      this.transactionData[path] = documentRef.setInTransaction(
-        docData,
-        data,
-        options
-      );
+      this.transactionData[path] = documentRef.setInTransaction(docData, data, options);
     }
     this.transactionOperation[path] = changeType;
     return this;
@@ -122,87 +102,30 @@ export default class MockTransaction implements Transaction {
    * within the document.
    * @return This `Transaction` instance. Used for chaining method calls.
    */
-  update = (
+  public update = (
     documentRef: MockDocumentReference,
-    dataOrField?: UpdateData | string | FieldPath,
+    dataOrField: UpdateData | string | FieldPath,
     ...moreFieldsAndValues: any[]
   ): Transaction => {
     this.modified = true;
 
     const path = documentRef.path;
-    const data = this.transactionData[path] || { ...documentRef.data }; // TODO need to do locking for transaction
-    const newData = { ...data };
+    const data = this.transactionData[path] || deepCopy(documentRef.data);
+    const newData = deepCopy(data);
 
     const fieldType = typeof dataOrField;
 
     if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
       // TODO remove repetative code
-      let args = [dataOrField];
-      if (moreFieldsAndValues && moreFieldsAndValues.length > 0) {
-        args = args.concat(moreFieldsAndValues);
-      }
-      if (args.length % 1 === 1) {
-        throw new MockFirebaseValidationError(
-          'Argument count does not mach in pairs. Update must contain key value -pairs to work'
-        );
-      }
+      const args = parseFieldValuePairsFromArgs([dataOrField], [moreFieldsAndValues]);
 
-      for (let i = 0; i < args.length; i += 2) {
-        const fieldPath = args[i];
-        const fieldValue = args[i + 1];
-        if (typeof fieldPath === 'string') {
-          if (fieldValue instanceof MockFieldValue) {
-            processFieldValue(
-              this.firestore,
-              data,
-              newData,
-              fieldPath,
-              fieldValue
-            );
-          } else {
-            newData[fieldPath] = fieldValue;
-          }
-        } else if (fieldPath instanceof MockFieldPath) {
-          const fieldNames = fieldPath.fieldNames;
-
-          let parent = newData;
-          for (let j = 1; j < fieldNames.length; j++) {
-            parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
-            if (typeof parent !== 'object') {
-              throw new MockFirebaseValidationError(
-                `Illegal path. Can not add value under field type of ${typeof parent}`
-              );
-            }
-          }
-          const propPath = fieldNames[fieldNames.length - 1];
-
-          if (fieldValue instanceof MockFieldValue) {
-            processFieldValue(
-              this.firestore,
-              data,
-              parent,
-              propPath,
-              fieldValue
-            );
-          } else {
-            parent[propPath] = fieldValue;
-          }
-        } else
-          throw new MockFirebaseValidationError(
-            `Unsupported field path: typeof(${typeof fieldPath}: ${fieldPath})`
-          );
-      }
+      this.updateFieldsFromArgs(args, data, newData);
       this.transactionData[path] = newData;
       this.transactionOperation[path] = 'modified';
       return this;
     }
     if (typeof dataOrField === 'object') {
-      // TODO fieldPaths...
-      this.transactionData[path] = documentRef.updateInTransaction(
-        data,
-        dataOrField,
-        moreFieldsAndValues
-      );
+      this.transactionData[path] = documentRef.updateInTransaction(data, dataOrField, moreFieldsAndValues);
       this.transactionOperation[path] = 'modified';
       return this;
     }
@@ -215,7 +138,7 @@ export default class MockTransaction implements Transaction {
    * @param documentRef A reference to the document to be deleted.
    * @return This `Transaction` instance. Used for chaining method calls.
    */
-  delete = (documentRef: MockDocumentReference): Transaction => {
+  public delete = (documentRef: MockDocumentReference): Transaction => {
     this.modified = true;
 
     const path = documentRef.path;
@@ -224,40 +147,36 @@ export default class MockTransaction implements Transaction {
     return this;
   }
 
-  commit = async (): Promise<void> => {
+  public commit = async (): Promise<void> => {
     const collectionChanges: {
-      [collectionId: string]: MockDocumentChange[],
+      [collectionId: string]: MockDocumentChange[];
     } = {};
     try {
       for (const path in this.transactionOperation) {
-        const operation = this.transactionOperation[path];
-        const doc = this.firestore.doc(path) as MockDocumentReference;
+        if (this.transactionOperation.hasOwnProperty(path)) {
+          const operation = this.transactionOperation[path];
+          const doc = this.firestore.doc(path) as MockDocumentReference;
 
-        const documentChange = await doc.commitChange(
-          operation,
-          this.transactionData[path]
-        );
-        const collectionPath = path.substr(0, path.lastIndexOf('/'));
-        const changes: MockDocumentChange[] =
-          collectionChanges[collectionPath] || [];
-        changes.push(documentChange as any); // TODO typing
-        collectionChanges[collectionPath] = changes;
+          const documentChange = await doc.commitChange(operation, this.transactionData[path]);
+          const collectionPath = path.substr(0, path.lastIndexOf('/'));
+          const changes: MockDocumentChange[] = collectionChanges[collectionPath] || [];
+          changes.push(documentChange as any); // TODO typing
+          collectionChanges[collectionPath] = changes;
+        }
       }
       // iterate snapshot callbacks collections and documents
       for (const collectionId in collectionChanges) {
-        const documentChanges = collectionChanges[collectionId];
-        for (const documentId in documentChanges) {
-          const document = documentChanges[documentId];
-          document.doc.ref.fireDocumentChangeEvent(
-            document.type,
-            documentChanges[documentId].oldIndex,
-            false
-          );
+        if (collectionChanges.hasOwnProperty(collectionId)) {
+          const documentChanges = collectionChanges[collectionId];
+          for (const documentId in documentChanges) {
+            if (documentChanges.hasOwnProperty(documentId)) {
+              const document = documentChanges[documentId];
+              document.doc.ref.fireDocumentChangeEvent(document.type, documentChanges[documentId].oldIndex, false);
+            }
+          }
+          const collection = this.firestore.collection(collectionId) as MockCollectionReference;
+          collection.fireBatchDocumentChange(documentChanges);
         }
-        const collection = this.firestore.collection(
-          collectionId
-        ) as MockCollectionReference;
-        collection.fireBatchDocumentChange(documentChanges);
       }
     } catch (error) {
       this.rollback();
@@ -265,7 +184,41 @@ export default class MockTransaction implements Transaction {
     }
   }
 
-  rollback = (): void => {
+  public rollback = (): void => {
+    // tslint:disable-next-line: no-console
     console.log('rollback');
+  }
+
+  private updateFieldsFromArgs = (args: Array<string | UpdateData | FieldPath>, data: any, newData: any) => {
+    for (let i = 0; i < args.length; i += 2) {
+      const fieldPath = args[i];
+      const fieldValue = args[i + 1];
+      if (typeof fieldPath === 'string') {
+        if (fieldValue instanceof MockFieldValue) {
+          processFieldValue(this.firestore, data, newData, fieldPath, fieldValue);
+        } else {
+          newData[fieldPath] = fieldValue;
+        }
+      } else if (fieldPath instanceof MockFieldPath) {
+        const fieldNames = fieldPath.fieldNames;
+        let parent = newData;
+        for (let j = 1; j < fieldNames.length; j++) {
+          parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
+          if (typeof parent !== 'object') {
+            throw new MockFirebaseValidationError(
+              `Illegal path. Can not add value under field type of ${typeof parent}`
+            );
+          }
+        }
+        const propPath = fieldNames[fieldNames.length - 1];
+        if (fieldValue instanceof MockFieldValue) {
+          processFieldValue(this.firestore, data, parent, propPath, fieldValue);
+        } else {
+          parent[propPath] = fieldValue;
+        }
+      } else {
+        throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof fieldPath}: ${fieldPath})`);
+      }
+    }
   }
 }

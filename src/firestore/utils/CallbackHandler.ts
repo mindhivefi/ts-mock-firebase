@@ -6,7 +6,7 @@
  * @template S Type of snapshot object
  */
 export default class MockCallbackHandler<S> {
-  private _callbacks: ((snapshot: S) => void)[] = [];
+  private _callbacks: Array<(snapshot: S) => void> = [];
 
   /**
    * Add a new snapshot callback
@@ -25,20 +25,17 @@ export default class MockCallbackHandler<S> {
     }
   }
 
-  public fire = (
-    snapshot: S,
-    callbacks: ((snapshot: S) => void)[] = this._callbacks
-  ): void => {
+  public fire = (snapshot: S, callbacks: Array<(snapshot: S) => void> = this._callbacks): void => {
     for (const callback of callbacks) {
       callback(snapshot);
     }
   }
 
-  public get list(): ((snapshot: S) => void)[] {
+  public get list(): Array<(snapshot: S) => void> {
     return this._callbacks.slice();
   }
 
-  public load = (callbacks: ((snapshot: S) => void)[]) => {
+  public load = (callbacks: Array<(snapshot: S) => void>) => {
     this._callbacks = callbacks.slice();
   }
 

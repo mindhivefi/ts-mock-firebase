@@ -14,12 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  FirebaseApp,
-  FirebaseAppConfig,
-  FirebaseNamespace,
-  FirebaseOptions,
-} from '@firebase/app-types';
+import { FirebaseApp, FirebaseAppConfig, FirebaseNamespace, FirebaseOptions } from '@firebase/app-types';
 import {
   _FirebaseNamespace,
   AppHook,
@@ -28,17 +23,11 @@ import {
   FirebaseServiceFactory,
   FirebaseServiceNamespace,
 } from '@firebase/app-types/private';
-import {
-  createSubscribe,
-  deepCopy,
-  deepExtend,
-  ErrorFactory,
-  patchProperty,
-} from '@firebase/util';
+import { createSubscribe, deepCopy, deepExtend, ErrorFactory, patchProperty } from '@firebase/util';
 
 import { MockFirebaseFirestore } from '../firestore';
 
-const contains = function(obj: object, key: string) {
+const contains = (obj: object, key: string) => {
   return Object.prototype.hasOwnProperty.call(obj, key);
 };
 
@@ -53,49 +42,6 @@ let tokenListeners: any[] = [];
  * a shared authentication state.
  */
 export class MockFirebaseApp implements FirebaseApp {
-  private options_: FirebaseOptions;
-  private name_: string;
-  private isDeleted_ = false;
-  private services_: {
-    [name: string]: {
-      [serviceName: string]: FirebaseService,
-    },
-  } = {};
-
-  private _firestore: MockFirebaseFirestore;
-
-  private _automaticDataCollectionEnabled: boolean;
-
-  public INTERNAL: FirebaseAppInternals;
-
-  constructor(
-    options: FirebaseOptions = {},
-    config: FirebaseAppConfig = {},
-    // tslint:disable-next-line
-    private firebase_: FirebaseNamespace = firebaseNamespace
-  ) {
-    this.name_ = config.name!;
-    this._automaticDataCollectionEnabled =
-      config.automaticDataCollectionEnabled || false;
-    this.options_ = deepCopy<FirebaseOptions>(options);
-    this.INTERNAL = {
-      getUid: () => null,
-      getToken: () => Promise.resolve(null),
-      addAuthTokenListener: (callback: (token: string | null) => void) => {
-        tokenListeners.push(callback);
-        // Make sure callback is called, asynchronously, in the absence of the auth module
-        setTimeout(() => callback(null), 0);
-      },
-      removeAuthTokenListener: (callback: (token: string | null) => void) => {
-        tokenListeners = tokenListeners.filter(
-          listener => listener !== callback
-        );
-      },
-    };
-
-    this._firestore = new MockFirebaseFirestore(this);
-  }
-
   get automaticDataCollectionEnabled(): boolean {
     this.checkDestroyed_();
     return this._automaticDataCollectionEnabled;
@@ -116,11 +62,50 @@ export class MockFirebaseApp implements FirebaseApp {
     return this.options_;
   }
 
+  public INTERNAL: FirebaseAppInternals;
+  private options_: FirebaseOptions;
+  private name_: string;
+  private isDeleted_ = false;
+  private services_: {
+    [name: string]: {
+      [serviceName: string]: FirebaseService;
+    };
+  } = {};
+
+  private _firestore: MockFirebaseFirestore;
+
+  private _automaticDataCollectionEnabled: boolean;
+
+  constructor(
+    options: FirebaseOptions = {},
+    config: FirebaseAppConfig = {},
+    // tslint:disable-next-line
+    private firebase_: FirebaseNamespace = firebaseNamespace,
+  ) {
+    this.name_ = config.name!;
+    this._automaticDataCollectionEnabled = config.automaticDataCollectionEnabled || false;
+    this.options_ = deepCopy<FirebaseOptions>(options);
+    this.INTERNAL = {
+      getUid: () => null,
+      getToken: () => Promise.resolve(null),
+      addAuthTokenListener: (callback: (token: string | null) => void) => {
+        tokenListeners.push(callback);
+        // Make sure callback is called, asynchronously, in the absence of the auth module
+        setTimeout(() => callback(null), 0);
+      },
+      removeAuthTokenListener: (callback: (token: string | null) => void) => {
+        tokenListeners = tokenListeners.filter(listener => listener !== callback);
+      },
+    };
+
+    this._firestore = new MockFirebaseFirestore(this);
+  }
+
   public firestore() {
     return this._firestore;
   }
 
-  delete(): Promise<void> {
+  public delete(): Promise<void> {
     return new Promise(resolve => {
       this.checkDestroyed_();
       resolve();
@@ -161,10 +146,7 @@ export class MockFirebaseApp implements FirebaseApp {
    * The service name is passed to this already
    * @internal
    */
-  _getService(
-    name: string,
-    instanceIdentifier: string = DEFAULT_ENTRY_NAME
-  ): FirebaseService {
+  public _getService(name: string, instanceIdentifier: string = DEFAULT_ENTRY_NAME): FirebaseService {
     this.checkDestroyed_();
 
     if (!this.services_[name]) {
@@ -176,13 +158,12 @@ export class MockFirebaseApp implements FirebaseApp {
        * If a custom instance has been defined (i.e. not '[DEFAULT]')
        * then we will pass that instance on, otherwise we pass `null`
        */
-      const instanceSpecifier =
-        instanceIdentifier !== DEFAULT_ENTRY_NAME
-          ? instanceIdentifier
-          : undefined;
-      const service = (this.firebase_ as _FirebaseNamespace).INTERNAL.factories[
-        name
-      ](this, this.extendApp.bind(this), instanceSpecifier);
+      const instanceSpecifier = instanceIdentifier !== DEFAULT_ENTRY_NAME ? instanceIdentifier : undefined;
+      const service = (this.firebase_ as _FirebaseNamespace).INTERNAL.factories[name](
+        this,
+        this.extendApp.bind(this),
+        instanceSpecifier
+      );
       this.services_[name][instanceIdentifier] = service;
     }
 
@@ -221,15 +202,17 @@ export class MockFirebaseApp implements FirebaseApp {
   private checkDestroyed_(): void {
     if (this.isDeleted_) {
       // tslint:disable-next-line
-      error('app-deleted', { name: this.name_ })
+      error('app-deleted', { name: this.name_ });
     }
   }
 }
 
 // Prevent dead-code elimination of these methods w/o invalid property
 // copying.
+// tslint:disable-next-line: no-unused-expression
 (MockFirebaseApp.prototype.name && MockFirebaseApp.prototype.options) ||
   MockFirebaseApp.prototype.delete ||
+  // tslint:disable-next-line: no-console
   console.log('dc');
 
 /**
@@ -250,22 +233,22 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     // Hack to prevent Babel from modifying the object returned
     // as the firebase namespace.
     __esModule: true,
-    initializeApp: initializeApp,
+    initializeApp,
     app: app as any,
     apps: null as any,
-    Promise: Promise,
+    Promise,
     SDK_VERSION: '${JSCORE_VERSION}',
     INTERNAL: {
-      registerService: registerService,
-      createFirebaseNamespace: createFirebaseNamespace,
-      extendNamespace: extendNamespace,
-      createSubscribe: createSubscribe,
-      ErrorFactory: ErrorFactory,
-      removeApp: removeApp,
-      factories: factories,
-      useAsService: useAsService,
-      Promise: Promise,
-      deepExtend: deepExtend,
+      registerService,
+      createFirebaseNamespace,
+      extendNamespace,
+      createSubscribe,
+      ErrorFactory,
+      removeApp,
+      factories,
+      useAsService,
+      Promise,
+      deepExtend,
     },
   };
 
@@ -312,12 +295,8 @@ export function createFirebaseNamespace(): FirebaseNamespace {
   /**
    * Create a new App instance (name must be unique).
    */
-  function initializeApp(
-    options: FirebaseOptions,
-    configOrName?: FirebaseAppConfig | string
-  ): FirebaseApp {
-    const config: FirebaseAppConfig =
-      typeof configOrName === 'object' ? configOrName : { name: configOrName };
+  function initializeApp(options: FirebaseOptions, configOrName?: FirebaseAppConfig | string): FirebaseApp {
+    const config: FirebaseAppConfig = typeof configOrName === 'object' ? configOrName : { name: configOrName };
 
     if (config.name === undefined) {
       config.name = DEFAULT_ENTRY_NAME;
@@ -327,19 +306,15 @@ export function createFirebaseNamespace(): FirebaseNamespace {
 
     if (typeof name !== 'string' || !name) {
       // tslint:disable-next-line
-      error('bad-app-name', { name: name + '' })
+      error('bad-app-name', { name: name + '' });
     }
 
     if (contains(apps_, name)) {
       // tslint:disable-next-line
-      error('duplicate-app', { name: name })
+      error('duplicate-app', { name: name });
     }
 
-    const newApp = new MockFirebaseApp(
-      options,
-      config,
-      namespace as FirebaseNamespace
-    );
+    const newApp = new MockFirebaseApp(options, config, namespace as FirebaseNamespace);
 
     apps_[name] = newApp;
     callAppHooks(newApp, 'create');
@@ -367,12 +342,12 @@ export function createFirebaseNamespace(): FirebaseNamespace {
     serviceProperties?: { [prop: string]: any },
     appHook?: AppHook,
     // tslint:disable-next-line
-    allowMultipleInstances?: boolean
+    allowMultipleInstances?: boolean,
   ): FirebaseServiceNamespace<FirebaseService> {
     // Cannot re-register a service that already exists
     if (factories[name]) {
       // tslint:disable-next-line
-      error('duplicate-service', { name: name })
+      error('duplicate-service', { name: name });
     }
 
     // Capture the service factory for later service instantiation
@@ -394,7 +369,7 @@ export function createFirebaseNamespace(): FirebaseNamespace {
         // Invalid argument.
         // This happens in the following case: firebase.storage('gs:/')
         // tslint:disable-next-line
-        error('invalid-app-argument', { name: name })
+        error('invalid-app-argument', { name: name });
       }
 
       // Forward service instance lookup to the FirebaseApp.
@@ -472,9 +447,7 @@ type AppError =
 // TypeScript does not support non-string indexes!
 // let errors: {[code: AppError: string} = {
 const errors: { [code: string]: string } = {
-  'no-app':
-    "No Firebase App '{$name}' has been created - " +
-    'call Firebase App.initializeApp()',
+  'no-app': "No Firebase App '{$name}' has been created - " + 'call Firebase App.initializeApp()',
   'bad-app-name': "Illegal App name: '{$name}",
   'duplicate-app': "Firebase App named '{$name}' already exists",
   'app-deleted': "Firebase App named '{$name}' already deleted",
@@ -484,9 +457,7 @@ const errors: { [code: string]: string } = {
     'account is only allowed in a Node.js environment. On client ' +
     'devices, you should instead initialize the SDK with an api key and ' +
     'auth domain',
-  'invalid-app-argument':
-    'firebase.{$name}() takes either no argument or a ' +
-    'Firebase App instance.',
+  'invalid-app-argument': 'firebase.{$name}() takes either no argument or a ' + 'Firebase App instance.',
 };
 
 const appErrors = new ErrorFactory<AppError>('app', 'Firebase', errors);

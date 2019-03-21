@@ -1,9 +1,11 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
+
 import { MockDatabase } from '..';
 import { MockFirebaseApp } from '../../firebaseApp';
 import MockDocumentSnapshot from '../MockDocumentSnapshot';
 import MockFieldPath from '../MockFieldPath';
 
+// tslint:disable-next-line: no-big-function
 describe('Transaction handling', () => {
   describe('Handling multiple operations as a single transaction', () => {
     const database: MockDatabase = {
@@ -148,7 +150,7 @@ describe('Transaction handling', () => {
       const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      let result: MockDocumentSnapshot | undefined = undefined;
+      let result: MockDocumentSnapshot | undefined;
 
       await firestore.runTransaction(async transaction => {
         const ref = firestore.doc('b/A');

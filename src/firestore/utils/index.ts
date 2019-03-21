@@ -1,10 +1,12 @@
 import { FieldPath } from '@firebase/firestore-types';
+import { deepCopy } from '@firebase/util';
 import * as uuidv4 from 'uuid/v4';
+
 import { MockFirebaseFirestore } from '..';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
-
 import MockFieldPath from '../MockFieldPath';
+import MockFieldValue, { processFieldValue } from '../MockFieldValue';
 
 export class NotImplementedYet extends Error {
   constructor(label?: string) {
@@ -12,6 +14,7 @@ export class NotImplementedYet extends Error {
   }
 }
 
+// tslint:disable-next-line: max-classes-per-file
 export class MockFirebaseValidationError extends Error {}
 /**
  * Generate an unique document id
@@ -80,6 +83,7 @@ function isValidPathReference(path: string, parity: 0 | 1): boolean {
   }
   const items = path.split('/');
 
+  // tslint:disable-next-line: no-bitwise
   if ((items.length & 1) === parity) {
     return false;
   }
@@ -91,10 +95,8 @@ function isValidPathReference(path: string, parity: 0 | 1): boolean {
   return true;
 }
 
-const FIRESTORE_FIELD_PATH_VALID_CHARACTERS =
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
-const FIRESTORE_FIELD_NAME_VALID_CHARACTERS =
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.';
+const FIRESTORE_FIELD_PATH_VALID_CHARACTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
+const FIRESTORE_FIELD_NAME_VALID_CHARACTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.';
 const NUMBERS = '0123456789';
 
 /**
@@ -141,12 +143,7 @@ export function isValidFirestoreFieldName(name: string): boolean {
  * @param name
  */
 export function isValidFirestoreFieldPath(name: string): boolean {
-  if (
-    name === '' ||
-    name.indexOf('..') >= 0 ||
-    NUMBERS.indexOf(name[0]) >= 0 ||
-    name.length > 1500
-  ) {
+  if (name === '' || name.indexOf('..') >= 0 || NUMBERS.indexOf(name[0]) >= 0 || name.length > 1500) {
     return false;
   }
   if (name[0] === '`') {
@@ -207,16 +204,8 @@ export function resolveReference(
      */
     testPath = 'collection/' + path;
   }
-  if (
-    !(isCollectionPath
-      ? isValidCollectionReference(testPath)
-      : isValidDocumentReference(testPath))
-  ) {
-    throw Error(
-      `Not a valid ${
-        isCollectionPath ? 'collection' : 'document'
-      } reference: ${path}`
-    );
+  if (!(isCollectionPath ? isValidCollectionReference(testPath) : isValidDocumentReference(testPath))) {
+    throw Error(`Not a valid ${isCollectionPath ? 'collection' : 'document'} reference: ${path}`);
   }
 
   const elements = path.split('/');
@@ -229,11 +218,7 @@ export function resolveReference(
     if (parity) {
       collection = doc.mocker.collection(id);
       if (!collection) {
-        collection = new MockCollectionReference(
-          firestore,
-          id,
-          doc !== firestore.root ? doc : null
-        );
+        collection = new MockCollectionReference(firestore, id, doc !== firestore.root ? doc : null);
         doc.mocker.setCollection(collection);
       }
     } else {
@@ -265,7 +250,7 @@ export function resolveReference(
  */
 export function findIndexForDocument(
   docs: MockDocumentReference[],
-  fieldNames: (string | FieldPath)[],
+  fieldNames: Array<string | FieldPath>,
   fieldValues: any[]
 ): number {
   for (let i = 0; i < docs.length; i++) {
@@ -287,13 +272,11 @@ export function findIndexForDocument(
  */
 export function matchFields(
   doc: MockDocumentReference,
-  fieldNames: (string | FieldPath)[],
+  fieldNames: Array<string | FieldPath>,
   fieldValues: any[]
 ): boolean {
   if (fieldNames.length !== fieldValues.length) {
-    throw new Error(
-      'Field names and values count differ, you must give value for each name'
-    );
+    throw new Error('Field names and values count differ, you must give value for each name');
   }
   for (let i = 0; i < fieldNames.length; i++) {
     if (getFieldValue(doc, fieldNames[i]) !== fieldValues[i]) {
@@ -303,10 +286,7 @@ export function matchFields(
   return true;
 }
 
-export function getFieldValue(
-  doc: MockDocumentReference,
-  fieldName: string | FieldPath
-): any {
+export function getFieldValue(doc: MockDocumentReference, fieldName: string | FieldPath): any {
   if (typeof fieldName === 'string') {
     return doc.data[fieldName];
   } else if (fieldName instanceof MockFieldPath) {
@@ -322,3 +302,91 @@ export function getFieldValue(
   // TODO support for actual FieldPaths
   return undefined;
 }
+
+export function getFieldValueFromData(data: any, fieldName: string | FieldPath): any {
+  if (typeof fieldName === 'string') {
+    return data[fieldName];
+  } else if (fieldName instanceof MockFieldPath) {
+    let parent = data;
+    for (const field of fieldName.fieldNames) {
+      parent = parent[field];
+      if (!parent) {
+        return undefined;
+      }
+    }
+    return parent;
+  }
+  // TODO support for actual FieldPaths
+  return undefined;
+}
+
+/**
+ * Parse firestore update or set function input args back to an solid array to be used with
+ * @param dataOrField
+ * @param moreFieldsAndValues
+ */
+export function parseFieldValuePairsFromArgs(prefix: any[], moreFieldsAndValues: any[]) {
+  let args = prefix;
+  if (
+    moreFieldsAndValues &&
+    moreFieldsAndValues.length > 0 &&
+    !// tslint:disable-next-line: no-bitwise
+    (
+      (args.length & 1) === 0 &&
+      moreFieldsAndValues.length === 1 &&
+      Array.isArray(moreFieldsAndValues) &&
+      Array.isArray(moreFieldsAndValues[0]) &&
+      moreFieldsAndValues[0].length === 0
+    )
+  ) {
+    args = args.concat(moreFieldsAndValues[0]);
+  }
+
+  if (args.length % 1 === 1) {
+    throw new MockFirebaseValidationError(
+      'Argument count does not match in pairs. Update must contain key-value -pairs to work'
+    );
+  }
+  return args;
+}
+
+/**
+ * Alter an object with a set of field value pairs
+ *
+ * @param firestore current firestore instance
+ * @param data current document's data object
+ * @param fieldValuePairs an arrau with fieldName / fieldPath - value pairs to be set to object
+ * @returns altered object containing fieldValues assigned with possible FieldValue's processed
+ */
+export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, fieldValuePairs: any[]) => {
+  const newData = deepCopy(data);
+  for (let i = 0; i < fieldValuePairs.length; i += 2) {
+    const path = fieldValuePairs[i];
+    const fieldValue = fieldValuePairs[i + 1];
+    if (typeof path === 'string') {
+      if (fieldValue instanceof MockFieldValue) {
+        processFieldValue(firestore, data, newData, path, fieldValue);
+      } else {
+        newData[path] = fieldValue;
+      }
+    } else if (path instanceof MockFieldPath) {
+      const fieldNames = path.fieldNames;
+      let parent = newData;
+      for (let j = 1; j < fieldNames.length; j++) {
+        parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
+        if (typeof parent !== 'object') {
+          throw new MockFirebaseValidationError(`Illegal path. Can not add value under field type of ${typeof parent}`);
+        }
+      }
+      const propPath = fieldNames[fieldNames.length - 1];
+      if (fieldValue instanceof MockFieldValue) {
+        processFieldValue(firestore, data, parent, propPath, fieldValue);
+      } else {
+        parent[propPath] = fieldValue;
+      }
+    } else {
+      throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof path}: ${path})`);
+    }
+  }
+  return newData;
+};

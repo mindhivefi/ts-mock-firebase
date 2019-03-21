@@ -15,19 +15,6 @@ enum MockFieldValueType {
  * or update().
  */
 export default class MockFieldValue implements FieldValue {
-  private _type: MockFieldValueType;
-  private _args: any[];
-
-  private static deleteSentinel = new MockFieldValue(MockFieldValueType.DELETE);
-  private static timestampSentinel = new MockFieldValue(
-    MockFieldValueType.TIMESTAMP
-  );
-
-  private constructor(type: MockFieldValueType, ...args: any[]) {
-    this._type = type;
-    this._args = args[0];
-  }
-
   public get args(): any[] {
     return this._args;
   }
@@ -40,14 +27,14 @@ export default class MockFieldValue implements FieldValue {
    * Returns a sentinel used with set() or update() to include a
    * server-generated timestamp in the written data.
    */
-  static serverTimestamp(): FieldValue {
+  public static serverTimestamp(): FieldValue {
     return MockFieldValue.timestampSentinel;
   }
 
   /**
    * Returns a sentinel for use with update() to mark a field for deletion.
    */
-  static delete(): FieldValue {
+  public static delete(): FieldValue {
     return MockFieldValue.deleteSentinel;
   }
 
@@ -62,7 +49,7 @@ export default class MockFieldValue implements FieldValue {
    * @param elements The elements to union into the array.
    * @return The FieldValue sentinel for use in a call to set() or update().
    */
-  static arrayUnion(...elements: any[]): FieldValue {
+  public static arrayUnion(...elements: any[]): FieldValue {
     return new MockFieldValue(MockFieldValueType.ARRAY_UNION, elements[0]);
   }
 
@@ -76,8 +63,18 @@ export default class MockFieldValue implements FieldValue {
    * @param elements The elements to remove from the array.
    * @return The FieldValue sentinel for use in a call to set() or update().
    */
-  static arrayRemove(...elements: any[]): FieldValue {
+  public static arrayRemove(...elements: any[]): FieldValue {
     return new MockFieldValue(MockFieldValueType.ARRAY_REMOVE, elements[0]);
+  }
+
+  private static deleteSentinel = new MockFieldValue(MockFieldValueType.DELETE);
+  private static timestampSentinel = new MockFieldValue(MockFieldValueType.TIMESTAMP);
+  private _type: MockFieldValueType;
+  private _args: any[];
+
+  private constructor(type: MockFieldValueType, ...args: any[]) {
+    this._type = type;
+    this._args = args[0];
   }
 
   /**
@@ -86,7 +83,7 @@ export default class MockFieldValue implements FieldValue {
    * @param other The `FieldValue` to compare against.
    * @return true if this `FieldValue` is equal to the provided one.
    */
-  isEqual(other: FieldValue): boolean {
+  public isEqual(other: FieldValue): boolean {
     throw new NotImplementedYet('serverTimestamp');
   }
 }
@@ -98,18 +95,17 @@ export default class MockFieldValue implements FieldValue {
  * @param {DocumentData} data
  * @returns {DocumentData}
  */
-export function preprocessData(
-  firestore: MockFirebaseFirestore,
-  data: DocumentData
-): DocumentData {
+export function preprocessData(firestore: MockFirebaseFirestore, data: DocumentData): DocumentData {
   const result = { ...data };
   for (const key in result) {
-    const value = result[key];
-    if (value && value instanceof MockFieldValue) {
-      processFieldValue(firestore, data, result, key, value);
-    } else {
-      if (typeof value === 'object') {
-        result[key] = preprocessData(firestore, value);
+    if (result.hasOwnProperty(key)) {
+      const value = result[key];
+      if (value && value instanceof MockFieldValue) {
+        processFieldValue(firestore, data, result, key, value);
+      } else {
+        if (typeof value === 'object') {
+          result[key] = preprocessData(firestore, value);
+        }
       }
     }
   }
