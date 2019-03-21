@@ -13,11 +13,8 @@ import MockFieldValue, { processFieldValue } from '../MockFieldValue';
  * Note that the target can be a function, in which case the properties in
  * the source Object are copied onto it as static properties of the Function.
  */
-export function processAndDeepMerge(
-  firestore: MockFirebaseFirestore,
-  target: any,
-  source: any
-) {
+// tslint:disable-next-line: cognitive-complexity
+export function processAndDeepMerge(firestore: MockFirebaseFirestore, target: any, source: any) {
   if (!source || !(source instanceof Object)) {
     return source;
   }
@@ -42,42 +39,37 @@ export function processAndDeepMerge(
   }
 
   for (const prop in source) {
-    if (!source.hasOwnProperty(prop)) {
-      continue;
-    }
-    const sourceValue = source[prop];
-    const targetValue = target ? target[prop] : undefined;
+    if (source.hasOwnProperty(prop)) {
+      const sourceValue = source[prop];
+      const targetValue = target ? target[prop] : undefined;
 
-    if (!sourceValue) {
-      result[prop] = targetValue;
-      continue;
-    }
-    switch (sourceValue.constructor) {
-      case Date:
-        // Treat Dates like scalars; if the target date object had any child
-        // properties - they will be lost!
-        const dateValue = source as Date;
-        result[prop] = new Date(dateValue.getTime());
-        break;
+      if (!sourceValue) {
+        result[prop] = targetValue;
+        continue;
+      }
+      switch (sourceValue.constructor) {
+        case Date:
+          // Treat Dates like scalars; if the target date object had any child
+          // properties - they will be lost!
+          const dateValue = source as Date;
+          result[prop] = new Date(dateValue.getTime());
+          break;
 
-      case Object:
-        result[prop] = processAndDeepMerge(firestore, targetValue, sourceValue);
-        break;
-      case Array:
-        // Always copy the array source and overwrite the target.
-        result[prop] = processAndDeepMerge(
-          firestore,
-          targetValue ? targetValue.slice() : [],
-          sourceValue
-        );
-        break;
-      case MockFieldValue:
-        processFieldValue(firestore, source, result, prop, sourceValue);
-        break;
+        case Object:
+          result[prop] = processAndDeepMerge(firestore, targetValue, sourceValue);
+          break;
+        case Array:
+          // Always copy the array source and overwrite the target.
+          result[prop] = processAndDeepMerge(firestore, targetValue ? targetValue.slice() : [], sourceValue);
+          break;
+        case MockFieldValue:
+          processFieldValue(firestore, source, result, prop, sourceValue);
+          break;
 
-      default:
-        // Not a plain Object - treat it as a scalar.
-        result[prop] = sourceValue;
+        default:
+          // Not a plain Object - treat it as a scalar.
+          result[prop] = sourceValue;
+      }
     }
   }
   return result;

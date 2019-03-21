@@ -18,10 +18,7 @@ import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
 import MockQuerySnapshot from './MockQuerySnapshot';
 import { NotImplementedYet } from './utils';
 
-import {
-  ErrorFunction,
-  MockSubscriptionFunction,
-} from './MockDocumentReference';
+import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
 import { findIndexForDocument, MockFirebaseValidationError } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 import { filterDocumentsByRules } from './utils/matching';
@@ -102,6 +99,12 @@ export type MockQuerySnapshotCallback = (snapshot: QuerySnapshot) => void;
  * construct refined `Query` objects by adding filters and ordering.
  */
 export default class MockQuery implements Query {
+  public docRefs: MockDocumentReference[];
+  /**
+   * The `Firestore` for the Firestore database (useful for performing
+   * transactions, etc.).
+   */
+  public firestore: FirebaseFirestore;
   private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
   private unsubscribeCollection: () => void;
 
@@ -112,25 +115,12 @@ export default class MockQuery implements Query {
   ) {
     this.firestore = collectionRef.firestore;
     this.docRefs = docRefs.slice();
-    this.unsubscribeCollection = this.collectionRef.onSnapshot(
-      this.handleCollectionSnapshotChange
-    );
+    this.unsubscribeCollection = this.collectionRef.onSnapshot(this.handleCollectionSnapshotChange);
   }
-
-  private createClone = (): MockQuery => {
-    return new MockQuery(this.collectionRef, this.docRefs, this.rules);
-  }
-
-  public docRefs: MockDocumentReference[];
 
   public reset = () => {
     this.unsubscribeCollection();
   }
-  /**
-   * The `Firestore` for the Firestore database (useful for performing
-   * transactions, etc.).
-   */
-  firestore: FirebaseFirestore;
 
   /**
    * Creates and returns a new Query with the additional filter that documents
@@ -142,11 +132,7 @@ export default class MockQuery implements Query {
    * @param value The value for comparison
    * @return The created Query.
    */
-  public where = (
-    fieldPath: string | FieldPath,
-    opStr: WhereFilterOp,
-    value: any
-  ): Query => {
+  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
     const result = this.createClone();
     const where: MockQueryWhereRule[] = result.rules.where || [];
     where.push({
@@ -167,10 +153,7 @@ export default class MockQuery implements Query {
    * not specified, order will be ascending.
    * @return The created Query.
    */
-  orderBy = (
-    fieldPath: string | FieldPath,
-    directionStr: OrderByDirection = 'asc'
-  ): Query => {
+  public orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query => {
     const result = this.createClone();
     const rules = result.rules.order || ([] as MockQueryOrderRule[]);
     rules.push({
@@ -188,11 +171,9 @@ export default class MockQuery implements Query {
    * @param limit The maximum number of items to return.
    * @return The created Query.
    */
-  limit = (limit: number): Query => {
+  public limit = (limit: number): Query => {
     if (limit <= 0) {
-      throw new MockFirebaseValidationError(
-        'Query limit value must be greater than zero'
-      );
+      throw new MockFirebaseValidationError('Query limit value must be greater than zero');
     }
     const result = this.createClone();
     result.rules.limit = limit;
@@ -208,10 +189,9 @@ export default class MockQuery implements Query {
    * @param snapshot   The snapshot of the document to start at.
    * or
    * @param fieldValues The field values to start this query at, in order
-
    * @return The created Query.
    */
-  startAt = (...fieldValues: any[]): Query => {
+  public startAt = (...fieldValues: any[]): Query => {
     // TODO startAt / startAfter called multiple times?
     this.rules = this.createStartRule(fieldValues, 'at');
     return this;
@@ -238,7 +218,7 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to start this query after, in order
    * @return The created Query.
    */
-  startAfter = (...fieldValues: any[]): Query => {
+  public startAfter = (...fieldValues: any[]): Query => {
     this.rules = this.createStartRule(fieldValues, 'after');
     return this;
   }
@@ -264,7 +244,7 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to end this query before, in order
    * @return The created Query.
    */
-  endBefore = (...fieldValues: any[]): Query => {
+  public endBefore = (...fieldValues: any[]): Query => {
     this.rules = this.createEndRule(fieldValues, 'before');
     return this;
   }
@@ -290,7 +270,7 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to end this query at, in order
    * @return The created Query.
    */
-  endAt = (...fieldValues: any[]): Query => {
+  public endAt = (...fieldValues: any[]): Query => {
     this.rules = this.createEndRule(fieldValues, 'at');
     return this;
   }
@@ -312,7 +292,7 @@ export default class MockQuery implements Query {
    * @param other The `Query` to compare against.
    * @return true if this `Query` is equal to the provided one.
    */
-  isEqual = (other: Query): boolean => {
+  public isEqual = (other: Query): boolean => {
     return this === other;
   }
 
@@ -329,9 +309,7 @@ export default class MockQuery implements Query {
    */
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
     const docs = this.getFilterDocumentReferences();
-    return Promise.resolve<QuerySnapshot>(
-      new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), [])
-    );
+    return Promise.resolve<QuerySnapshot>(new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []));
   }
 
   /**
@@ -351,22 +329,15 @@ export default class MockQuery implements Query {
    * @return An unsubscribe function that can be called to cancel
    * the snapshot listener.
    */
-  onSnapshot = (
-    optionsOrObserverOrOnNext:
-      | SnapshotListenOptions
-      | MockQuerySnapshotObserver
-      | MockQuerySnapshotCallback,
-    observerOrOnNextOrOnError?:
-      | MockQuerySnapshotObserver
-      | MockQuerySnapshotCallback
-      | ErrorFunction,
+  public onSnapshot = (
+    optionsOrObserverOrOnNext: SnapshotListenOptions | MockQuerySnapshotObserver | MockQuerySnapshotCallback,
+    observerOrOnNextOrOnError?: MockQuerySnapshotObserver | MockQuerySnapshotCallback | ErrorFunction,
     onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
 
-      return () =>
-        this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
+      return () => this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
     }
     throw new NotImplementedYet('MockQuery.onSnapshot');
   }
@@ -375,10 +346,9 @@ export default class MockQuery implements Query {
    * Handle onSnapshot callbacks for document changes that have impact on this query.
    * @memberof MockQuery
    */
-  handleCollectionSnapshotChange = (snapshot: QuerySnapshot) => {
+  public handleCollectionSnapshotChange = (snapshot: QuerySnapshot) => {
     const oldDocs = this.getFilterDocumentReferences();
-    this.docRefs = (this
-      .collectionRef as MockCollectionReference).mocker.docRefs();
+    this.docRefs = (this.collectionRef as MockCollectionReference).mocker.docRefs();
     const newDocs = this.getFilterDocumentReferences();
 
     const docChanges: DocumentChange[] = [];
@@ -417,21 +387,17 @@ export default class MockQuery implements Query {
     });
     if (docChanges.length > 0) {
       this._snapshotCallbackHandler.fire(
-        new MockQuerySnapshot(
-          snapshot.query,
-          this.getDocumentSnapshots(newDocs),
-          docChanges
-        )
+        new MockQuerySnapshot(snapshot.query, this.getDocumentSnapshots(newDocs), docChanges)
       );
     }
   }
 
-  private getDocumentSnapshots = (
-    docRefs: MockDocumentReference[] = this.docRefs
-  ): QueryDocumentSnapshot[] => {
-    return docRefs.map(
-      doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot
-    );
+  private createClone = (): MockQuery => {
+    return new MockQuery(this.collectionRef, this.docRefs, this.rules);
+  }
+
+  private getDocumentSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
+    return docRefs.map(doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot);
   }
 
   private getFilterDocumentReferences = () => {
@@ -444,16 +410,10 @@ export default class MockQuery implements Query {
     if (start) {
       if (!order) {
         throw new MockFirebaseValidationError(
-          `${
-            start.startAt ? 'StartAt' : 'StartBefore'
-          } needs to match with query order but order is not defined.`
+          `${start.startAt ? 'StartAt' : 'StartBefore'} needs to match with query order but order is not defined.`
         );
       }
-      const index = findIndexForDocument(
-        docs,
-        order.map(field => field.fieldPath),
-        start.fieldValues
-      );
+      const index = findIndexForDocument(docs, order.map(field => field.fieldPath), start.fieldValues);
       if (index >= 0) {
         docs = docs.slice(start.startAt === 'at' ? index : index + 1);
       }
@@ -462,16 +422,10 @@ export default class MockQuery implements Query {
     if (end) {
       if (!order) {
         throw new MockFirebaseValidationError(
-          `${
-            end.endAt ? 'beforeAt' : 'at'
-          } needs to match with query order but order is not defined.`
+          `${end.endAt ? 'beforeAt' : 'at'} needs to match with query order but order is not defined.`
         );
       }
-      const index = findIndexForDocument(
-        docs,
-        order.map(field => field.fieldPath),
-        end.fieldValues
-      );
+      const index = findIndexForDocument(docs, order.map(field => field.fieldPath), end.fieldValues);
       if (index >= 0) {
         docs = docs.slice(0, end.endAt === 'at' ? index + 1 : index);
       }
@@ -493,10 +447,7 @@ export default class MockQuery implements Query {
     };
   }
 
-  private createEndRule = (
-    fieldValues: any[],
-    endAt: 'before' | 'at'
-  ): MockQueryRules => {
+  private createEndRule = (fieldValues: any[], endAt: 'before' | 'at'): MockQueryRules => {
     return {
       ...this.rules,
       end: {

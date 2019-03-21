@@ -6,7 +6,6 @@ import {
   SnapshotListenOptions,
   SnapshotMetadata,
 } from '@firebase/firestore-types';
-import { NotImplementedYet } from './utils/index';
 
 /**
  * A `QuerySnapshot` contains zero or more `DocumentSnapshot` objects
@@ -16,29 +15,6 @@ import { NotImplementedYet } from './utils/index';
  * properties.
  */
 export default class MockQuerySnapshot implements QuerySnapshot {
-  public constructor(
-    public query: Query,
-    private _docs: QueryDocumentSnapshot[],
-    private _docChanges: DocumentChange[]
-  ) {}
-
-  /**
-   * The query on which you called `get` or `onSnapshot` in order to get this
-   * `QuerySnapshot`.
-   */
-  // query: Query;
-  /**
-   * Metadata about this snapshot, concerning its source and if it has local
-   * modifications.
-   */
-  metadata: SnapshotMetadata = {
-    hasPendingWrites: false,
-    fromCache: false,
-    isEqual: (other: SnapshotMetadata) => {
-      return other.hasPendingWrites === false && other.fromCache === false;
-    },
-  };
-
   /** An array of all the documents in the QuerySnapshot. */
   public get docs(): QueryDocumentSnapshot[] {
     return this._docs.slice();
@@ -53,6 +29,28 @@ export default class MockQuerySnapshot implements QuerySnapshot {
   public get empty(): boolean {
     return this._docs.length === 0;
   }
+
+  /**
+   * The query on which you called `get` or `onSnapshot` in order to get this
+   * `QuerySnapshot`.
+   */
+  // query: Query;
+  /**
+   * Metadata about this snapshot, concerning its source and if it has local
+   * modifications.
+   */
+  public metadata: SnapshotMetadata = {
+    hasPendingWrites: false,
+    fromCache: false,
+    isEqual: (other: SnapshotMetadata) => {
+      return other.hasPendingWrites === false && other.fromCache === false;
+    },
+  };
+  public constructor(
+    public query: Query,
+    private _docs: QueryDocumentSnapshot[],
+    private _docChanges: DocumentChange[]
+  ) {}
 
   /**
    * Returns an array of the documents changes since the last snapshot. If this
@@ -73,11 +71,11 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    * each document in the snapshot.
    * @param thisArg The `this` binding for the callback.
    */
-  public forEach = (
-    callback: (result: QueryDocumentSnapshot) => void,
-    thisArg?: any
-  ): void => {
-    throw new NotImplementedYet('MockQuerySnapshot.forEach');
+  public forEach = (callback: (result: QueryDocumentSnapshot) => void, thisArg?: any): void => {
+    // Todo this binding
+    for (const documentSnapshot of this._docs) {
+      callback(documentSnapshot);
+    }
   }
 
   /**

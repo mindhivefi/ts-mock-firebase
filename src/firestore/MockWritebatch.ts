@@ -9,10 +9,12 @@ import {
 } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from '.';
 
+import { deepCopy } from '@firebase/util';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
+import MockFieldPath from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
-import { NotImplementedYet } from './utils';
+import { NotImplementedYet, parseFieldValuePairsFromArgs, setFieldValuePairs } from './utils';
 
 /**
  * A write batch, used to perform multiple writes as a single atomic unit.
@@ -27,10 +29,10 @@ import { NotImplementedYet } from './utils';
  */
 export class MockWriteBatch implements WriteBatch {
   private transactionData: {
-    [documentPath: string]: any,
+    [documentPath: string]: any;
   } = {};
   private transactionOperation: {
-    [documentPath: string]: DocumentChangeType,
+    [documentPath: string]: DocumentChangeType;
   } = {};
 
   public constructor(public firestore: MockFirebaseFirestore) {}
@@ -45,31 +47,18 @@ export class MockWriteBatch implements WriteBatch {
    * @param options An object to configure the set behavior.
    * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  set(
-    documentRef: MockDocumentReference,
-    data: DocumentData,
-    options?: SetOptions
-  ): WriteBatch {
+  public set(documentRef: MockDocumentReference, data: DocumentData, options?: SetOptions): WriteBatch {
     const path = documentRef.path;
 
-    let docData =
-      this.transactionData[path] ||
-      (documentRef.data && { ...documentRef.data }); // TODO need to do locking for transaction
+    let docData = this.transactionData[path] || (documentRef.data && { ...documentRef.data }); // TODO need to do locking for transaction
     const changeType: DocumentChangeType = docData ? 'modified' : 'added';
 
     if (options && options.merge) {
       docData = { ...docData, ...data };
-      this.transactionData[path] = documentRef.updateInTransaction(
-        docData,
-        data
-      );
+      this.transactionData[path] = documentRef.updateInTransaction(docData, data);
     } else {
       docData = { ...data };
-      this.transactionData[path] = documentRef.setInTransaction(
-        docData,
-        data,
-        options
-      );
+      this.transactionData[path] = documentRef.setInTransaction(docData, data, options);
     }
     this.transactionOperation[path] = changeType;
     return this;
@@ -86,22 +75,26 @@ export class MockWriteBatch implements WriteBatch {
    * within the document.
    * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  update(
+  public update(
     documentRef: MockDocumentReference,
     dataOrField: UpdateData | string | FieldPath,
     value?: any,
-    ...moreFielsAndValues: any[]
+    ...moreFieldsAndValues: any[]
   ): WriteBatch {
-    if (typeof dataOrField === 'object') {
-      // TODO fieldPaths...
-      const path = documentRef.path;
+    const path = documentRef.path;
+    const data = this.transactionData[path] || deepCopy(documentRef.data);
 
-      const data = this.transactionData[path] || { ...documentRef.data }; // TODO need to do locking for transaction
-      this.transactionData[path] = documentRef.updateInTransaction(
-        data,
-        dataOrField,
-        moreFielsAndValues
-      );
+    const fieldType = typeof dataOrField;
+    if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
+      // TODO remove repetative code
+      const args = parseFieldValuePairsFromArgs([dataOrField, value], moreFieldsAndValues[0]);
+
+      this.transactionData[path] = setFieldValuePairs(this.firestore, data, args);
+      this.transactionOperation[path] = 'modified';
+      return this;
+    }
+    if (typeof dataOrField === 'object') {
+      this.transactionData[path] = documentRef.updateInTransaction(data, dataOrField, value, moreFieldsAndValues);
       this.transactionOperation[path] = 'modified';
       return this;
     }
@@ -109,35 +102,12 @@ export class MockWriteBatch implements WriteBatch {
   }
 
   /**
-   * Updates fields in the document referred to by this `DocumentReference`.
-   * The update will fail if applied to a document that does not exist.
-   *
-   * Nested fields can be update by providing dot-separated field path strings
-   * or by providing FieldPath objects.
-   *
-   * @param documentRef A reference to the document to be updated.
-   * @param field The first field to update.
-   * @param value The first value.
-   * @param moreFieldsAndValues Additional key value pairs.
-   * @return A Promise resolved once the data has been successfully written
-   * to the backend (Note that it won't resolve while you're offline).
-   */
-  // update(
-  //   documentRef: DocumentReference,
-  //   field: string | FieldPath,
-  //   value: any,
-  //   ...moreFieldsAndValues: any[]
-  // ): WriteBatch {
-  //   throw new NotImplementedYet('MockWriteBatch.update')
-  // }
-
-  /**
    * Deletes the document referred to by the provided `DocumentReference`.
    *
    * @param documentRef A reference to the document to be deleted.
    * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  delete(documentRef: DocumentReference): WriteBatch {
+  public delete(documentRef: DocumentReference): WriteBatch {
     const path = documentRef.path;
     this.transactionData[path] = undefined;
     this.transactionOperation[path] = 'removed';
@@ -151,45 +121,66 @@ export class MockWriteBatch implements WriteBatch {
    * successfully written to the backend as an atomic unit. Note that it won't
    * resolve while you're offline.
    */
-  commit = async (): Promise<void> => {
+  public commit = async (): Promise<void> => {
     const collectionChanges: {
-      [collectionId: string]: MockDocumentChange[],
+      [collectionId: string]: MockDocumentChange[];
     } = {};
     try {
-      for (const path in this.transactionOperation) {
-        const operation = this.transactionOperation[path];
-        const doc = this.firestore.doc(path) as MockDocumentReference;
+      const triggers: {
+        [path: string]: () => void;
+      } = {};
 
-        const documentChange = await doc.commitChange(
-          operation,
-          this.transactionData[path]
-        );
-        const collectionPath = path.substr(0, path.lastIndexOf('/'));
-        const changes: MockDocumentChange[] =
-          collectionChanges[collectionPath] || [];
-        changes.push(documentChange as any); // TODO typing
-        collectionChanges[collectionPath] = changes;
-      }
-      // iterate snapshot callbacks collections and documents
-      for (const collectionId in collectionChanges) {
-        const documentChanges = collectionChanges[collectionId];
-        for (const documentId in documentChanges) {
-          const document = documentChanges[documentId];
-          document.doc.ref.fireDocumentChangeEvent(
-            document.type,
-            documentChanges[documentId].oldIndex,
-            false
-          );
+      for (const path in this.transactionOperation) {
+        if (this.transactionOperation.hasOwnProperty(path)) {
+          const operation = this.transactionOperation[path];
+          const doc = this.firestore.doc(path) as MockDocumentReference;
+
+          const documentChange = await doc.commitChange(operation, this.transactionData[path]);
+          const collectionPath = path.substr(0, path.lastIndexOf('/'));
+          const changes: MockDocumentChange[] = collectionChanges[collectionPath] || [];
+          changes.push(documentChange as any); // TODO typing
+          collectionChanges[collectionPath] = changes;
+
+          // iterate snapshot callbacks collections and documents
+          for (const collectionId in collectionChanges) {
+            if (collectionChanges.hasOwnProperty(collectionId)) {
+              const documentChanges = collectionChanges[collectionId];
+              for (const documentId in documentChanges) {
+                if (documentChanges.hasOwnProperty(documentId)) {
+                  const document = documentChanges[documentId];
+                  triggers[document.doc.ref.path] = () =>
+                    document.doc.ref.fireDocumentChangeEvent(
+                      document.type,
+                      documentChanges[documentId].oldIndex,
+                      false
+                    );
+                }
+              }
+              const collection = this.firestore.collection(collectionId) as MockCollectionReference;
+
+              triggers[collectionId] = () => {
+                collection.fireBatchDocumentChange(documentChanges);
+              };
+            }
+          }
+          // tslint:disable-next-line
         }
-        const collection = this.firestore.collection(
-          collectionId
-        ) as MockCollectionReference;
-        collection.fireBatchDocumentChange(documentChanges);
       }
-      // tslint:disable-next-line
+
+      // fire triggers
+      for (const trigger in triggers) {
+        if (triggers.hasOwnProperty(trigger)) {
+          triggers.hasOwnProperty(trigger) && triggers[trigger]();
+        }
+      }
     } catch (error) {
-      // TODO this.rollback();
+      this.rollback();
       throw error;
     }
+  }
+
+  private rollback = () => {
+    // tslint:disable-next-line: no-console
+    console.error('Rollback not implemented yet');
   }
 }
