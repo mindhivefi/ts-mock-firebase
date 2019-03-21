@@ -1,10 +1,11 @@
 {
-  "extends": ["tslint-sonarts"],
+  "extends": ["tslint:recommended", "tslint-config-prettier", "tslint-sonarts"],
   "rules": {
     // -- Strict errors --
     // These lint rules are likely always a good idea.
     "semicolon": [true, "always"],
 
+    "interface-name": false,
     // Force function overloads to be declared together. This ensures readers understand APIs.
     "adjacent-overload-signatures": true,
 
@@ -24,6 +25,8 @@
     // code currently being edited (they may be incorrectly handling a different type case that does not exist).
     "no-unnecessary-type-assertion": true,
 
+    "no-unused-expression": false,
+    
     // Disallow nonsensical label usage.
     "label-position": true,
 
@@ -127,10 +130,12 @@
         "esSpecCompliant": true
       }
     ],
-
-    "ordered-imports": true
+    "object-literal-sort-keys": false,
+    "ordered-imports": true,
     // Needed to work with baseUrl
     // "no-implicit-dependencies": false
+
+    "variable-name": false
   },
   "rulesDirectory": [],
   "defaultSeverity": "error",
