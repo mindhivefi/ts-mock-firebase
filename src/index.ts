@@ -7,7 +7,7 @@ import firebase from './firebaseApp';
  */
 export interface Mocker {
   /**
-   * Return object's initial state
+   * Return object's initial state. You should call this before each firestore test case, to initialize the database state
    */
   reset(): void;
 }

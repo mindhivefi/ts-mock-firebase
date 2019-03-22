@@ -13,7 +13,7 @@ Firestore mock supports currently:
 - All references for doc and collections
 - FieldPaths
 - All FieldValue -sentinels
-- Queryes with `where()`, `orderBy()`, `limit()`, `startAt()`, `startAfter()`, `endBefore()` and `endAt()` are all supported.
+- Queries with `where()`, `orderBy()`, `limit()`, `startAt()`, `startAfter()`, `endBefore()` and `endAt()` are all supported.
 - All document manipulation and reading operations are supported
 - Transactions and WriteBatches are supported
 
