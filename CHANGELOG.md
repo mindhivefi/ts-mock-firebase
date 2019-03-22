@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.3.1...v1.4.0) (2019-03-22)
+
+
+### Features
+
+* loading-partial-database-state-mocker-functions ([9b15b42](https://github.com/mindhivefi/ts-mock-firebase/commit/9b15b42))
+
 ## [1.3.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.3.0...v1.3.1) (2019-03-21)
 
 
