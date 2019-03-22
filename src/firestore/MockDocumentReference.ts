@@ -49,6 +49,12 @@ export interface DocumentMocker extends Mocker {
 
   load(document: MockDocument): void;
 
+  /**
+   * Set document data object
+   * @param data A new data for document
+   */
+  setData(data: DocumentData): void;
+
   saveDocument(): MockDocument;
 
   saveCollections(): MockCollections;
@@ -90,6 +96,10 @@ export default class MockDocumentReference implements DocumentReference {
 
       setCollection: (collection: MockCollectionReference) => {
         this._collections[collection.id] = collection;
+      },
+
+      setData: (data: DocumentData) => {
+        this.data = data;
       },
 
       reset: () => {
