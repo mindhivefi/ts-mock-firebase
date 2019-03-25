@@ -5,7 +5,7 @@ ts-mock-firebase supports to basic ways to set up the initial database state for
 One important thing to understand is that this mock library have a singleton instance of firebase in memory. So it is important that you will call mocker reset before every test in following way:
 
 ```typescript
-firestore.mocker.reser(); // this will reset the whole database into an initial state
+firestore.mocker.reset(); // this will reset the whole database into an initial state
 ```
 
 ## Setting database state by setting document into a paths
