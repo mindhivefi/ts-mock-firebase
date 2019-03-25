@@ -1,6 +1,6 @@
 # Setting the test scene
 
-ts-mock-firebase supports to basic ways to set up the initial database state for testing. You can read the whole state of the database from an object or on json file or then you can set up the scene by setting collections and single documents with direct path pointings. You can also combine these to ways to setting up the state. 
+ts-mock-firebase supports to basic ways to set up the initial database state for testing. You can read the whole state of the database from an object or on json file or then you can set up the scene by setting collections and single documents with direct path pointings. You can also combine these to ways to setting up the state.
 
 One important thing to understand is that this mock library have a singleton instance of firebase in memory. So it is important that you will call mocker reset before every test in following way:
 
@@ -17,7 +17,7 @@ In basic test cases, it is might be the easiest way to just set the required fir
 Load document will load a single document data into a given path:
 
 ```typescript
-firestore.mocker.loadDocument('path/to/my/document', { 
+firestore.mocker.loadDocument('path/to/my/document', {
   title: 'This is my document data',
 });
 ```

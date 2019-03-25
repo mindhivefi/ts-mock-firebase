@@ -342,7 +342,11 @@ export class MockCollectionReference implements CollectionReference {
    * @return A Promise that will be resolved with the results of the Query.
    */
   public get = async (options?: GetOptions): Promise<QuerySnapshot> => {
-    return Promise.resolve(new MockQuery(this, this.getDocs()).get());
+    try {
+      return Promise.resolve(new MockQuery(this, this.getDocs()).get());
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
   /**

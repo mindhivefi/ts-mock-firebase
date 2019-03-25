@@ -308,8 +308,12 @@ export default class MockQuery implements Query {
    * @return A Promise that will be resolved with the results of the Query.
    */
   public get = (options?: GetOptions): Promise<QuerySnapshot> => {
-    const docs = this.getFilterDocumentReferences();
-    return Promise.resolve<QuerySnapshot>(new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []));
+    try {
+      const docs = this.getFilterDocumentReferences();
+      return Promise.resolve<QuerySnapshot>(new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []));
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
   /**

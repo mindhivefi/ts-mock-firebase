@@ -1,9 +1,7 @@
+import { MockDatabase } from '..';
 import { MockFirebaseApp } from '../../firebaseApp';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
-
-import { MockDatabase } from '..';
-import { MockFirebaseValidationError } from '../utils';
 
 /* tslint:disable:no-big-function no-identical-functions */
 describe('CollectionReferenceMock', () => {
@@ -468,18 +466,13 @@ describe('CollectionReferenceMock', () => {
         const firestore = app.firestore();
         firestore.mocker.fromMockDatabase(testData4);
 
-        const crash = () => {
+        // tslint:disable-next-line: no-floating-promises
+        expect(
           firestore
             .collection('list')
             .where('name', 'array-contains', 2)
             .get()
-            .catch(error => {
-              // excpect call to fail. Raise the error further for jest
-              throw error;
-            });
-        };
-
-        expect(crash).toThrowError(MockFirebaseValidationError);
+        ).rejects.toMatch('Error');
       });
     });
 

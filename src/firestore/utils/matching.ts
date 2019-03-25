@@ -32,9 +32,7 @@ export function createFirestoreMatchRuleFunction(
             return field >= value;
           case 'array-contains': {
             if (!Array.isArray(field)) {
-              throw new MockFirebaseValidationError(
-                `Field ${fieldPath} is not an array.`
-              );
+              throw new MockFirebaseValidationError(`Field ${fieldPath} is not an array.`);
             }
             return field.indexOf(value) >= 0;
           }
@@ -81,32 +79,45 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
   if (field) {
     switch (opStr) {
       case '==':
-        if (field !== value) return false;
+        if (field !== value) {
+          return false;
+        }
         break;
       case '<':
-        if (field >= value) return false;
+        if (field >= value) {
+          return false;
+        }
         break;
       case '<=':
-        if (field > value) return false;
+        if (field > value) {
+          return false;
+        }
         break;
       case '>':
-        if (field <= value) return false;
+        if (field <= value) {
+          return false;
+        }
         break;
       case '>=':
-        if (field < value) return false;
+        if (field < value) {
+          return false;
+        }
         break;
       case 'array-contains': {
-        if (!Array.isArray(field))
-          throw new MockFirebaseValidationError(
-            `Field ${fieldPath} is not an array.`
-          );
+        if (!Array.isArray(field)) {
+          throw new MockFirebaseValidationError(`Error: Field ${fieldPath} is not an array.`);
+        }
 
-        if (field.indexOf(value) < 0) return false;
+        if (field.indexOf(value) < 0) {
+          return false;
+        }
         break;
       }
       default:
         throw new Error(`Unidentified where operation: ${opStr}`);
     }
-  } else return false;
+  } else {
+    return false;
+  }
   return true;
 }
