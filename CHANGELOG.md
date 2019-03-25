@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.4.0...v1.4.1) (2019-03-25)
+
+
+### Bug Fixes
+
+* fix-for-query-get-error-handling ([f5bb634](https://github.com/mindhivefi/ts-mock-firebase/commit/f5bb634))
+
 # [1.4.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.3.1...v1.4.0) (2019-03-22)
 
 
