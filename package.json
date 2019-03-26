@@ -65,12 +65,12 @@
   "devDependencies": {
     "@commitlint/cli": "7.5.2",
     "@commitlint/config-conventional": "7.5.0",
-    "@firebase/app-types": "0.3.6",
-    "@firebase/auth": "0.9.5",
-    "@firebase/firestore": "1.0.6",
-    "@firebase/firestore-types": "1.0.3",
-    "@firebase/messaging": "0.3.14",
-    "@firebase/util": "0.2.9",
+    "@firebase/app-types": "0.3.7",
+    "@firebase/auth": "0.9.6",
+    "@firebase/firestore": "1.1.1",
+    "@firebase/firestore-types": "1.1.1",
+    "@firebase/messaging": "0.3.15",
+    "@firebase/util": "0.2.11",
     "@semantic-release/changelog": "3.0.2",
     "@semantic-release/git": "7.0.8",
     "@semantic-release/npm": "5.1.4",
@@ -86,7 +86,7 @@
     "tslint": "5.14.0",
     "tslint-config-prettier": "1.18.0",
     "tslint-sonarts": "1.9.0",
-    "typescript": "3.3.3333"
+    "typescript": "3.3.4000"
   },
   "dependencies": {
     "uuid": "3.3.2"
