@@ -2,7 +2,7 @@ import { DocumentData, FieldValue } from '@firebase/firestore-types';
 import { MockFirebaseFirestore } from '.';
 
 import MockTimestamp from './MockTimestamp';
-import { NotImplementedYet } from './utils';
+import { NotImplementedYet } from './utils/NotImplementedYet';
 
 enum MockFieldValueType {
   DELETE = 'delete',
@@ -83,8 +83,29 @@ export default class MockFieldValue implements FieldValue {
    * @param other The `FieldValue` to compare against.
    * @return true if this `FieldValue` is equal to the provided one.
    */
-  public isEqual(other: FieldValue): boolean {
-    throw new NotImplementedYet('serverTimestamp');
+  public isEqual(other: MockFieldValue): boolean {
+    if (this._type !== other._type) {
+      return false;
+    }
+    switch (this._type) {
+      case MockFieldValueType.DELETE:
+      case MockFieldValueType.TIMESTAMP:
+        return true;
+      case MockFieldValueType.ARRAY_UNION:
+      case MockFieldValueType.ARRAY_REMOVE: {
+        if (other._args.length !== this._args.length) {
+          return false;
+        }
+        for (let i = 0; i < this._args.length; i++) {
+          if (other._args[i] !== this._args[i]) {
+            return false;
+          }
+        }
+        return true;
+      }
+      default:
+        throw new NotImplementedYet(`MockFieldValue.isEqual have no support for FieldValue type of ${this._type}`);
+    }
   }
 }
 

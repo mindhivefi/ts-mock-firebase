@@ -11,7 +11,7 @@ describe('CollectionReferenceMock', () => {
       const firestore = app.firestore();
 
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
+      firestore.mocker.setCollection(collection);
 
       const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
@@ -24,7 +24,7 @@ describe('CollectionReferenceMock', () => {
       const firestore = app.firestore();
 
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
+      firestore.mocker.setCollection(collection);
 
       const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
@@ -39,7 +39,7 @@ describe('CollectionReferenceMock', () => {
       const firestore = app.firestore();
 
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
+      firestore.mocker.setCollection(collection);
 
       const data = {
         test: 'data',

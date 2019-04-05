@@ -14,15 +14,14 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import { Mocker } from '../index';
-import MockDocumentReference from './MockDocumentReference';
-import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from './MockQuery';
-import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
-import { generateDocumentId, resolveReference } from './utils';
 
 import { MockCollection, MockDocuments, MockFirebaseFirestore } from '.';
-import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import { Mocker } from '..';
+import MockDocumentReference, { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from './MockQuery';
+import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
 import MockQuerySnapshot from './MockQuerySnapshot';
+import { resolveReference } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 
 export interface CollectionMocker extends Mocker {
@@ -140,7 +139,7 @@ export class MockCollectionReference implements CollectionReference {
       this.firestore,
       this.parent as MockDocumentReference,
       false,
-      documentPath || generateDocumentId(),
+      documentPath || this.firestore.mocker.getNextDocumentId(),
       false,
       this
     ) as DocumentReference;
@@ -156,7 +155,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   public add = (data: DocumentData): Promise<DocumentReference> => {
     return new Promise<DocumentReference>((resolve, reject) => {
-      const id = generateDocumentId();
+      const id = this.firestore.mocker.getNextDocumentId();
       const document = new MockDocumentReference(this.firestore, id, this);
       this.mocker.setDoc(document);
       document.data = { ...data };

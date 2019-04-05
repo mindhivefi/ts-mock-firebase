@@ -16,7 +16,7 @@ import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
 import MockQuerySnapshot from './MockQuerySnapshot';
-import { NotImplementedYet } from './utils';
+import { NotImplementedYet } from './utils/NotImplementedYet';
 
 import { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
 import { findIndexForDocument, MockFirebaseValidationError } from './utils';

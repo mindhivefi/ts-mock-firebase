@@ -8,12 +8,6 @@ import MockDocumentReference from '../MockDocumentReference';
 import MockFieldPath from '../MockFieldPath';
 import MockFieldValue, { processFieldValue } from '../MockFieldValue';
 
-export class NotImplementedYet extends Error {
-  constructor(label?: string) {
-    super('Not implemented yet' + label ? ` (${label})` : '');
-  }
-}
-
 // tslint:disable-next-line: max-classes-per-file
 export class MockFirebaseValidationError extends Error {}
 /**
@@ -209,7 +203,7 @@ export function resolveReference(
   }
 
   const elements = path.split('/');
-  let doc = root || firestore.root;
+  let doc = root || firestore.mocker.root();
   let collection = rootCollection || (doc.parent as MockCollectionReference);
 
   let parity = startParity;
@@ -218,7 +212,7 @@ export function resolveReference(
     if (parity) {
       collection = doc.mocker.collection(id);
       if (!collection) {
-        collection = new MockCollectionReference(firestore, id, doc !== firestore.root ? doc : null);
+        collection = new MockCollectionReference(firestore, id, doc !== firestore.mocker.root() ? doc : null);
         doc.mocker.setCollection(collection);
       }
     } else {
@@ -330,9 +324,8 @@ export function parseFieldValuePairsFromArgs(prefix: any[], moreFieldsAndValues:
   if (
     moreFieldsAndValues &&
     moreFieldsAndValues.length > 0 &&
-    !// tslint:disable-next-line: no-bitwise
-    (
-      (args.length & 1) === 0 &&
+    !(
+      hasParity(args) &&
       moreFieldsAndValues.length === 1 &&
       Array.isArray(moreFieldsAndValues) &&
       Array.isArray(moreFieldsAndValues[0]) &&
@@ -390,3 +383,7 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
   }
   return newData;
 };
+function hasParity(args: any[]) {
+  // tslint:disable-next-line: no-bitwise
+  return (args.length & 1) === 0;
+}

@@ -18,7 +18,10 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "sourceMaps": true,
-      "skipFiles": ["<node_internals>/**", "node_modules/jest*/**"]
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/jest*/**"
+    ]
     },
     {
       "type": "node",

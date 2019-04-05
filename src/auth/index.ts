@@ -14,11 +14,16 @@ import {
 } from '@firebase/auth-types';
 import { Observer, Unsubscribe } from '@firebase/util';
 import { MockFirebaseApp } from '../firebaseApp';
-import { NotImplementedYet } from '../firestore/utils';
+import { NotImplementedYet } from '../firestore/utils/NotImplementedYet';
+import MockUser from './MockUser';
 
 export default class MockFirebaseAuth implements FirebaseAuth {
-  public get currentUser(): User | null {
-    throw new NotImplementedYet('applyActionCode');
+  public get currentUser(): MockUser | null {
+    return this._user;
+  }
+
+  public set currentUser(user: MockUser | null) {
+    this._user = user;
   }
   public get languageCode(): string | null {
     throw new NotImplementedYet('applyActionCode');
@@ -28,10 +33,12 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   }
 
   public static Persistence: {
-    LOCAL: Persistence
-    NONE: Persistence
-    SESSION: Persistence,
+    LOCAL: Persistence;
+    NONE: Persistence;
+    SESSION: Persistence;
   };
+  private _user: MockUser | null = null;
+
   public constructor(public app: MockFirebaseApp) {}
 
   public applyActionCode = (code: string): Promise<void> => {
@@ -44,16 +51,10 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   public confirmPasswordReset = (code: string, newPassword: string): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public createUserWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
+  public createUserWithEmailAndPassword = (email: string, password: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public createUserAndRetrieveDataWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
+  public createUserAndRetrieveDataWithEmailAndPassword = (email: string, password: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
 
@@ -83,24 +84,16 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   ): Unsubscribe => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public sendSignInLinkToEmail = (
-    email: string,
-    actionCodeSettings: ActionCodeSettings
-  ): Promise<void> => {
+  public sendSignInLinkToEmail = (email: string, actionCodeSettings: ActionCodeSettings): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public sendPasswordResetEmail = (
-    email: string,
-    actionCodeSettings?: ActionCodeSettings | null
-  ): Promise<void> => {
+  public sendPasswordResetEmail = (email: string, actionCodeSettings?: ActionCodeSettings | null): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
   public setPersistence = (persistence: Persistence): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public signInAndRetrieveDataWithCredential = (
-    credential: AuthCredential
-  ): Promise<UserCredential> => {
+  public signInAndRetrieveDataWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
   public signInAnonymously = (): Promise<UserCredential> => {
@@ -115,27 +108,16 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   public signInWithCustomToken = (token: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public signInAndRetrieveDataWithCustomToken = (
-    token: string
-  ): Promise<UserCredential> => {
+  public signInAndRetrieveDataWithCustomToken = (token: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public signInWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
+  public signInWithEmailAndPassword = (email: string, password: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public signInAndRetrieveDataWithEmailAndPassword = (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
+  public signInAndRetrieveDataWithEmailAndPassword = (email: string, password: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
-  public signInWithEmailLink = (
-    email: string,
-    emailLink?: string
-  ): Promise<UserCredential> => {
+  public signInWithEmailLink = (email: string, emailLink?: string): Promise<UserCredential> => {
     throw new NotImplementedYet('applyActionCode');
   }
   public signInWithPhoneNumber = (

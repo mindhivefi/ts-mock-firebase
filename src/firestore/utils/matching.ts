@@ -1,7 +1,7 @@
 import { FieldPath, WhereFilterOp } from '@firebase/firestore-types';
 import MockDocumentReference from '../MockDocumentReference';
 import { MockQueryWhereRule } from '../MockQuery';
-import { NotImplementedYet } from '../utils/index';
+import { NotImplementedYet } from '../utils/NotImplementedYet';
 import { MockFirebaseValidationError } from './index';
 
 export type MatchFunction = (doc: MockDocumentReference) => boolean;
@@ -53,7 +53,7 @@ export function filterDocumentsByRules(
   if (!rules) {
     return docs.filter(d => d.data !== undefined);
   }
-  const result = docs.filter(doc => {
+  return docs.filter(doc => {
     // Documents that do not exists, will be removed automatically from the list
     if (!doc.data) {
       return false;
@@ -65,7 +65,6 @@ export function filterDocumentsByRules(
     }
     return true;
   });
-  return result;
 }
 
 function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {

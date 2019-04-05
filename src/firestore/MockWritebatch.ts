@@ -14,7 +14,8 @@ import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import MockFieldPath from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
-import { NotImplementedYet, parseFieldValuePairsFromArgs, setFieldValuePairs } from './utils';
+import { parseFieldValuePairsFromArgs, setFieldValuePairs } from './utils';
+import { NotImplementedYet } from './utils/NotImplementedYet';
 
 /**
  * A write batch, used to perform multiple writes as a single atomic unit.
