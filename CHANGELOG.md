@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.0.0...v2.0.1) (2019-04-08)
+
+
+### Bug Fixes
+
+* 🐛 moved-app-types-to-the-root ([af5e99a](https://github.com/mindhivefi/ts-mock-firebase/commit/af5e99a))
+
 # [2.0.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.4.1...v2.0.0) (2019-04-08)
 
 
