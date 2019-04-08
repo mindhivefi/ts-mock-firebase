@@ -1,7 +1,10 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from '../../firebaseApp';
+import { createFirebaseNamespace } from '../../app';
 
 import { MockDatabase } from '..';
+
+const firebase = createFirebaseNamespace();
+const firestore = firebase.initializeApp({}).firestore();
 
 describe('Write batch functionality', () => {
   const database: MockDatabase = {
@@ -31,7 +34,6 @@ describe('Write batch functionality', () => {
   };
 
   it('will update changes in a batch', async () => {
-    const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
     let ref2Snap;
@@ -66,7 +68,6 @@ describe('Write batch functionality', () => {
   });
 
   it('will add and update operations atomically', async () => {
-    const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
     let ref2Snap;
@@ -106,7 +107,6 @@ describe('Write batch functionality', () => {
   });
 
   it('will add, update and delete operations atomically', async () => {
-    const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
     let ref2CollectionSnap: QuerySnapshot | undefined;

@@ -1,62 +1,48 @@
-import { DocumentSnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from '../../firebaseApp';
+import { createFirebaseNamespace } from '../../app';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
-import MockFieldPath from '../MockFieldPath';
+import { MockFieldPath } from '../MockFieldPath';
 
 import { MockDatabase } from '..';
 import { MockDocumentSnapshotCallback } from '../MockDocumentReference';
+import MockDocumentSnapshot from '../MockDocumentSnapshot';
 
 const documentPath = 'company/mindhive/skills/coding/technologies';
+const firebase = createFirebaseNamespace();
+const firestore = firebase.initializeApp({}).firestore();
 
 /* tslint:disable:no-big-function no-identical-functions */
 describe('DocumentReferenceMock', () => {
   describe('Paths', () => {
     it('Will return a path to a document', () => {
-      const firestore = new MockFirebaseApp().firestore();
       const document = firestore.collection('company').doc('mindhive');
       expect(document.path).toMatch('company/mindhive');
     });
 
     it('Will return a path to a collection', () => {
-      const firestore = new MockFirebaseApp().firestore();
       const collection = firestore.collection(documentPath);
-      expect(collection.path).toMatch(
-        'company/mindhive/skills/coding/technologies'
-      );
+      expect(collection.path).toMatch(documentPath);
     });
   });
 
   describe('References', () => {
     it('collection() returns a collection by id', () => {
-      const firestore = new MockFirebaseApp().firestore();
-      const document = firestore.root;
-
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
-
-      expect(document.collection('test')).toBe(collection);
+      firestore.mocker.setCollection(collection);
+      expect(firestore.mocker.collection('test')).toBe(collection);
     });
 
     it('collection() returns a collection by path', () => {
-      const firestore = new MockFirebaseApp().firestore();
-
-      const collection = firestore.collection(
-        'company/mindhive/skills/coding/technologies'
-      );
-      const document = firestore.root.collection('company').doc('mindhive');
-
+      const collection = firestore.collection(documentPath);
+      const document = firestore.mocker.collection('company').doc('mindhive');
       expect(document.collection('skills/coding/technologies')).toBe(collection);
     });
   });
 
   describe('set()', () => {
     it('will replace the current data', async () => {
-      const app = new MockFirebaseApp();
-      const firestore = app.firestore();
-
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
+      firestore.mocker.setCollection(collection);
       const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
@@ -68,10 +54,8 @@ describe('DocumentReferenceMock', () => {
     });
 
     it('will only update defined fields if merge options set to true', async () => {
-      const firestore = new MockFirebaseApp().firestore();
-
       const collection = new MockCollectionReference(firestore, 'test', null);
-      firestore.root.mocker.setCollection(collection);
+      firestore.mocker.setCollection(collection);
       const document = new MockDocumentReference(firestore, 'doc', collection);
       collection.mocker.setDoc(document);
       const data = {
@@ -95,11 +79,8 @@ describe('DocumentReferenceMock', () => {
 
     describe('set()', () => {
       it('will replace the current data', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
-
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
         const data = {
@@ -111,10 +92,8 @@ describe('DocumentReferenceMock', () => {
       });
 
       it('will only update defined fields if merge options set to true', async () => {
-        const firestore = new MockFirebaseApp().firestore();
-
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
         const data = {
@@ -137,19 +116,14 @@ describe('DocumentReferenceMock', () => {
       });
 
       it('will trigger onSnapshot event listeners', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
-
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
 
-        let snap: DocumentSnapshot | undefined = undefined;
+        let snap: MockDocumentSnapshot | undefined;
 
-        const listener: MockDocumentSnapshotCallback = (
-          snapshot: DocumentSnapshot
-        ) => {
+        const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
           snap = snapshot;
         };
 
@@ -168,16 +142,40 @@ describe('DocumentReferenceMock', () => {
         unsubscribe();
       });
 
-      // TOTO merge options
+      // TODO merge options
+
+      // it('will throw unauthorized exception if write is not allowed', () => {
+      //   const firestore = new MockFirebaseApp().firestore();
+      //   firestore.mocker.reset();
+      //   firestore.mocker.loadCollection('users', {
+      //     user1: {
+      //       name: 'Johnny',
+      //     },
+      //     user2: {
+      //       name: 'Cash',
+      //     },
+      //   });
+
+      //   const docRef = firestore.doc('users/user1');
+      //   expect.assertions(1);
+      //   expect(
+      //     docRef.set({
+      //       value: 'nada',
+      //     })
+      //   ).rejects.toMatch('PERMISSION_DENIED');
+      // });
+
+      // it('will throw unauthorized exception if create is not allowed', () => {});
+
+      // it('will throw unauthorized exception if update is not allowed', () => {});
     });
 
     describe('delete()', () => {
       it('will remove the document', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
 
@@ -186,19 +184,16 @@ describe('DocumentReferenceMock', () => {
       });
 
       it('will trigger onSnapshot -event', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
 
-        let snap: DocumentSnapshot | undefined = undefined;
+        let snap: MockDocumentSnapshot | undefined;
 
-        const listener: MockDocumentSnapshotCallback = (
-          snapshot: DocumentSnapshot
-        ) => {
+        const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
           snap = snapshot;
         };
 
@@ -215,11 +210,10 @@ describe('DocumentReferenceMock', () => {
 
     describe('get()', () => {
       it('will get snapshot with data', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
         const data = {
@@ -233,11 +227,10 @@ describe('DocumentReferenceMock', () => {
       });
 
       it('will get snapshot with exists = false if document does not exists', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
 
@@ -250,18 +243,13 @@ describe('DocumentReferenceMock', () => {
 
     describe('isEqual()', () => {
       it('will identify if the document refence points to itself ', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
-        const document2 = new MockDocumentReference(
-          firestore,
-          'doc2',
-          collection
-        );
+        const document2 = new MockDocumentReference(firestore, 'doc2', collection);
         collection.mocker.setDoc(document2);
 
         expect(document.isEqual(document)).toBeTruthy();
@@ -271,12 +259,11 @@ describe('DocumentReferenceMock', () => {
 
     describe('onSnapshot()', () => {
       it('will let user to start and stop listening snapshots', () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
-        const doc = firestore.doc('test/doc') as MockDocumentReference;
-        const listener = (snapshot: DocumentSnapshot) => {
-          console.log(snapshot);
-        };
+        firestore.mocker.reset();
+
+        const doc = firestore.doc('test/doc');
+        // tslint:disable-next-line: no-empty
+        const listener = (snapshot: MockDocumentSnapshot) => {};
         const unsubscribe = doc.onSnapshot(listener);
         expect(unsubscribe).toBeDefined();
 
@@ -289,11 +276,10 @@ describe('DocumentReferenceMock', () => {
 
     describe('update()', () => {
       it('will alter the data', async () => {
-        const app = new MockFirebaseApp();
-        const firestore = app.firestore();
+        firestore.mocker.reset();
 
         const collection = new MockCollectionReference(firestore, 'test', null);
-        firestore.root.mocker.setCollection(collection);
+        firestore.mocker.setCollection(collection);
         const document = new MockDocumentReference(firestore, 'doc', collection);
         collection.mocker.setDoc(document);
         const data = {
@@ -312,9 +298,9 @@ describe('DocumentReferenceMock', () => {
       });
 
       it('will fail if document do not exist', async () => {
-        const firestore = new MockFirebaseApp().firestore();
-        const document = firestore.doc('test/doc');
+        firestore.mocker.reset();
 
+        const document = firestore.doc('test/doc');
         expect.assertions(1);
         try {
           await document.update({
@@ -337,10 +323,9 @@ describe('DocumentReferenceMock', () => {
             },
           },
         };
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.fromMockDatabase(database);
 
-        const document = firestore.doc('list/doc') as MockDocumentReference;
+        const document = firestore.doc('list/doc');
         await document.update('test', 'cool');
 
         expect(document.data).toEqual({
@@ -361,18 +346,10 @@ describe('DocumentReferenceMock', () => {
             },
           },
         };
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.fromMockDatabase(database);
 
-        const document = firestore.doc('list/doc') as MockDocumentReference;
-        await document.update(
-          'test',
-          'cool',
-          'test2',
-          'cooler',
-          'test3',
-          'the coolest'
-        );
+        const document = firestore.doc('list/doc');
+        await document.update('test', 'cool', 'test2', 'cooler', 'test3', 'the coolest');
 
         expect(document.data).toEqual({
           value: 1,
@@ -395,10 +372,9 @@ describe('DocumentReferenceMock', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      const document = firestore.doc('list/doc') as MockDocumentReference;
+      const document = firestore.doc('list/doc');
       await document.update(new MockFieldPath('test'), 'cool');
 
       expect(document.data).toEqual({
@@ -419,10 +395,9 @@ describe('DocumentReferenceMock', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      const document = firestore.doc('list/doc') as MockDocumentReference;
+      const document = firestore.doc('list/doc');
       await document.update(new MockFieldPath('test', 'dive'), 'cool');
 
       expect(document.data).toEqual({
@@ -445,16 +420,12 @@ describe('DocumentReferenceMock', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      const document = firestore.doc('list/doc') as MockDocumentReference;
+      const document = firestore.doc('list/doc');
       await document.update(new MockFieldPath('test', 'dive'), 'cool');
       await document.update(new MockFieldPath('test', 'another'), 6);
-      await document.update(
-        new MockFieldPath('diverse', 'paths', 'possible'),
-        true
-      );
+      await document.update(new MockFieldPath('diverse', 'paths', 'possible'), true);
 
       expect(document.data).toEqual({
         value: 1,
@@ -482,14 +453,11 @@ describe('DocumentReferenceMock', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      const document = firestore.doc('list/doc') as MockDocumentReference;
+      const document = firestore.doc('list/doc');
 
-      await expect(
-        document.update(new MockFieldPath('value', 'crash'), 'will it?')
-      ).rejects.toThrow();
+      await expect(document.update(new MockFieldPath('value', 'crash'), 'will it?')).rejects.toThrow();
     });
   });
 });

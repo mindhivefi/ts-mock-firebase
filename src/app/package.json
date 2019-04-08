@@ -1,0 +1,28 @@
+{
+  "name": "@mock-firebase/app",
+  "version": "1.0.0",
+  "description": "Mocking Simulator for Firebase",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "jest"
+  },  
+  "repository": {
+    "directory": "src/app",
+    "type": "git",
+    "url": "git+https://github.com/mindhivefi/ts-mock-firebase.git"
+  },
+  "keywords": [
+    "firebase",
+    "mock",
+    "firebase-app",
+    "testing",
+    "test",
+    "simulation"
+  ],
+  "author": "Ville Venäläinen <ville@mindhive.fi> (https://www.mindhive.fi)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/mindhivefi/ts-mock-firebase/issues"
+  },
+  "homepage": "https://github.com/mindhivefi/ts-mock-firebase#readme"
+}

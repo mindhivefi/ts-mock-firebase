@@ -1,3 +1,4 @@
+import { MockFirebaseFirestore } from '@firebase/app-types';
 import {
   DocumentChange,
   DocumentChangeType,
@@ -7,16 +8,16 @@ import {
   Transaction,
   UpdateData,
 } from '@firebase/firestore-types';
-
 import { deepCopy } from '@firebase/util';
-import { MockFirebaseFirestore } from '.';
+
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
-import MockFieldPath from './MockFieldPath';
-import MockFieldValue, { processFieldValue } from './MockFieldValue';
+import { MockFieldPath } from './MockFieldPath';
+import { MockFieldValue, processFieldValue } from './MockFieldValue';
 import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
-import { MockFirebaseValidationError, NotImplementedYet, parseFieldValuePairsFromArgs } from './utils';
+import { MockFirebaseValidationError, parseFieldValuePairsFromArgs } from './utils';
+import { NotImplementedYet } from './utils/NotImplementedYet';
 
 export interface MockDocumentChange extends DocumentChange {
   doc: MockQueryDocumentSnapshot;

@@ -1,18 +1,12 @@
+import { MockFirebaseFirestore } from '@firebase/app-types';
 import { FieldPath } from '@firebase/firestore-types';
 import { deepCopy } from '@firebase/util';
 import * as uuidv4 from 'uuid/v4';
 
-import { MockFirebaseFirestore } from '..';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
-import MockFieldPath from '../MockFieldPath';
-import MockFieldValue, { processFieldValue } from '../MockFieldValue';
-
-export class NotImplementedYet extends Error {
-  constructor(label?: string) {
-    super('Not implemented yet' + label ? ` (${label})` : '');
-  }
-}
+import { createFieldPathFromString, MockFieldPath } from '../MockFieldPath';
+import { MockFieldValue, processFieldValue } from '../MockFieldValue';
 
 // tslint:disable-next-line: max-classes-per-file
 export class MockFirebaseValidationError extends Error {}
@@ -209,7 +203,7 @@ export function resolveReference(
   }
 
   const elements = path.split('/');
-  let doc = root || firestore.root;
+  let doc = root || firestore.mocker.root();
   let collection = rootCollection || (doc.parent as MockCollectionReference);
 
   let parity = startParity;
@@ -218,7 +212,7 @@ export function resolveReference(
     if (parity) {
       collection = doc.mocker.collection(id);
       if (!collection) {
-        collection = new MockCollectionReference(firestore, id, doc !== firestore.root ? doc : null);
+        collection = new MockCollectionReference(firestore, id, doc !== firestore.mocker.root() ? doc : null);
         doc.mocker.setCollection(collection);
       }
     } else {
@@ -287,28 +281,16 @@ export function matchFields(
 }
 
 export function getFieldValue(doc: MockDocumentReference, fieldName: string | FieldPath): any {
-  if (typeof fieldName === 'string') {
-    return doc.data[fieldName];
-  } else if (fieldName instanceof MockFieldPath) {
-    let parent = doc.data;
-    for (const field of fieldName.fieldNames) {
-      parent = parent[field];
-      if (!parent) {
-        return undefined;
-      }
-    }
-    return parent;
-  }
-  // TODO support for actual FieldPaths
-  return undefined;
+  return getFieldValueFromData(doc.data, fieldName);
 }
 
 export function getFieldValueFromData(data: any, fieldName: string | FieldPath): any {
-  if (typeof fieldName === 'string') {
-    return data[fieldName];
-  } else if (fieldName instanceof MockFieldPath) {
+  const fieldPath = validateFieldPathName(fieldName);
+  if (typeof fieldPath === 'string') {
+    return data[fieldPath];
+  } else if (fieldPath instanceof MockFieldPath) {
     let parent = data;
-    for (const field of fieldName.fieldNames) {
+    for (const field of fieldPath.fieldNames) {
       parent = parent[field];
       if (!parent) {
         return undefined;
@@ -316,8 +298,20 @@ export function getFieldValueFromData(data: any, fieldName: string | FieldPath):
     }
     return parent;
   }
-  // TODO support for actual FieldPaths
   return undefined;
+}
+
+export function validateFieldPathName(fieldName: string | FieldPath): string | FieldPath {
+  if (fieldName instanceof MockFieldPath) {
+    return fieldName;
+  }
+  if (typeof fieldName === 'string') {
+    if (fieldName.includes('.')) {
+      return createFieldPathFromString(fieldName);
+    }
+    return fieldName;
+  }
+  throw new Error(`Unexpected type of fieldPath ${typeof fieldName}`);
 }
 
 /**
@@ -330,9 +324,8 @@ export function parseFieldValuePairsFromArgs(prefix: any[], moreFieldsAndValues:
   if (
     moreFieldsAndValues &&
     moreFieldsAndValues.length > 0 &&
-    !// tslint:disable-next-line: no-bitwise
-    (
-      (args.length & 1) === 0 &&
+    !(
+      hasParity(args) &&
       moreFieldsAndValues.length === 1 &&
       Array.isArray(moreFieldsAndValues) &&
       Array.isArray(moreFieldsAndValues[0]) &&
@@ -390,3 +383,7 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
   }
   return newData;
 };
+function hasParity(args: any[]) {
+  // tslint:disable-next-line: no-bitwise
+  return (args.length & 1) === 0;
+}

@@ -1,4 +1,6 @@
-import firebase from '../';
+import { mockFirebase } from '../../';
+
+const firebase = mockFirebase();
 
 describe('Firebase namespace', () => {
   it('will create an instance of firebase namespace', () => {

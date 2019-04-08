@@ -1,9 +1,13 @@
 import { QuerySnapshot } from '@firebase/firestore-types';
 
 import { MockDatabase } from '..';
-import { MockFirebaseApp } from '../../firebaseApp';
+import { createFirebaseNamespace } from '../../app';
+import MockTransaction from '../../firestore/MockTransaction';
 import MockDocumentSnapshot from '../MockDocumentSnapshot';
-import MockFieldPath from '../MockFieldPath';
+import { MockFieldPath } from '../MockFieldPath';
+
+const firebase = createFirebaseNamespace();
+const firestore = firebase.initializeApp({}).firestore();
 
 // tslint:disable-next-line: no-big-function
 describe('Transaction handling', () => {
@@ -35,7 +39,6 @@ describe('Transaction handling', () => {
     };
 
     it('will update operations atomically', async () => {
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       let ref2Snap;
@@ -51,7 +54,7 @@ describe('Transaction handling', () => {
       firestore.doc('b/A').onSnapshot(onRef2DocumentSnapshot);
       firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('a/first');
         const ref2 = firestore.doc('b/A');
 
@@ -71,7 +74,6 @@ describe('Transaction handling', () => {
     it('will add and update operations atomically', async () => {
       expect(true).toBeTruthy();
 
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       let ref2Snap;
@@ -87,7 +89,7 @@ describe('Transaction handling', () => {
       firestore.doc('b/A').onSnapshot(onRef2DocumentSnapshot);
       firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('a/first');
         const ref2 = firestore.doc('b/A');
         const ref3 = firestore.doc('b/C');
@@ -112,7 +114,6 @@ describe('Transaction handling', () => {
     it('will add, update and delete operations atomically', async () => {
       expect(true).toBeTruthy();
 
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       let ref2CollectionSnap: QuerySnapshot | undefined;
@@ -123,7 +124,7 @@ describe('Transaction handling', () => {
 
       firestore.collection('b').onSnapshot(onRef2CollectionSnapshot);
 
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('a/first');
         const ref2 = firestore.doc('b/A');
         const ref3 = firestore.doc('b/C');
@@ -147,12 +148,11 @@ describe('Transaction handling', () => {
     it('will get value from document ref if value is not defined in transaction', async () => {
       expect(true).toBeTruthy();
 
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       let result: MockDocumentSnapshot | undefined;
 
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('b/A');
 
         result = (await transaction.get(ref)) as MockDocumentSnapshot;
@@ -165,10 +165,9 @@ describe('Transaction handling', () => {
     it('will give an error if get is called after updating operations', async () => {
       expect(true).toBeTruthy();
 
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('b/A');
         transaction.set(ref, { test: 'value' });
 
@@ -192,11 +191,10 @@ describe('Transaction handling', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       const ref = firestore.doc('a/first');
-      await firestore.runTransaction(async transaction => {
+      await firestore.runTransaction(async (transaction: MockTransaction) => {
         const fieldPath = new MockFieldPath('sub', 'value');
         transaction.update(ref, fieldPath, 'modified');
       });
@@ -223,11 +221,10 @@ describe('Transaction handling', () => {
         },
       },
     };
-    const firestore = new MockFirebaseApp().firestore();
     firestore.mocker.fromMockDatabase(database);
 
     const ref = firestore.doc('a/first');
-    await firestore.runTransaction(async transaction => {
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
       const fieldPath = new MockFieldPath('sub', 'value');
       transaction.update(ref, fieldPath, 'modified', 'text', 'cat');
     });
