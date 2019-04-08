@@ -1,20 +1,22 @@
 import { DocumentData, FieldValue } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from '.';
 
-import MockTimestamp from './MockTimestamp';
+import { MockFirebaseFirestore } from '@firebase/app-types';
+
+import { MockTimestamp } from './MockTimestamp';
 import { NotImplementedYet } from './utils/NotImplementedYet';
 
 enum MockFieldValueType {
-  DELETE = 'delete',
-  TIMESTAMP = 'timestamp',
   ARRAY_UNION = 'array_union',
   ARRAY_REMOVE = 'array_remove',
+  DELETE = 'delete',
+  INCREMENT = 'increment',
+  TIMESTAMP = 'timestamp',
 }
 /**
  * Sentinel values that can be used when writing document fields with set()
  * or update().
  */
-export default class MockFieldValue implements FieldValue {
+export class MockFieldValue implements FieldValue {
   public get args(): any[] {
     return this._args;
   }
@@ -67,6 +69,27 @@ export default class MockFieldValue implements FieldValue {
     return new MockFieldValue(MockFieldValueType.ARRAY_REMOVE, elements[0]);
   }
 
+  /**
+   * Returns a special value that can be used with set() or update() that tells
+   * the server to increment the field's current value by the given value.
+   *
+   * If either the operand or the current field value uses floating point
+   * precision, all arithmetic will follow IEEE 754 semantics. If both values
+   * are integers, values outside of JavaScript's safe number range
+   * (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`) are also subject
+   * to precision loss. Furthermore, once processed by the Firestore backend,
+   * all integer operations are capped between -2^63 and 2^63-1.
+   *
+   * If the current field value is not of type 'number', or if the field does
+   * not yet exist, the transformation will set the field to the given value.
+   *
+   * @param n The value to increment by.
+   * @return The FieldValue sentinel for use in a call to set() or update().
+   */
+  public static increment(n: number): MockFieldValue {
+    return new MockFieldValue(MockFieldValueType.INCREMENT, n);
+  }
+
   private static deleteSentinel = new MockFieldValue(MockFieldValueType.DELETE);
   private static timestampSentinel = new MockFieldValue(MockFieldValueType.TIMESTAMP);
   private _type: MockFieldValueType;
@@ -91,6 +114,9 @@ export default class MockFieldValue implements FieldValue {
       case MockFieldValueType.DELETE:
       case MockFieldValueType.TIMESTAMP:
         return true;
+      case MockFieldValueType.INCREMENT: {
+        return other._args[0] === this._args[0];
+      }
       case MockFieldValueType.ARRAY_UNION:
       case MockFieldValueType.ARRAY_REMOVE: {
         if (other._args.length !== this._args.length) {
@@ -137,7 +163,7 @@ export function preprocessData(firestore: MockFirebaseFirestore, data: DocumentD
  * Process a single fieldvalue in object
  *
  * @export
- * @param {MockFirebaseFirestore} firestore
+ * @param {MockFirebaseFirestoreImpl} firestore
  * @param {DocumentData} sourceData
  * @param {DocumentData} targetData
  * @param {string} key
@@ -179,7 +205,7 @@ export function processFieldValue(
           }
           targetData[key] = currentValue;
         } else {
-          // if the field is not an array field values will be replaced with the new array values
+          // if the field is not an array, all field values will be replaced with the given array values
           targetData[key] = fieldValue.args;
         }
       }
@@ -188,20 +214,28 @@ export function processFieldValue(
     case MockFieldValueType.ARRAY_REMOVE:
       {
         const currentValue = targetData[key];
-
         if (Array.isArray(currentValue)) {
           const newValues = fieldValue.args;
           for (const arg of newValues) {
             const index = currentValue.indexOf(arg);
-
             if (index >= 0) {
               currentValue.splice(index, 1);
             }
           }
           targetData[key] = currentValue;
         } else {
-          // if the field is not an array field values will be replaced with an empty
+          // if the field is not an array, all field values will be replaced with an empty array
           targetData[key] = [];
+        }
+      }
+      break;
+
+      case MockFieldValueType.INCREMENT: {
+        const currentValue = targetData[key];
+        if (!currentValue || typeof currentValue !== 'number') {
+          targetData[key] = fieldValue.args[0];
+        } else {
+          targetData[key] += fieldValue.args[0];
         }
       }
       break;

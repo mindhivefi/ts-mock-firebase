@@ -1,3 +1,4 @@
+import { MockFirebaseFirestore } from '@firebase/app-types';
 import {
   CollectionReference,
   DocumentChange,
@@ -14,9 +15,9 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
+import { Mocker } from '../app';
 
-import { MockCollection, MockDocuments, MockFirebaseFirestore } from '.';
-import { Mocker } from '..';
+import { MockCollection, MockDocuments } from '.';
 import MockDocumentReference, { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
 import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from './MockQuery';
 import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';

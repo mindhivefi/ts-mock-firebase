@@ -1,9 +1,11 @@
-import { MockFirebaseApp } from '../../../firebaseApp';
-import { MockDatabase } from '../../index';
-import MockDocumentReference from '../../MockDocumentReference';
-import MockFieldPath from '../../MockFieldPath';
-import { matchFields } from '../index';
+import { matchFields } from '..';
+import { MockDatabase } from '../..';
+import { createFirebaseNamespace } from '../../../app';
+import { MockFieldPath } from '../../MockFieldPath';
 import { filterDocumentsByRules } from '../matching';
+
+const firebase = createFirebaseNamespace();
+const firestore = firebase.initializeApp({}).firestore();
 
 describe('Where Clauses', () => {
   describe('simple rules', () => {
@@ -80,35 +82,25 @@ describe('Where Clauses', () => {
       },
     };
     it('will find a simple field name - value match', () => {
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
-      const doc = firestore.doc('list/a') as MockDocumentReference;
+      const doc = firestore.doc('list/a');
       expect(matchFields(doc, ['field1'], ['cat'])).toBeTruthy();
     });
     it('will return false if the field do not exist', () => {
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
-      const doc = firestore.doc('list/a') as MockDocumentReference;
+      const doc = firestore.doc('list/a');
       expect(matchFields(doc, ['field3'], ['cat'])).toBeFalsy();
-      expect(
-        matchFields(doc, [new MockFieldPath('field5', 'daa', 'daa')], ['cat'])
-      ).toBeFalsy();
+      expect(matchFields(doc, [new MockFieldPath('field5', 'daa', 'daa')], ['cat'])).toBeFalsy();
     });
     it('will match values in sub objects pointed with FieldPath', () => {
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
-      const doc = firestore.doc('list/a') as MockDocumentReference;
-      expect(
-        matchFields(doc, [new MockFieldPath('sub', 'field')], ['dog'])
-      ).toBeTruthy();
+      const doc = firestore.doc('list/a');
+      expect(matchFields(doc, [new MockFieldPath('sub', 'field')], ['dog'])).toBeTruthy();
     });
     it('will un match values in sub objects pointed with FieldPath that contain wrong value', () => {
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
-      const doc = firestore.doc('list/a') as MockDocumentReference;
-      expect(
-        matchFields(doc, [new MockFieldPath('sub', 'field')], ['chicken'])
-      ).toBeFalsy();
+      const doc = firestore.doc('list/a');
+      expect(matchFields(doc, [new MockFieldPath('sub', 'field')], ['chicken'])).toBeFalsy();
     });
   });
 });

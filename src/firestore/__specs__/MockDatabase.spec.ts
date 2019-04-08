@@ -1,13 +1,19 @@
 import { DocumentSnapshot } from '@firebase/firestore-types';
-import { MockFirebaseApp } from '../../firebaseApp';
+import { createFirebaseNamespace } from '../../app';
 
 import { MockDatabase } from '../index';
-import MockDocumentReference from '../MockDocumentReference';
+
+const firebase = createFirebaseNamespace();
+const firestore = firebase.initializeApp({}).firestore();
+
+// tslint:disable: no-identical-functions
+// tslint:disable: no-big-function
 
 describe('Database state restoring', () => {
   describe('Reading the whole database state', () => {
     it('will create the database from an object model', async () => {
       const dogWhisper = (snapshot: DocumentSnapshot) => {
+        // tslint:disable-next-line: no-console
         console.log(snapshot);
       };
 
@@ -51,8 +57,6 @@ describe('Database state restoring', () => {
         },
       };
 
-      const app = new MockFirebaseApp();
-      const firestore = app.firestore();
       firestore.mocker.fromMockDatabase(database);
 
       expect(firestore.doc('animals/dog')).toBeDefined();
@@ -70,7 +74,7 @@ describe('Database state restoring', () => {
         quantity: 2,
       });
 
-      const doc = firestore.doc('animals/dog') as MockDocumentReference;
+      const doc = firestore.doc('animals/dog');
       expect(doc.mocker.listeners().length).toBe(1);
       expect(doc.mocker.listeners()[0]).toBe(dogWhisper);
     });
@@ -111,7 +115,6 @@ describe('Database state restoring', () => {
           },
         },
       };
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromJson(JSON.stringify(database));
       const result = firestore.mocker.toJson();
       expect(result).toMatch(JSON.stringify(database, undefined, 2));
@@ -199,8 +202,6 @@ describe('Database state restoring', () => {
         },
       };
 
-      const app = new MockFirebaseApp();
-      const firestore = app.firestore();
       firestore.mocker.fromMockDatabase(database);
 
       const result = firestore.mocker.toMockDatabase();
@@ -246,7 +247,6 @@ describe('Database state restoring', () => {
         },
       };
 
-      const firestore = new MockFirebaseApp().firestore();
       firestore.mocker.fromMockDatabase(database);
 
       const result = firestore.mocker.toJson();
@@ -258,7 +258,6 @@ describe('Database state restoring', () => {
   describe('Setting database state by pointing data to paths', () => {
     describe('Collection paths', () => {
       it('Will save documents on the collection in root level', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
         firestore.mocker.loadCollection('test', {
           doc1: {
@@ -285,8 +284,8 @@ describe('Database state restoring', () => {
       });
 
       it('Will save documents on the collection in sub path level', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
+        // tslint:disable-next-line: no-duplicate-string
         firestore.mocker.loadCollection('test/doc/sub', {
           doc1: {
             value: 1,
@@ -312,7 +311,6 @@ describe('Database state restoring', () => {
       });
 
       it('Will save multiple collections in diffent paths', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
         firestore.mocker.loadCollection('test/doc/sub', {
           doc1: {
@@ -361,7 +359,6 @@ describe('Database state restoring', () => {
       });
 
       it('Will save multiple collections in diffent paths that intersect', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
         firestore.mocker.loadCollection('test', {
           doc1: {
@@ -412,7 +409,6 @@ describe('Database state restoring', () => {
 
     describe('Document paths', () => {
       it('Will save document on the collection at root level', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
         firestore.mocker.loadDocument('test/doc1', {
           value: 1,
@@ -428,8 +424,8 @@ describe('Database state restoring', () => {
         });
       });
 
+      // tslint:disable-next-line
       it('Will save document on the collection into a sub path', async () => {
-        const firestore = new MockFirebaseApp().firestore();
         firestore.mocker.reset();
         firestore.mocker.loadDocument('test/subdoc/subcollection/doc1', {
           value: 1,

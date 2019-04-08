@@ -1,12 +1,12 @@
+import { MockFirebaseFirestore } from '@firebase/app-types';
 import { FieldPath } from '@firebase/firestore-types';
 import { deepCopy } from '@firebase/util';
 import * as uuidv4 from 'uuid/v4';
 
-import { MockFirebaseFirestore } from '..';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
-import MockFieldPath from '../MockFieldPath';
-import MockFieldValue, { processFieldValue } from '../MockFieldValue';
+import { createFieldPathFromString, MockFieldPath } from '../MockFieldPath';
+import { MockFieldValue, processFieldValue } from '../MockFieldValue';
 
 // tslint:disable-next-line: max-classes-per-file
 export class MockFirebaseValidationError extends Error {}
@@ -281,28 +281,16 @@ export function matchFields(
 }
 
 export function getFieldValue(doc: MockDocumentReference, fieldName: string | FieldPath): any {
-  if (typeof fieldName === 'string') {
-    return doc.data[fieldName];
-  } else if (fieldName instanceof MockFieldPath) {
-    let parent = doc.data;
-    for (const field of fieldName.fieldNames) {
-      parent = parent[field];
-      if (!parent) {
-        return undefined;
-      }
-    }
-    return parent;
-  }
-  // TODO support for actual FieldPaths
-  return undefined;
+  return getFieldValueFromData(doc.data, fieldName);
 }
 
 export function getFieldValueFromData(data: any, fieldName: string | FieldPath): any {
-  if (typeof fieldName === 'string') {
-    return data[fieldName];
-  } else if (fieldName instanceof MockFieldPath) {
+  const fieldPath = validateFieldPathName(fieldName);
+  if (typeof fieldPath === 'string') {
+    return data[fieldPath];
+  } else if (fieldPath instanceof MockFieldPath) {
     let parent = data;
-    for (const field of fieldName.fieldNames) {
+    for (const field of fieldPath.fieldNames) {
       parent = parent[field];
       if (!parent) {
         return undefined;
@@ -310,8 +298,20 @@ export function getFieldValueFromData(data: any, fieldName: string | FieldPath):
     }
     return parent;
   }
-  // TODO support for actual FieldPaths
   return undefined;
+}
+
+export function validateFieldPathName(fieldName: string | FieldPath): string | FieldPath {
+  if (fieldName instanceof MockFieldPath) {
+    return fieldName;
+  }
+  if (typeof fieldName === 'string') {
+    if (fieldName.includes('.')) {
+      return createFieldPathFromString(fieldName);
+    }
+    return fieldName;
+  }
+  throw new Error(`Unexpected type of fieldPath ${typeof fieldName}`);
 }
 
 /**

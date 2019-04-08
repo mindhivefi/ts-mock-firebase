@@ -1,5 +1,5 @@
-import { MockFirebaseFirestore } from '..';
-import MockFieldValue, { processFieldValue } from '../MockFieldValue';
+import { MockFirebaseFirestore } from '@firebase/app-types';
+import { MockFieldValue, processFieldValue } from '../MockFieldValue';
 
 /**
  * Copy properties from source to target (recursively allows extension
@@ -70,6 +70,19 @@ export function processAndDeepMerge(firestore: MockFirebaseFirestore, target: an
           // Not a plain Object - treat it as a scalar.
           result[prop] = sourceValue;
       }
+    }
+  }
+  return result;
+}
+
+export function shallowCopy(obj: any): any {
+  if (!(obj && typeof obj === 'object')) {
+    throw new Error('shallowCopy() expects object parameter.');
+  }
+  const result: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      result[key] = obj[key];
     }
   }
   return result;

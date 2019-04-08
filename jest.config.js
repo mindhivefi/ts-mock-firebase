@@ -1,7 +1,8 @@
 const { pathsToModuleNameMapper } = require('ts-jest/utils');
+const { defaults: tsjPreset } = require('ts-jest/presets');
 
 module.exports = {
-  preset: 'ts-jest/presets/js-with-ts',
+  ...tsjPreset,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],

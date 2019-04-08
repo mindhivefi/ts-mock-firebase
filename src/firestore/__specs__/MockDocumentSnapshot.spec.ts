@@ -1,5 +1,5 @@
 import MockDocumentSnapshot from '../MockDocumentSnapshot';
-import MockFieldPath from '../MockFieldPath';
+import { MockFieldPath } from '../MockFieldPath';
 
 describe('MockDocumentSnapshot', () => {
   describe('get', () => {

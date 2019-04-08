@@ -1,4 +1,4 @@
-import { GeoPoint } from "@firebase/firestore-types";
+import { GeoPoint } from '@firebase/firestore-types';
 
 /**
  * An immutable object representing a geo point in Firestore. The geo point

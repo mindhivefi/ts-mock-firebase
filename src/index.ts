@@ -1,17 +1,28 @@
-import firebase from './firebaseApp';
+import { MockFirebaseApp, MockFirebaseNamespace } from '@firebase/app-types';
+import { createFirebaseNamespace } from './app';
 
-/**
- * Through mockers, you can setup the object to state ready for testing and read the object's state directly.
- * Mocker -objects are mixed with the actual mock -objects as a pattern to change mock objects
- * state without any further consequences.
- */
-export interface Mocker {
-  /**
-   * Return object's initial state. You should call this before each firestore test case, to initialize the database state
-   */
-  reset(): void;
+// TODO change this to create a separate implementations for different target environments
+const firebase = createFirebaseNamespace();
+
+export function mockFirebase(): MockFirebaseNamespace {
+  return firebase;
 }
 
-export default firebase;
+export function mockFirebaseAdmin(): MockFirebaseNamespace {
+  return firebase;
+}
 
-export * from './firebaseApp';
+export function exposeMockFirebaseAdminApp(app: any): MockFirebaseApp {
+  return app as MockFirebaseApp;
+}
+
+export function exposeMockFirebaseApp(app: any): MockFirebaseApp {
+  return app as MockFirebaseApp;
+}
+
+export * from './app';
+export * from './auth';
+export * from './firestore';
+export * from './utils';
+
+export default mockFirebase;

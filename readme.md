@@ -1,27 +1,64 @@
 # Mock-Firebase
 
-Mock firebase is mocking library to help testing Firebase projects. It is especially handy for developers using Typescript. All mocking classes implements the actual Firebase interfaces.
+Ts-Mock-Firebase is a mocking library to help testing Firebase projects. It is especially handy for developers using Typescript. All mocking classes implements the actual Firebase interfaces.
 
-Current version is still in early alpha and currently supports only Firestore. All features of Firestore are already supported, altough there are cases like with onSnapshot -callbacks, that all possible ways to use are not covered.
+Firebase is a creat service which really improves the development speed and also makes it possible to build services that would be really big challenge to build otherways. At the same time, largely scalable environments with possibly millons of users really need a professional level development tools for testing. This kind of tools have been missing from Firebase comminity. This project's goal is to build this kind of professional tools to test thoroughly Firebase applications.
 
-The philosophy with Mock-Firebase is to support all typescript interfaces offered by Firebase libraries. The mock itself is not specialized to any unit testing tool, instead the idea is to use it together unit test environment specific helper library.
+The philosophy with Ts-Mock-Firebase is to emulate the whole functionality of Firebase as an inmemory instance. This will make it possible to set up an unque state for each test and test all consequences expected for each case. Another philophical point is to support all typescript interfaces offered by Firebase libraries to make it easier to developers to develop the actual code with a strong testing tool.
 
-## Mock-Firestore
+This mocking library is not itself specialized to any unit testing tool framewoork, instead the idea is to use it together unit test environment specific helper library.
 
-Firestore mock supports currently:
+NOTE - Current version is still in early alpha and only supports Firestore. All features of Firestore are already supported, altought there are cases like with onSnapshot -callbacks, that all possible ways to use are not covered.
 
-- All references for doc and collections
-- FieldPaths
-- All FieldValue -sentinels
-- Queries with `where()`, `orderBy()`, `limit()`, `startAt()`, `startAfter()`, `endBefore()` and `endAt()` are all supported.
-- All document manipulation and reading operations are supported
-- Transactions and WriteBatches are supported
+## Mocking Firebase with Jest
+
+Easiest way to mock with jest is to use is to define a file with a module name into `__mocks__` -folder under the source root folder. This way all times your code will use the module, it will be mocked on every jest unit test. To do that for `firestore` -module, do as follows:
+
+Create a file to `[SOURCE_ROOT]/__mocks__/firebase.ts`, with content:
+
+```typescript
+import { mockFirebase } from 'ts-mock-firebase';
+
+const firebase = mockFirebase();
+
+export = firebase;
+```
+
+After this, all your jest unit tests will use ts-mock-firebase instead of the actual one. To do the same for `firebase-admin`, just create a file with name `firebase-admin` and user `mockFirebaseAdmin` -function instead:
+
+Create a file to `[SOURCE_ROOT]/__mocks__/firebase-admin.ts`, with content:
+
+```typescript
+import { mockFirebaseAdmin } from 'ts-mock-firebase';
+
+const firebaseAdmin = mockFirebaseAdmin();
+
+export = firebaseAdmin;
+```
+
+To get an access to mock operation in your jest code, you must expose the module:
+
+```typescript
+
+import * as firebase from 'firebase';
+import { exposeMockFirebase } from 'ts-mock-firebase';
+
+// your app instance (normally created in a different module, but here as an example)
+const app = firebase.initializeApp({});
+
+// expose mock interface to make it possible to set up the database state
+const mocked = exposeMockFirebase(app);
+
+// now, you will have an access to mocked Firebase's extrafeatures like:
+mocked.firestore().mocker.fromMockDatabase(database);
+
+```
 
 ## Setting the test scene
 
-ts-mock-firebase supports to basic ways to set up the initial database state for testing. You can read the whole state of the database from an object or on json file or then you can set up the scene by setting collections and single documents with direct path pointings. You can also combine these to ways to setting up the state.
+ts-mock-firebase supports two basic ways for setting up the initial database state for testing. You can read the whole state of the database from an object or on json file, or then you can set up the scene by setting collections and single documents with direct path pointings. You can also combine these to ways to setting up the state.
 
-One important thing to understand is that this mock library have a singleton instance of firebase in memory. So it is important that you will call mocker reset before every test in following way:
+If you are using a same instance of mock database in several tests, it is important that you will call `mocker.reset()` before each test to reset the database:
 
 ```typescript
 firestore.mocker.reset(); // this will reset the whole database into an initial state
@@ -63,18 +100,11 @@ Load collection works just like loadDocument except that the object's first leve
 
 ## Loading the whole database state at once
 
-Each mock class is named after the actual Firebase class prefixed with Mock, like `MockDocumentReference` or `MockFirebaseFirestore`. Mock classes have a special mocker -object that can be used to manipulate the initial state. Basic usage to create a mock Firestore instance, is been done in a following way:
+Each mock class is named after the actual Firebase class prefixed with Mock, like `MockDocumentReference` or `MockFirebaseFirestore`. Mock classes have a special `mocker` -object that can be used to manipulate the database state.
+
+To create an initial database for testing, you can use a `MockDatabase` -interface as follows:
 
 ```typescript
-const firestore = new MockFirebaseApp().firestore();
-```
-
-This will create a emulated firestore instance that will acts just like the real firestore is working.
-
-To create an initial database for testing, you can use a MockDatabase -interface as follows:
-
-```typescript
-const firestore = new MockFirebaseApp().firestore();
 const database: MockDatabase = {
   list: {
     docs: {

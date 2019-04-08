@@ -1,4 +1,4 @@
-import MockFieldPath, { createFieldPathFromString, documentIdSentinel } from '../MockFieldPath';
+import { createFieldPathFromString, documentIdSentinel, MockFieldPath } from '../MockFieldPath';
 
 describe('Field Paths', () => {
   describe('MockFieldPath', () => {

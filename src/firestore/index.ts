@@ -1,56 +1,21 @@
+import { MockFirebaseApp, MockFirebaseFirestore, MockFirebaseService } from '@firebase/app-types';
 import * as types from '@firebase/firestore-types';
-import { CollectionReference, DocumentReference } from '@firebase/firestore-types';
-import createFirebaseRulesIntepreter from 'firebase-rules-parser';
-import FirebaseRulesIntepreterFacade, { defaultFirebaseRulesContext } from 'firebase-rules-parser/lib/intepreter';
-import { FirebaseRulesContext } from 'firebase-rules-parser/lib/intepreter/FirebaseRulesContext';
+import createFirebaseRulesIntepreter, {
+  defaultFirebaseRulesContext,
+  FirebaseRulesContext,
+} from 'firebase-rules-parser';
+import { FirebaseRulesIntepreter } from 'firebase-rules-parser';
 import * as fs from 'fs';
-import { MockFirebaseApp } from '../firebaseApp';
+
 import { hash } from '../utils/stringUtils';
 import { FirestoreMocker } from './FirestoreMocker';
 import { MockCollectionReference } from './MockCollectionReference';
-import MockDocumentReference from './MockDocumentReference';
-import { MockDocumentSnapshotCallback } from './MockDocumentReference';
-import MockDocumentSnapshot from './MockDocumentSnapshot';
-import MockFieldPath from './MockFieldPath';
-import MockFieldValue from './MockFieldValue';
-import MockQuery from './MockQuery';
-import MockQuerySnapshot from './MockQuerySnapshot';
-import MockTimestamp from './MockTimestamp';
+import MockDocumentReference, { MockDocumentSnapshotCallback } from './MockDocumentReference';
+import { MockTimestamp } from './MockTimestamp';
 import MockTransaction from './MockTransaction';
 import { MockWriteBatch } from './MockWritebatch';
-import {
-  generateDocumentId,
-  isValidCollectionReference,
-  isValidDocumentReference,
-  resolveReference,
-} from './utils/index';
+import { generateDocumentId, isValidCollectionReference, isValidDocumentReference, resolveReference } from './utils';
 import { NotImplementedYet } from './utils/NotImplementedYet';
-
-declare module '@firebase/app-types' {
-  interface FirebaseNamespace {
-    firestore?: {
-      (app?: MockFirebaseApp): MockFirebaseFirestore;
-      Blob: typeof types.Blob;
-      CollectionReference: typeof MockCollectionReference;
-      DocumentReference: typeof MockDocumentReference;
-      DocumentSnapshot: typeof MockDocumentSnapshot;
-      FieldPath: typeof MockFieldPath;
-      FieldValue: typeof MockFieldValue;
-      // tslint:disable-next-line: no-use-before-declare
-      Firestore: typeof MockFirebaseFirestore;
-      GeoPoint: typeof types.GeoPoint;
-      Query: typeof MockQuery;
-      QuerySnapshot: typeof MockQuerySnapshot;
-      Timestamp: typeof MockTimestamp;
-      Transaction: typeof MockTransaction;
-      WriteBatch: typeof MockWriteBatch;
-      setLogLevel: typeof types.setLogLevel;
-    };
-  }
-  interface FirebaseApp {
-    firestore?(): types.FirebaseFirestore;
-  }
-}
 
 /**
  * Document object to define database data to be set into a mock
@@ -84,7 +49,7 @@ export interface MockCollections {
 
 export type MockDatabase = MockCollections;
 
-export type TimestampFunction = () => MockTimestamp;
+export type MockTimestampFunction = () => MockTimestamp;
 
 export interface CollectionObject {
   [documentId: string]: types.DocumentData;
@@ -93,8 +58,8 @@ export interface CollectionObject {
  * `Firestore` represents a Firestore Database and is the entry point for all
  * Firestore operations.
  */
-export class MockFirebaseFirestore implements types.FirebaseFirestore {
-  public get rules(): FirebaseRulesIntepreterFacade | undefined {
+export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFirebaseService {
+  public get rules(): FirebaseRulesIntepreter | undefined {
     return this._rules;
   }
   /**
@@ -113,7 +78,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
 
   private _settings?: types.Settings;
 
-  private _rules?: FirebaseRulesIntepreterFacade;
+  private _rules?: FirebaseRulesIntepreter;
   private _rulesHash?: number;
   private _nextDocumentIds: string[] = [];
 
@@ -121,7 +86,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
   public constructor(app: MockFirebaseApp) {
     this.app = app;
     this.INTERNAL = {
-      // delete: () => void,
+      // delete: () => void
     };
 
     const firestore = this;
@@ -285,8 +250,8 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @param collectionPath A slash-separated path to a collection.
    * @return The `CollectionReference` instance.
    */
-  public collection = (collectionPath: string): types.CollectionReference => {
-    return resolveReference(this, this.root, true, collectionPath) as CollectionReference;
+  public collection = (collectionPath: string): MockCollectionReference => {
+    return resolveReference(this, this.root, true, collectionPath) as MockCollectionReference;
   }
 
   /**
@@ -296,8 +261,8 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * @param documentPath A slash-separated path to a document.
    * @return The `DocumentReference` instance.
    */
-  public doc = (documentPath: string): types.DocumentReference => {
-    return resolveReference(this, this.root, false, documentPath) as DocumentReference;
+  public doc = (documentPath: string): MockDocumentReference => {
+    return resolveReference(this, this.root, false, documentPath) as MockDocumentReference;
   }
 
   /**
@@ -314,7 +279,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * transaction failed, a rejected Promise with the corresponding failure
    * error will be returned.
    */
-  public runTransaction = async <T>(updateFunction: (transaction: types.Transaction) => Promise<T>): Promise<T> => {
+  public runTransaction = async <T>(updateFunction: (transaction: MockTransaction) => Promise<T>): Promise<T> => {
     const transaction = new MockTransaction(this);
     try {
       const result = await updateFunction(transaction);
@@ -330,7 +295,7 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
    * Creates a write batch, used for performing multiple writes as a single
    * atomic operation.
    */
-  public batch = (): types.WriteBatch => {
+  public batch = (): MockWriteBatch => {
     return new MockWriteBatch(this);
   }
 
@@ -364,3 +329,9 @@ export class MockFirebaseFirestore implements types.FirebaseFirestore {
     return {};
   }
 }
+
+export { MockFieldPath } from './MockFieldPath';
+export { MockFieldValue } from './MockFieldValue';
+export { MockGeoPoint } from './MockGeoPoint';
+export { MockTimestamp } from './MockTimestamp';
+export { MockBlob } from './MockBlob';

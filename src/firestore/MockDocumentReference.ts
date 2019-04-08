@@ -12,11 +12,11 @@ import {
   UpdateData,
 } from '@firebase/firestore-types';
 
-import { MockCollections, MockDocument, MockFirebaseFirestore } from '.';
-import { Mocker } from '..';
+import { MockFirebaseFirestore } from '@firebase/app-types';
+import { MockCollections, MockDocument, Mocker } from '../app';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
-import MockFieldPath from './MockFieldPath';
+import { MockFieldPath } from './MockFieldPath';
 import { preprocessData } from './MockFieldValue';
 import { MockDocumentChange } from './MockTransaction';
 import {
@@ -79,7 +79,7 @@ export default class MockDocumentReference implements DocumentReference {
     [id: string]: MockCollectionReference;
   } = {};
 
-  private _snapshotCallbackHandler = new MockCallbackHandler<DocumentSnapshot>();
+  private _snapshotCallbackHandler = new MockCallbackHandler<MockDocumentSnapshot>();
 
   /**
    *
@@ -204,7 +204,7 @@ export default class MockDocumentReference implements DocumentReference {
 
     await this._set(data, options);
 
-    const documentSnapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    const documentSnapshot = new MockDocumentSnapshot(this, this.data);
     this._snapshotCallbackHandler.fire(documentSnapshot);
     (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, documentSnapshot);
   }
@@ -356,7 +356,7 @@ export default class MockDocumentReference implements DocumentReference {
     cascade: boolean = true,
     callbacks?: MockDocumentSnapshotCallback[]
   ) => {
-    const snapshot = new MockDocumentSnapshot(this, this.data) as DocumentSnapshot;
+    const snapshot = new MockDocumentSnapshot(this, this.data);
 
     cascade && (this.parent as MockCollectionReference).fireSubDocumentChange(changeType, snapshot, oldIndex);
     this._snapshotCallbackHandler.fire(snapshot, callbacks);
@@ -450,4 +450,4 @@ export default class MockDocumentReference implements DocumentReference {
 export type MockSubscriptionFunction = () => void;
 export type ErrorFunction = (error: Error) => void;
 export type FirebaseErrorFunction = (error: FirestoreError) => void;
-export type MockDocumentSnapshotCallback = (snapshot: DocumentSnapshot) => void;
+export type MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => void;

@@ -7,12 +7,12 @@ import {
   UpdateData,
   WriteBatch,
 } from '@firebase/firestore-types';
-import { MockFirebaseFirestore } from '.';
 
+import { MockFirebaseFirestore } from '@firebase/app-types';
 import { deepCopy } from '@firebase/util';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
-import MockFieldPath from './MockFieldPath';
+import { MockFieldPath } from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
 import { parseFieldValuePairsFromArgs, setFieldValuePairs } from './utils';
 import { NotImplementedYet } from './utils/NotImplementedYet';

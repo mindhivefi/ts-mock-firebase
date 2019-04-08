@@ -1,6 +1,6 @@
 import { Timestamp } from '@firebase/firestore-types';
 
-export default class MockTimestamp implements Timestamp {
+export class MockTimestamp implements Timestamp {
   /**
    * Creates a new timestamp with the current date, with millisecond precision.
    *
@@ -90,8 +90,6 @@ export default class MockTimestamp implements Timestamp {
    * @return true if this `Timestamp` is equal to the provided one.
    */
   public isEqual(other: Timestamp): boolean {
-    return (
-      other.seconds === this._seconds && other.nanoseconds === this._nanoseconds
-    );
+    return other.seconds === this._seconds && other.nanoseconds === this._nanoseconds;
   }
 }

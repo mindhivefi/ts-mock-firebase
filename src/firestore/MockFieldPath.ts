@@ -5,7 +5,7 @@ import { FieldPath } from '@firebase/firestore-types';
  * single field name (referring to a top-level field in the document), or a
  * list of field names (referring to a nested field in the document).
  */
-export default class MockFieldPath implements FieldPath {
+export class MockFieldPath implements FieldPath {
   public get path(): string {
     return this._path;
   }

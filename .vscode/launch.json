@@ -21,7 +21,7 @@
       "skipFiles": [
         "<node_internals>/**",
         "node_modules/jest*/**"
-    ]
+      ]
     },
     {
       "type": "node",

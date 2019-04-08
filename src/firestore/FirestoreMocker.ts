@@ -1,12 +1,11 @@
 import * as types from '@firebase/firestore-types';
-import RulesParserFacade from 'firebase-rules-parser/lib/intepreter';
 
-import { FirebaseRulesContext } from 'firebase-rules-parser/lib/intepreter/FirebaseRulesContext';
-import { CollectionObject, MockDatabase, TimestampFunction } from '.';
-import { Mocker } from '..';
+import { FirebaseRulesContext, FirebaseRulesIntepreter } from 'firebase-rules-parser';
+import { CollectionObject, MockDatabase, MockTimestampFunction } from '.';
+import { Mocker } from '../app';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
-import MockTimestamp from './MockTimestamp';
+import { MockTimestamp } from './MockTimestamp';
 
 /**
  * Mocker interface to operate in firestore level. User this mocker to setup the initial state of your test case and to
@@ -21,10 +20,10 @@ export interface FirestoreMocker extends Mocker {
    * that will return a MockTimestamp value. If the value is not defined, MockFirebase will generate a timestamp from
    * current machine time.
    *
-   * @type {(MockTimestamp | TimestampFunction)}
+   * @type {(MockTimestamp | MockTimestampFunction)}
    * @memberof FirestoreMocker
    */
-  serverTime?: MockTimestamp | TimestampFunction; // TODO default value
+  serverTime?: MockTimestamp | MockTimestampFunction; // TODO default value
 
   /**
    * Load the whole database from MockDatabase -object
@@ -105,7 +104,7 @@ export interface FirestoreMocker extends Mocker {
    * @returns {(RulesParserFacade | undefined)}
    * @memberof FirestoreMocker
    */
-  rules(): RulesParserFacade | undefined;
+  rules(): FirebaseRulesIntepreter | undefined;
 
   /**
    * Create a context for firebase rule inquiry
