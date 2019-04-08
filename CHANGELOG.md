@@ -1,3 +1,23 @@
+# [2.0.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.4.1...v2.0.0) (2019-04-08)
+
+
+### Bug Fixes
+
+* 🐛 fixed-transaction-class-reference-on-firestore ([22e3472](https://github.com/mindhivefi/ts-mock-firebase/commit/22e3472))
+
+
+### Features
+
+* 🎸 support-for-multiple-namespaces ([bf2fb18](https://github.com/mindhivefi/ts-mock-firebase/commit/bf2fb18))
+* 🎸 use-firebase-rules-parser-20 ([a31cf48](https://github.com/mindhivefi/ts-mock-firebase/commit/a31cf48))
+* mock-for-geopoint ([3dd4d38](https://github.com/mindhivefi/ts-mock-firebase/commit/3dd4d38))
+
+
+### BREAKING CHANGES
+
+* 🧨 Instance creation is now based target environment. Instances are create
+with mockFirebase() or mockFirebaseAdmin() -functions.
+
 ## [1.4.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v1.4.0...v1.4.1) (2019-03-25)
 
 
