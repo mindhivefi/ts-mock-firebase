@@ -1,5 +1,4 @@
 import { _MockFirebaseNamespace, MockFirebaseApp, MockFirebaseNamespace } from '@firebase/app-types';
-import { MatchBlockContext } from 'firebase-rules-parser/lib/parser/FirebaseRulesParser';
 
 import { MockFirebaseFirestoreImpl } from '../../app';
 import { MockBlob } from '../MockBlob';
@@ -13,6 +12,7 @@ import MockQuery from '../MockQuery';
 import MockQueryDocumentSnapshot from '../MockQueryDocumentSnapshot';
 import MockQuerySnapshot from '../MockQuerySnapshot';
 import { MockTimestamp } from '../MockTimestamp';
+import MockTransaction from '../MockTransaction';
 import { MockWriteBatch } from '../MockWritebatch';
 import { shallowCopy } from '../utils/manipulation';
 
@@ -21,7 +21,7 @@ const firestoreNamespace = {
   GeoPoint: MockGeoPoint,
   Timestamp: MockTimestamp,
   Blob: MockBlob,
-  Transaction: MatchBlockContext,
+  Transaction: MockTransaction,
   WriteBatch: MockWriteBatch,
   DocumentReference: MockDocumentReference,
   DocumentSnapshot: MockDocumentSnapshot,
