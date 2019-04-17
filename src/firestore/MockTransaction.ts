@@ -194,32 +194,45 @@ export default class MockTransaction implements Transaction {
     for (let i = 0; i < args.length; i += 2) {
       const fieldPath = args[i];
       const fieldValue = args[i + 1];
+
       if (typeof fieldPath === 'string') {
-        if (fieldValue instanceof MockFieldValue) {
-          processFieldValue(this.firestore, data, newData, fieldPath, fieldValue);
+        if (fieldPath.includes('.')) {
+          const extractedFieldPath = new MockFieldPath(...fieldPath.split('.'));
+          this.updateSingleFieldPathValue(extractedFieldPath, newData, fieldValue, data);
         } else {
-          newData[fieldPath] = fieldValue;
-        }
-      } else if (fieldPath instanceof MockFieldPath) {
-        const fieldNames = fieldPath.fieldNames;
-        let parent = newData;
-        for (let j = 1; j < fieldNames.length; j++) {
-          parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
-          if (typeof parent !== 'object') {
-            throw new MockFirebaseValidationError(
-              `Illegal path. Can not add value under field type of ${typeof parent}`
-            );
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(this.firestore, data, newData, fieldPath, fieldValue);
+          } else {
+            newData[fieldPath] = fieldValue;
           }
         }
-        const propPath = fieldNames[fieldNames.length - 1];
-        if (fieldValue instanceof MockFieldValue) {
-          processFieldValue(this.firestore, data, parent, propPath, fieldValue);
-        } else {
-          parent[propPath] = fieldValue;
-        }
+      } else if (fieldPath instanceof MockFieldPath) {
+        this.updateSingleFieldPathValue(fieldPath, newData, fieldValue, data);
       } else {
         throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof fieldPath}: ${fieldPath})`);
       }
+    }
+  }
+
+  private updateSingleFieldPathValue(
+    fieldPath: MockFieldPath,
+    newData: any,
+    fieldValue: string | UpdateData | FieldPath,
+    data: any
+  ) {
+    const fieldNames = fieldPath.fieldNames;
+    let parent = newData;
+    for (let j = 1; j < fieldNames.length; j++) {
+      parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
+      if (typeof parent !== 'object') {
+        throw new MockFirebaseValidationError(`Illegal path. Can not add value under field type of ${typeof parent}`);
+      }
+    }
+    const propPath = fieldNames[fieldNames.length - 1];
+    if (fieldValue instanceof MockFieldValue) {
+      processFieldValue(this.firestore, data, parent, propPath, fieldValue);
+    } else {
+      parent[propPath] = fieldValue;
     }
   }
 }
