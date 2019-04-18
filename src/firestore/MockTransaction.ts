@@ -10,7 +10,6 @@ import {
 } from '@firebase/firestore-types';
 import { deepCopy } from '@firebase/util';
 
-import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { MockFieldPath } from './MockFieldPath';
@@ -156,7 +155,7 @@ export default class MockTransaction implements Transaction {
       for (const path in this.transactionOperation) {
         if (this.transactionOperation.hasOwnProperty(path)) {
           const operation = this.transactionOperation[path];
-          const doc = this.firestore.doc(path) as MockDocumentReference;
+          const doc = this.firestore.doc(path);
 
           const documentChange = await doc.commitChange(operation, this.transactionData[path]);
           const collectionPath = path.substr(0, path.lastIndexOf('/'));
@@ -175,7 +174,7 @@ export default class MockTransaction implements Transaction {
               document.doc.ref.fireDocumentChangeEvent(document.type, documentChanges[documentId].oldIndex, false);
             }
           }
-          const collection = this.firestore.collection(collectionId) as MockCollectionReference;
+          const collection = this.firestore.collection(collectionId);
           collection.fireBatchDocumentChange(documentChanges);
         }
       }
@@ -194,32 +193,45 @@ export default class MockTransaction implements Transaction {
     for (let i = 0; i < args.length; i += 2) {
       const fieldPath = args[i];
       const fieldValue = args[i + 1];
+
       if (typeof fieldPath === 'string') {
-        if (fieldValue instanceof MockFieldValue) {
-          processFieldValue(this.firestore, data, newData, fieldPath, fieldValue);
+        if (fieldPath.includes('.')) {
+          const extractedFieldPath = new MockFieldPath(...fieldPath.split('.'));
+          this.updateSingleFieldPathValue(extractedFieldPath, newData, fieldValue, data);
         } else {
-          newData[fieldPath] = fieldValue;
-        }
-      } else if (fieldPath instanceof MockFieldPath) {
-        const fieldNames = fieldPath.fieldNames;
-        let parent = newData;
-        for (let j = 1; j < fieldNames.length; j++) {
-          parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
-          if (typeof parent !== 'object') {
-            throw new MockFirebaseValidationError(
-              `Illegal path. Can not add value under field type of ${typeof parent}`
-            );
+          if (fieldValue instanceof MockFieldValue) {
+            processFieldValue(this.firestore, data, newData, fieldPath, fieldValue);
+          } else {
+            newData[fieldPath] = fieldValue;
           }
         }
-        const propPath = fieldNames[fieldNames.length - 1];
-        if (fieldValue instanceof MockFieldValue) {
-          processFieldValue(this.firestore, data, parent, propPath, fieldValue);
-        } else {
-          parent[propPath] = fieldValue;
-        }
+      } else if (fieldPath instanceof MockFieldPath) {
+        this.updateSingleFieldPathValue(fieldPath, newData, fieldValue, data);
       } else {
         throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof fieldPath}: ${fieldPath})`);
       }
+    }
+  }
+
+  private updateSingleFieldPathValue(
+    fieldPath: MockFieldPath,
+    newData: any,
+    fieldValue: string | UpdateData | FieldPath,
+    data: any
+  ) {
+    const fieldNames = fieldPath.fieldNames;
+    let parent = newData;
+    for (let j = 1; j < fieldNames.length; j++) {
+      parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
+      if (typeof parent !== 'object') {
+        throw new MockFirebaseValidationError(`Illegal path. Can not add value under field type of ${typeof parent}`);
+      }
+    }
+    const propPath = fieldNames[fieldNames.length - 1];
+    if (fieldValue instanceof MockFieldValue) {
+      processFieldValue(this.firestore, data, parent, propPath, fieldValue);
+    } else {
+      parent[propPath] = fieldValue;
     }
   }
 }
