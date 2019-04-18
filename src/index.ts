@@ -4,6 +4,7 @@ import * as types from '@firebase/firestore-types';
 import { Observer, Subscribe } from '@firebase/util';
 import {
   createFirebaseNamespace,
+  DEFAULT_ENTRY_NAME,
   MockBlob,
   MockFieldPath,
   MockFieldValue,
@@ -20,6 +21,12 @@ import MockQuery from './firestore/MockQuery';
 import MockQuerySnapshot from './firestore/MockQuerySnapshot';
 import MockTransaction from './firestore/MockTransaction';
 import { MockWriteBatch } from './firestore/MockWritebatch';
+
+import * as firestore from './firestore';
+
+// TODO default export is the default app
+
+// module level function for firestore()
 
 declare module '@firebase/app-types' {
   export interface MockFirebaseOptions {
@@ -237,6 +244,7 @@ declare module '@firebase/app-types' {
      * @param name The optional name of the app to initialize ('[DEFAULT]' if
      * omitted)
      */
+    // tslint:disable-next-line: unified-signatures
     initializeApp(options: FirebaseOptions, name?: string): MockFirebaseApp;
   }
 
@@ -318,6 +326,7 @@ declare module '@firebase/app-types' {
         createService: FirebaseServiceFactory,
         serviceProperties?: { [prop: string]: any },
         appHook?: AppHook,
+        // tslint:disable-next-line: bool-param-default
         allowMultipleInstances?: boolean
       ): FirebaseServiceNamespace<FirebaseService>;
 
@@ -410,11 +419,37 @@ declare module '@firebase/app-types' {
 const firebase = createFirebaseNamespace();
 
 export function mockFirebase(): MockFirebaseNamespace {
+  // (app.firestore as any) = (appName: string = DEFAULT_ENTRY_NAME) => {
+  //   const instance: MockFirebaseApp | undefined = firebase.apps.find(a => a.name === appName) ;
+  //   if (!instance) {
+  //     throw new Error('No instance initialized for app name: ' + appName);
+  //   }
+  //   return instance.firestore();
+  // };
+  // (app.firestore as any).FieldPath = firestore.MockFieldPath;
+  // (app.firestore as any).FieldValue = firestore.MockFieldValue;
+  // (app.firestore as any).Blob = firestore.MockBlob;
+  // (app.firestore as any).Timestamp = firestore.MockTimestamp;
+  // (app.firestore as any).GeoPoint = firestore.MockGeoPoint;
   return firebase;
 }
 
 export function mockFirebaseAdmin(): MockFirebaseNamespace {
-  return firebase;
+  const adminApp = { ...firebase };
+
+  (adminApp.firestore as any) = (appName: string = DEFAULT_ENTRY_NAME) => {
+    const instance: MockFirebaseApp | undefined = firebase.apps.find(a => a.name === appName);
+    if (!instance) {
+      throw new Error('No instance initialized for app name: ' + appName);
+    }
+    return instance.firestore();
+  };
+  (adminApp.firestore as any).FieldPath = firestore.MockFieldPath;
+  (adminApp.firestore as any).FieldValue = firestore.MockFieldValue;
+  (adminApp.firestore as any).Blob = firestore.MockBlob;
+  (adminApp.firestore as any).Timestamp = firestore.MockTimestamp;
+  (adminApp.firestore as any).GeoPoint = firestore.MockGeoPoint;
+  return adminApp;
 }
 
 export function exposeMockFirebaseAdminApp(app: any): MockFirebaseApp {

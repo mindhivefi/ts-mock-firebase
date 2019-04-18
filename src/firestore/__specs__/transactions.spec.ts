@@ -5,6 +5,7 @@ import { createFirebaseNamespace } from '../../app';
 import MockTransaction from '../../firestore/MockTransaction';
 import MockDocumentSnapshot from '../MockDocumentSnapshot';
 import { MockFieldPath } from '../MockFieldPath';
+import { MockFieldValue } from '../MockFieldValue';
 
 const firebase = createFirebaseNamespace();
 const firestore = firebase.initializeApp({}).firestore();
@@ -235,6 +236,152 @@ describe('Transaction handling', () => {
         value: 'modified',
       },
       text: 'cat',
+    });
+  });
+
+  it('Will update multiple fields defined in arguments with string and FieldPath pointings.', async () => {
+    const database: MockDatabase = {
+      a: {
+        docs: {
+          first: {
+            data: {
+              sub: {
+                value: 2,
+              },
+            },
+          },
+        },
+      },
+    };
+    firestore.mocker.fromMockDatabase(database);
+
+    const ref = firestore.doc('a/first');
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
+      transaction.update(ref, 'sub.value', 'modified', 'text', 'cat');
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      sub: {
+        value: 'modified',
+      },
+      text: 'cat',
+    });
+  });
+
+  it('Will delete fields defined with FieldValues.', async () => {
+    const database: MockDatabase = {
+      a: {
+        docs: {
+          first: {
+            data: {
+              sub1: {
+                value: 1,
+              },
+              sub2: {
+                value: 2,
+              },
+              sub3: {
+                value: 3,
+              },
+            },
+          },
+        },
+      },
+    };
+    firestore.mocker.fromMockDatabase(database);
+
+    const ref = firestore.doc('a/first');
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
+      transaction.update(ref, {
+        sub1: MockFieldValue.delete(),
+      });
+      transaction.update(ref, {
+        sub2: MockFieldValue.delete(),
+      });
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      sub3: {
+        value: 3,
+      },
+    });
+  });
+
+  it('Will delete fields in separate operations targeting a same document.', async () => {
+    const database: MockDatabase = {
+      a: {
+        docs: {
+          first: {
+            data: {
+              sub1: {
+                value1: 1,
+                value2: 2,
+                value3: 3,
+              },
+            },
+          },
+        },
+      },
+    };
+    firestore.mocker.fromMockDatabase(database);
+
+    const ref = firestore.doc('a/first');
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
+      transaction.update(ref, {
+        sub1: {
+          value1: MockFieldValue.delete(),
+        },
+      });
+      transaction.update(ref, {
+        sub1: {
+          value2: MockFieldValue.delete(),
+        },
+      });
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      sub1: {
+        value3: 3,
+      },
+    });
+  });
+
+  it('Will delete multiple fields from same document inside a transaction..', async () => {
+    const database: MockDatabase = {
+      a: {
+        docs: {
+          first: {
+            data: {
+              sub1: {
+                value1: 1,
+                value2: 2,
+                value3: 3,
+              },
+            },
+          },
+        },
+      },
+    };
+    firestore.mocker.fromMockDatabase(database);
+
+    const ref = firestore.doc('a/first');
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
+      transaction.update(ref, {
+        sub1: {
+          value1: MockFieldValue.delete(),
+          value2: MockFieldValue.delete(),
+        },
+      });
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      sub1: {
+        value3: 3,
+      },
     });
   });
 });

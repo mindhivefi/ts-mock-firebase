@@ -267,10 +267,11 @@ export default class MockDocumentReference implements DocumentReference {
       return setFieldValuePairs(this.firestore, transactionData, args);
     } else {
       // only one parameter, so we treat it as UpdateData
-      return {
-        ...transactionData,
-        ...(data as UpdateData),
-      } as DocumentData;
+      return processAndDeepMerge(this.firestore, transactionData, data);
+      // return {
+      //   ...transactionData,
+      //   ...(data as UpdateData),
+      // } as DocumentData;
     }
   }
 
@@ -365,18 +366,8 @@ export default class MockDocumentReference implements DocumentReference {
   public commitChange = async (type: DocumentChangeType, value: any): Promise<MockDocumentChange> => {
     switch (type) {
       case 'added':
+      case 'modified': // To make deletation work, we must treat modify as a set of object on commit
         await this._set(value); // TODO options
-        return {
-          type,
-          doc: new MockDocumentSnapshot(this, {
-            ...value,
-          }),
-          newIndex: -1,
-          oldIndex: -1,
-        } as any; // TODO typing
-
-      case 'modified':
-        await this._update(false, value); // TODO FIeld paths etc
         return {
           type,
           doc: new MockDocumentSnapshot(this, {
