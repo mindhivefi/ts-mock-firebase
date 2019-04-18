@@ -269,7 +269,6 @@ describe('Transaction handling', () => {
     });
   });
 
-
   it('Will delete fields defined with FieldValues.', async () => {
     const database: MockDatabase = {
       a: {
@@ -306,6 +305,42 @@ describe('Transaction handling', () => {
     expect(doc.data()).toEqual({
       sub3: {
         value: 3,
+      },
+    });
+  });
+
+  it('Will delete multiple fields from same document inside a transaction..', async () => {
+    const database: MockDatabase = {
+      a: {
+        docs: {
+          first: {
+            data: {
+              sub1: {
+                value1: 1,
+                value2: 2,
+                value3: 3,
+              },
+            },
+          },
+        },
+      },
+    };
+    firestore.mocker.fromMockDatabase(database);
+
+    const ref = firestore.doc('a/first');
+    await firestore.runTransaction(async (transaction: MockTransaction) => {
+      transaction.update(ref, {
+        sub1: {
+          value1: MockFieldValue.delete(),
+          value2: MockFieldValue.delete(),
+        },
+      });
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      sub1: {
+        value3: 3,
       },
     });
   });
