@@ -64,7 +64,7 @@
   "devDependencies": {
     "@commitlint/cli": "7.5.2",
     "@commitlint/config-conventional": "7.5.0",
-    "@firebase/app-types": "0.3.7",
+    "@firebase/app-types": "0.3.8",
     "@firebase/auth": "0.9.8",
     "@firebase/firestore": "1.1.3",
     "@firebase/firestore-types": "1.1.2",
