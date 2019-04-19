@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.0...v2.1.1) (2019-04-19)
+
+
+### Bug Fixes
+
+* 🐛 document.data changed to return a deep copy of data ([d9d567a](https://github.com/mindhivefi/ts-mock-firebase/commit/d9d567a))
+
 # [2.1.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.0.3...v2.1.0) (2019-04-19)
 
 
