@@ -15,9 +15,10 @@ import {
   SnapshotListenOptions,
   WhereFilterOp,
 } from '@firebase/firestore-types';
-import { Mocker } from '../app';
 
 import { MockCollection, MockDocuments } from '.';
+import { Mocker } from '../app';
+import { deepCopy } from '../utils/deepCopy';
 import MockDocumentReference, { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
 import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from './MockQuery';
 import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
@@ -29,6 +30,12 @@ export interface CollectionMocker extends Mocker {
   docRefs: () => MockDocumentReference[];
   doc(id: string): MockDocumentReference;
 
+  /**
+   * Set collection documents
+   *
+   * @param {MockDocumentReference} doc
+   * @memberof CollectionMocker
+   */
   setDoc(doc: MockDocumentReference): void;
 
   /**
@@ -36,9 +43,34 @@ export interface CollectionMocker extends Mocker {
    */
   deleteDoc(id: string): number;
 
+  /**
+   * Load mock collection content from MockCollection object
+   */
   load(collection: MockCollection): void;
 
-  saveCollection(): MockCollection;
+  /**
+   * Save mock collection data into a new MockCollection object
+   *
+   * @returns {MockCollection}
+   * @memberof CollectionMocker
+   */
+  save(): MockCollection;
+
+  /**
+   * Get a shallow object listing all documents as fields where each field contains
+   * the data of the document
+   *
+   * @returns {{ [documentId: string]: DocumentData}}
+   * @memberof CollectionMocker
+   */
+  getShallowCollection(): { [documentId: string]: DocumentData | undefined };
+
+  /**
+   * Set all documents of the collection by creating them from a single object
+   * where eact field is a document and fields value is the data in the document
+   * named by the field.
+   */
+  setShallowCollection(docs: { [documentId: string]: DocumentData }): void;
 
   reset(): void;
 }
@@ -100,7 +132,7 @@ export class MockCollectionReference implements CollectionReference {
         }
       },
 
-      saveCollection: (): MockCollection => {
+      save: (): MockCollection => {
         const collection: MockCollection = {};
         const docKeys = Object.getOwnPropertyNames(this._docRefs);
         if (docKeys.length > 0) {
@@ -112,6 +144,30 @@ export class MockCollectionReference implements CollectionReference {
           }
         }
         return collection;
+      },
+
+      getShallowCollection: () => {
+        const docs: { [documentId: string]: DocumentData | undefined } = {};
+        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+
+        for (const docId of docKeys) {
+          const data = this._docRefs[docId].data;
+          docs[docId] = data ? deepCopy(data) : undefined;
+        }
+        return docs;
+      },
+
+      setShallowCollection: (docs: { [documentId: string]: DocumentData }): void => {
+        this.mocker.reset();
+
+        for (const documentId in docs) {
+          if (docs.hasOwnProperty(documentId)) {
+            const documentData = docs[documentId];
+            const document = new MockDocumentReference(this.firestore, documentId, this);
+            this.mocker.setDoc(document);
+            document.mocker.setData(documentData);
+          }
+        }
       },
 
       reset: () => {

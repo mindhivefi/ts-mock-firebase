@@ -14,6 +14,7 @@ import {
 
 import { MockFirebaseFirestore } from '@firebase/app-types';
 import { MockCollections, MockDocument, Mocker } from '../app';
+import { deepCopy } from '../utils/deepCopy';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentSnapshot from './MockDocumentSnapshot';
 import { MockFieldPath } from './MockFieldPath';
@@ -54,6 +55,8 @@ export interface DocumentMocker extends Mocker {
    * @param data A new data for document
    */
   setData(data: DocumentData): void;
+
+  getData(): DocumentData | undefined;
 
   saveDocument(): MockDocument;
 
@@ -96,6 +99,10 @@ export default class MockDocumentReference implements DocumentReference {
 
       setCollection: (collection: MockCollectionReference) => {
         this._collections[collection.id] = collection;
+      },
+
+      getData: (): DocumentData | undefined => {
+        return this.data ? deepCopy(this.data) : undefined;
       },
 
       setData: (data: DocumentData) => {

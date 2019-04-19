@@ -156,7 +156,7 @@ describe('Transaction handling', () => {
       await firestore.runTransaction(async (transaction: MockTransaction) => {
         const ref = firestore.doc('b/A');
 
-        result = (await transaction.get(ref)) as MockDocumentSnapshot;
+        result = await transaction.get(ref);
       });
       expect(result!.data()).toEqual({
         text: 'A',

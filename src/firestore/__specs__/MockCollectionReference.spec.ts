@@ -1,4 +1,4 @@
-import { MockDatabase } from '..';
+import { MockCollection, MockDatabase } from '..';
 import { createFirebaseNamespace } from '../../app';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
@@ -566,6 +566,47 @@ describe('CollectionReferenceMock', () => {
           value: 3,
         });
       });
+    });
+  });
+
+  describe('Mocker', () => {
+    it('shallow set documents with with shallow set and read them with shallow get', () => {
+      const collection = firestore.collection('company');
+
+      collection.mocker.setShallowCollection({
+        first: {
+          value: 1,
+        },
+        second: {
+          value: 2,
+        },
+      });
+      expect(collection.mocker.getShallowCollection()).toEqual({
+        first: {
+          value: 1,
+        },
+        second: {
+          value: 2,
+        },
+      });
+    });
+
+    it('save set documents ', () => {
+      const collection = firestore.collection('company');
+
+      const mock: MockCollection = {
+        docs: {
+          first: {
+            data: { value: 1 },
+          },
+          second: {
+            data: { value: 2 },
+          },
+        },
+      };
+      collection.mocker.load(mock);
+
+      expect(collection.mocker.saveCollection()).toEqual(mock);
     });
   });
 });
