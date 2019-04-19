@@ -215,7 +215,7 @@ export class MockCollectionReference implements CollectionReference {
       const id = this.firestore.mocker.getNextDocumentId();
       const document = new MockDocumentReference(this.firestore, id, this);
       this.mocker.setDoc(document);
-      document.data = { ...data };
+      document.mocker.setData(deepCopy(data));
 
       document.fireDocumentChangeEvent('added');
 

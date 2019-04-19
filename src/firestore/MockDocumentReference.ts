@@ -73,10 +73,15 @@ export default class MockDocumentReference implements DocumentReference {
   public get path(): string {
     return this.parent ? `${this.parent.path}/${this.id}` : this.id;
   }
-  // if data does not exists, the document will be treated is if it does not exists
-  public data: any = undefined;
+
+  public get data(): any {
+    return this._data ? deepCopy(this._data) : this._data;
+  }
 
   public mocker: DocumentMocker;
+  // if data does not exists, the document will be treated is if it does not exists
+
+  private _data?: any;
 
   private _collections: {
     [id: string]: MockCollectionReference;
@@ -106,7 +111,7 @@ export default class MockDocumentReference implements DocumentReference {
       },
 
       setData: (data: DocumentData) => {
-        this.data = data;
+        this._data = data;
       },
 
       reset: () => {
@@ -118,12 +123,12 @@ export default class MockDocumentReference implements DocumentReference {
         }
         this._collections = {};
         this._snapshotCallbackHandler.reset();
-        this.data = undefined;
+        this._data = undefined;
       },
 
       load: (document: MockDocument) => {
         this.mocker.reset();
-        this.data = document.data ? { ...document.data } : undefined;
+        this._data = document.data ? deepCopy(document.data) : undefined;
 
         const collections = document.collections;
 
@@ -407,9 +412,9 @@ export default class MockDocumentReference implements DocumentReference {
    */
   private _set = async (data: DocumentData, options?: SetOptions) => {
     if (options && options.merge) {
-      this.data = processAndDeepMerge(this.firestore, this.data, data);
+      this._data = processAndDeepMerge(this.firestore, this.data, data);
     } else {
-      this.data = preprocessData(this.firestore, data);
+      this._data = preprocessData(this.firestore, data);
     }
   }
 
@@ -425,10 +430,10 @@ export default class MockDocumentReference implements DocumentReference {
     }
     if (typeof data === 'string' || data instanceof MockFieldPath) {
       const args = parseFieldValuePairsFromArgs([data, value], moreFieldsAndValues);
-      this.data = setFieldValuePairs(this.firestore, this.data, args);
+      this._data = setFieldValuePairs(this.firestore, this.data, args);
     } else {
       // only one parameter, so we treat it as UpdateData
-      this.data = processAndDeepMerge(this.firestore, this.data, data);
+      this._data = processAndDeepMerge(this.firestore, this.data, data);
     }
     fireCallbacks && this.fireDocumentChangeEvent('modified');
   }
@@ -440,7 +445,7 @@ export default class MockDocumentReference implements DocumentReference {
     fireCallbacks && this.fireDocumentChangeEvent('removed', oldIndex, true, callbaks);
 
     // remove data after triggering events
-    this.data = undefined;
+    this._data = undefined;
     this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   }
 }
