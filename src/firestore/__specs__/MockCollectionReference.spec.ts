@@ -606,7 +606,7 @@ describe('CollectionReferenceMock', () => {
       };
       collection.mocker.load(mock);
 
-      expect(collection.mocker.saveCollection()).toEqual(mock);
+      expect(collection.mocker.save()).toEqual(mock);
     });
   });
 });

@@ -150,7 +150,7 @@ export default class MockDocumentReference implements DocumentReference {
         for (const collectionId in this._collections) {
           if (this._collections.hasOwnProperty(collectionId)) {
             const collection = this._collections[collectionId];
-            result[collectionId] = collection.mocker.saveCollection();
+            result[collectionId] = collection.mocker.save();
           }
         }
         return result;
