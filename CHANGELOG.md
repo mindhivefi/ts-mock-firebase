@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.0.3...v2.1.0) (2019-04-19)
+
+
+### Features
+
+* 🎸 Shallow get and set for collections mocking ([0714f39](https://github.com/mindhivefi/ts-mock-firebase/commit/0714f39))
+
 ## [2.0.3](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.0.2...v2.0.3) (2019-04-18)
 
 
