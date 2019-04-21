@@ -87,11 +87,12 @@ export interface MockFirebaseError {
   stack: string;
 }
 
-export class MockFirebaseError implements MockFirebaseError {
+export class MockFirebaseError extends Error implements MockFirebaseError {
   public stack: string = '';
   public name: string = '';
 
   constructor(public code: string, public message: string) {
+    super(message);
     // We want the stack value, if implemented by Error
     if (captureStackTrace) {
       // Patches this.stack, omitted calls above ErrorFactory#create

@@ -591,6 +591,27 @@ describe('CollectionReferenceMock', () => {
       });
     });
 
+    it('shallow set create ', () => {
+      const collection = firestore.collection('company');
+
+      collection.mocker.setShallowCollection({
+        first: {
+          value: 1,
+        },
+        second: {
+          value: 2,
+        },
+      });
+      expect(collection.mocker.getShallowCollection()).toEqual({
+        first: {
+          value: 1,
+        },
+        second: {
+          value: 2,
+        },
+      });
+    });
+
     it('save set documents ', () => {
       const collection = firestore.collection('company');
 

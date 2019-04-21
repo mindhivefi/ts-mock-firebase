@@ -1,6 +1,5 @@
-import { createFirebaseNamespace } from '../../app';
-
 import { MockDatabase } from '..';
+import { createFirebaseNamespace } from '../../app';
 import { MockFieldPath } from '../MockFieldPath';
 import { MockFieldValue } from '../MockFieldValue';
 import { MockTimestamp } from '../MockTimestamp';
@@ -39,9 +38,11 @@ describe('FieldValue', () => {
         });
       });
 
-      it('will delete field from sub object', async () => {
+      it('will throw an invalid-argument error when trying to use FieldValue.delete in sub object', async () => {
         firestore.mocker.fromMockDatabase(database);
         const ref = firestore.doc('list/a');
+
+        // FirebaseError: [code=invalid-argument]: Function DocumentReference.update() called with invalid data. FieldValue.delete() can only appear at the top level of your update data (found in field third.sub.B)
 
         await ref.set(
           {
@@ -57,24 +58,21 @@ describe('FieldValue', () => {
             merge: true,
           }
         );
-        await ref.update({
-          third: {
-            sub: {
-              B: MockFieldValue.delete(),
+        // expect.assertions(1);
+        try {
+          await ref.update({
+            third: {
+              sub: {
+                B: MockFieldValue.delete(),
+              },
             },
-          },
-        });
-
-        expect(ref.data).toEqual({
-          first: 1,
-          second: 2,
-          third: {
-            sub: {
-              A: 1,
-              C: 3,
-            },
-          },
-        });
+          });
+        } catch (error) {
+          expect(error.code).toBe('invalid-argument');
+          expect(error.message).toBe(
+            'DocumentReference.update() called with invalid data. FieldValue.delete() can only appear at the top level of your update data (found in field third.sub.B)'
+          );
+        }
       });
 
       // TODO fieldPath updates and sets with field values
@@ -390,7 +388,41 @@ describe('FieldValue', () => {
         });
       });
 
-      it('will delete field from sub object', async () => {
+      it('will delete field from sub object - 2', async () => {
+        firestore.mocker.fromMockDatabase(database);
+        const ref = firestore.doc('list/a');
+
+        await ref.set(
+          {
+            third: {
+              sub: {
+                A: 1,
+                B: 2,
+                C: 3,
+              },
+            },
+          },
+          {
+            merge: true,
+          }
+        );
+        await ref.update({
+          'third.sub.B': MockFieldValue.delete(),
+        });
+
+        expect(ref.data).toEqual({
+          first: 1,
+          second: 2,
+          third: {
+            sub: {
+              A: 1,
+              C: 3,
+            },
+          },
+        });
+      });
+
+      it('will delete field from sub object - 3', async () => {
         firestore.mocker.fromMockDatabase(database);
         const ref = firestore.doc('list/a');
 

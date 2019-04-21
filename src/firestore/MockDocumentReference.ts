@@ -247,7 +247,7 @@ export default class MockDocumentReference implements DocumentReference {
     value?: any,
     ...moreFieldsAndValues: any[]
   ) => {
-    if (!this.data) {
+    if (!this._data) {
       // TODO change to use actual exception
       throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
     }
@@ -420,20 +420,35 @@ export default class MockDocumentReference implements DocumentReference {
 
   private _update = async (
     fireCallbacks: boolean,
-    data: UpdateData | string | FieldPath,
+    data: UpdateData | string | MockFieldPath,
     value?: any,
     ...moreFieldsAndValues: any[]
   ) => {
-    if (!this.data) {
+    if (!this._data) {
       // TODO change to use actual exception
       throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
     }
     if (typeof data === 'string' || data instanceof MockFieldPath) {
       const args = parseFieldValuePairsFromArgs([data, value], moreFieldsAndValues);
       this._data = setFieldValuePairs(this.firestore, this.data, args);
-    } else {
+    } else if (typeof data === 'object') {
       // only one parameter, so we treat it as UpdateData
-      this._data = processAndDeepMerge(this.firestore, this.data, data);
+      const args: any[] = [];
+      const fieldNames = Object.getOwnPropertyNames(data);
+
+      for (const fieldName of fieldNames) {
+        const fieldValue = data[fieldName];
+        if (fieldName.includes('.')) {
+          const paths = fieldName.split('.');
+          args.push(new MockFieldPath(...paths));
+        } else {
+          args.push(fieldName);
+        }
+        args.push(fieldValue);
+      }
+      this._data = setFieldValuePairs(this.firestore, this._data, args);
+    } else {
+      throw new Error('Unsupported data type: ' + typeof data);
     }
     fireCallbacks && this.fireDocumentChangeEvent('modified');
   }

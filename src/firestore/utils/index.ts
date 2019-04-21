@@ -1,8 +1,9 @@
 import { MockFirebaseFirestore } from '@firebase/app-types';
-import { FieldPath } from '@firebase/firestore-types';
+import { FieldPath, UpdateData } from '@firebase/firestore-types';
 import { deepCopy } from '@firebase/util';
 import * as uuidv4 from 'uuid/v4';
 
+import { MockFirebaseError } from '../../utils/errors';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
 import { createFieldPathFromString, MockFieldPath } from '../MockFieldPath';
@@ -360,15 +361,21 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
       if (fieldValue instanceof MockFieldValue) {
         processFieldValue(firestore, data, newData, path, fieldValue);
       } else {
+        validateUpdateData(path, fieldValue);
         newData[path] = fieldValue;
       }
     } else if (path instanceof MockFieldPath) {
       const fieldNames = path.fieldNames;
       let parent = newData;
+      let fieldPath = '';
+
       for (let j = 1; j < fieldNames.length; j++) {
-        parent[fieldNames[j - 1]] = parent = parent[fieldNames[j - 1]] || {};
-        if (typeof parent !== 'object') {
-          throw new MockFirebaseValidationError(`Illegal path. Can not add value under field type of ${typeof parent}`);
+        const parentValue = parent[fieldNames[j - 1]];
+        fieldPath += `${fieldPath !== '' ? '.' : ''}${fieldNames[j - 1]}`;
+        if (!parentValue || typeof parentValue !== 'object') {
+          parent[fieldNames[j - 1]] = parent = {};
+        } else {
+          parent[fieldNames[j - 1]] = parent = parentValue;
         }
       }
       const propPath = fieldNames[fieldNames.length - 1];
@@ -383,6 +390,32 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
   }
   return newData;
 };
+
+function validateUpdateData(path: string, fieldValue: any) {
+  function validateUpdateObject(path: string, root: UpdateData, source: UpdateData) {
+    if (source instanceof MockFieldValue) {
+      if (source === MockFieldValue.delete() && root !== source) {
+        throw new MockFirebaseError(
+          'invalid-argument',
+          `DocumentReference.update() called with invalid data. FieldValue.delete() can only appear at the top level of your update data (found in field ${path})`
+        );
+      }
+    }
+
+    const props = Object.getOwnPropertyNames(source);
+    for (const fieldName of props) {
+      const value = source[fieldName];
+      if (typeof value === 'object') {
+        validateUpdateObject(path + '.' + fieldName, root, value);
+      }
+    }
+  }
+
+  if (fieldValue && typeof fieldValue === 'object') {
+    validateUpdateObject(path, fieldValue, fieldValue);
+  }
+}
+
 function hasParity(args: any[]) {
   // tslint:disable-next-line: no-bitwise
   return (args.length & 1) === 0;

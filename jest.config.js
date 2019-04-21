@@ -13,5 +13,5 @@ module.exports = {
   },
   // map the baseDir for tests
   modulePaths: ['<rootDir>/src/'],
-  verbose: true,
+  // verbose: true,
 };
