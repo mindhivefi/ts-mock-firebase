@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.1...v2.1.2) (2019-04-21)
+
+
+### Bug Fixes
+
+* 🐛 Fixes on update() and set() with merge operations ([1d04148](https://github.com/mindhivefi/ts-mock-firebase/commit/1d04148))
+
 ## [2.1.1](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.0...v2.1.1) (2019-04-19)
 
 

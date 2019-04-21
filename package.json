@@ -1,6 +1,6 @@
 {
   "name": "ts-mock-firebase",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Mock objects for Firebase",
   "main": "lib/index.js",
   "scripts": {
@@ -84,7 +84,6 @@
     "typescript": "3.4.4"
   },
   "dependencies": {
-
     "@firebase/app-types": "~0.3.9",
     "@firebase/auth": "~0.10.0",
     "@firebase/firestore": "~1.2.0",
