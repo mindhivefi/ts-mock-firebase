@@ -279,11 +279,9 @@ export default class MockDocumentReference implements DocumentReference {
       return setFieldValuePairs(this.firestore, transactionData, args);
     } else {
       // only one parameter, so we treat it as UpdateData
-      return processAndDeepMerge(this.firestore, transactionData, data);
-      // return {
-      //   ...transactionData,
-      //   ...(data as UpdateData),
-      // } as DocumentData;
+      const args = extractArguments(data);
+      return setFieldValuePairs(this.firestore, transactionData, args);
+      // return processAndDeepMerge(this.firestore, transactionData, data);
     }
   }
 
@@ -433,19 +431,7 @@ export default class MockDocumentReference implements DocumentReference {
       this._data = setFieldValuePairs(this.firestore, this.data, args);
     } else if (typeof data === 'object') {
       // only one parameter, so we treat it as UpdateData
-      const args: any[] = [];
-      const fieldNames = Object.getOwnPropertyNames(data);
-
-      for (const fieldName of fieldNames) {
-        const fieldValue = data[fieldName];
-        if (fieldName.includes('.')) {
-          const paths = fieldName.split('.');
-          args.push(new MockFieldPath(...paths));
-        } else {
-          args.push(fieldName);
-        }
-        args.push(fieldValue);
-      }
+      const args: any[] = extractArguments(data);
       this._data = setFieldValuePairs(this.firestore, this._data, args);
     } else {
       throw new Error('Unsupported data type: ' + typeof data);
@@ -463,6 +449,22 @@ export default class MockDocumentReference implements DocumentReference {
     this._data = undefined;
     this.mocker.reset(); // TODO this must be tested how this will act with a real Firestore. Collections are not removed?
   }
+}
+
+export function extractArguments(data: UpdateData) {
+  const args: any[] = [];
+  const fieldNames = Object.getOwnPropertyNames(data);
+  for (const fieldName of fieldNames) {
+    const fieldValue = data[fieldName];
+    if (fieldName.includes('.')) {
+      const paths = fieldName.split('.');
+      args.push(new MockFieldPath(...paths));
+    } else {
+      args.push(fieldName);
+    }
+    args.push(fieldValue);
+  }
+  return args;
 }
 
 export type MockSubscriptionFunction = () => void;

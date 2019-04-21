@@ -186,7 +186,7 @@ export default class MockTransaction implements Transaction {
 
   public rollback = (): void => {
     // tslint:disable-next-line: no-console
-    console.log('rollback');
+    // console.log('rollback');
   }
 
   private updateFieldsFromArgs = (args: Array<string | UpdateData | FieldPath>, data: any, newData: any) => {
