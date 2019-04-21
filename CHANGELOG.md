@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.2...v2.1.3) (2019-04-21)
+
+
+### Bug Fixes
+
+* 🐛 Fixes for handling updates inside a transaction ([f494e57](https://github.com/mindhivefi/ts-mock-firebase/commit/f494e57))
+
 ## [2.1.2](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.1...v2.1.2) (2019-04-21)
 
 
