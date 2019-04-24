@@ -262,6 +262,27 @@ describe('DocumentReferenceMock', () => {
       expect(snapshot.exists).toBeFalsy();
       expect(snapshot.data()).toBeUndefined();
     });
+
+    it('will read an array type data as an array object', async () => {
+      firestore.mocker.reset();
+      firestore.mocker.loadDocument('collection/doc', {
+        anArray: ['one', 'two', 'three'],
+      });
+
+
+      const result = await firestore.doc('collection/doc').get();
+      expect(result.exists).toBeTruthy();
+
+      const data = result.data() as any;
+
+      expect(data.anArray).toBeDefined();
+      expect(Array.isArray(data.anArray)).toBeTruthy();
+      expect(data.anArray.length).toBe(3);
+
+      data.anArray.push("four");
+      expect(data.anArray.length).toBe(4);
+
+    });
   });
 
   describe('isEqual()', () => {
