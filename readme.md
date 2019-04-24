@@ -1,16 +1,16 @@
-# Mock-Firebase
+# Ts-Mock-Firebase
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/mindhivefi/ts-mock-firebase.svg)](https://greenkeeper.io/)
 
 Ts-Mock-Firebase is a mocking library to help testing Firebase projects. It is especially handy for developers using Typescript. All mocking classes implements the actual Firebase interfaces.
 
-Firebase is a creat service which really improves the development speed and also makes it possible to build services that would be really big challenge to build otherways. At the same time, largely scalable environments with possibly millons of users really need a professional level development tools for testing. This kind of tools have been missing from Firebase comminity. This project's goal is to build this kind of professional tools to test thoroughly Firebase applications.
+Firebase is a great service which improves the development speed and it also makes it possible to build services that would be really big challenge to build otherways. At the same time, largely scalable environments with possibly millons of users really need a professional level development tools for testing. This kind of tools have been missing from Firebase comminity. This project's goal is to build this kind of professional tools to test thoroughly Firebase applications.
 
-The philosophy with Ts-Mock-Firebase is to emulate the whole functionality of Firebase as an inmemory instance. This will make it possible to set up an unque state for each test and test all consequences expected for each case. Another philophical point is to support all typescript interfaces offered by Firebase libraries to make it easier to developers to develop the actual code with a strong testing tool.
+The philosophy with Ts-Mock-Firebase is to emulate the whole functionality of Firebase as an inmemory instance. This will make it possible to set up an unique state for each test and test all consequences expected for each case. Another philosophical point is to support all typescript interfaces offered by Firebase libraries to make it easier to developers to develop the actual code with a strong testing tool.
 
-This mocking library is not itself specialized to any unit testing tool framewoork, instead the idea is to use it together unit test environment specific helper library.
+This mocking library is not itself specialized to any unit testing tool framewoork. You should be able to use it with jest, mocha or any other testing library. 
 
-NOTE - Current version is still in early alpha and only supports Firestore. All features of Firestore are already supported, altought there are cases like with onSnapshot -callbacks, that all possible ways to use are not covered.
+NOTE - Current version is still in early alpha and only supports Firestore. All features of Firestore are already supported, altought there are cases like with onSnapshot -callbacks, where all possible ways are not yet covered.
 
 ## Mocking Firebase with Jest
 
@@ -68,7 +68,7 @@ firestore.mocker.reset(); // this will reset the whole database into an initial 
 
 ### Setting database state by setting document into a paths
 
-In basic test cases, it is might be the easiest way to just set the required firestore document into the database with `loadDocument` and `loadCollection` -mocker functions.
+In basic test cases, it might be easiest to just set the required firestore document into the database with `loadDocument` and `loadCollection` -mocker functions.
 
 #### mocker.loadDocument
 
@@ -102,7 +102,7 @@ Load collection works just like loadDocument except that the object's first leve
 
 ## Loading the whole database state at once
 
-Each mock class is named after the actual Firebase class prefixed with Mock, like `MockDocumentReference` or `MockFirebaseFirestore`. Mock classes have a special `mocker` -object that can be used to manipulate the database state.
+Each mock class is named after the actual Firebase class prefixed with Mock, like `MockDocumentReference` or `MockFirebaseFirestore`. Mock classes have a special `mocker` -object that can be used to manipulate the database state related to object.
 
 To create an initial database for testing, you can use a `MockDatabase` -interface as follows:
 
