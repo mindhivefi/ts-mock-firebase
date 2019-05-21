@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.3...v2.1.4) (2019-05-21)
+
+
+### Bug Fixes
+
+* 🐛 Updated TypeScript version from 3.4.4 to 3.4.5 ([b4f521c](https://github.com/mindhivefi/ts-mock-firebase/commit/b4f521c))
+
 ## [2.1.3](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.2...v2.1.3) (2019-04-21)
 
 
