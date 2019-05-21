@@ -84,12 +84,12 @@
     "typescript": "3.4.4"
   },
   "dependencies": {
-    "@firebase/app-types": "~0.3.9",
-    "@firebase/auth": "~0.10.0",
-    "@firebase/firestore": "~1.2.0",
-    "@firebase/firestore-types": "~1.2.0",
-    "@firebase/messaging": "~0.3.18",
-    "@firebase/util": "~0.2.13",
+    "@firebase/app-types": "0.3.9",
+    "@firebase/auth": "0.10.0",
+    "@firebase/firestore": "1.2.0",
+    "@firebase/firestore-types": "1.2.0",
+    "@firebase/messaging": "0.3.18",
+    "@firebase/util": "0.2.13",
     "antlr4": "4.7.2",
     "firebase-rules-parser": "^2.0.0",
     "uuid": "3.3.2"
