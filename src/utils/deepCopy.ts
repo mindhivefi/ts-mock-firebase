@@ -43,7 +43,7 @@ export function deepExtend(target: any, source: any): any {
     case Date:
       // Treat Dates like scalars; if the target date object had any child
       // properties - they will be lost!
-      let dateValue = (source as any) as Date;
+      const dateValue = (source) as Date;
       return new Date(dateValue.getTime());
 
     case Object:
@@ -62,7 +62,7 @@ export function deepExtend(target: any, source: any): any {
       return source;
   }
 
-  for (let prop in source) {
+  for (const prop in source) {
     if (!source.hasOwnProperty(prop)) {
       continue;
     }

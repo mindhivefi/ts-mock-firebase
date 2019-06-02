@@ -170,7 +170,7 @@ class ObserverProxy<T> implements Observer<T> {
       });
     }
 
-    this.observers!.push(observer as Observer<T>);
+    this.observers!.push(observer);
 
     return unsub;
   }

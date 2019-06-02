@@ -224,7 +224,7 @@ export class Sha1 {
           buf[inbuf] = bytes.charCodeAt(n);
           ++inbuf;
           ++n;
-          if (inbuf == this.blockSize) {
+          if (inbuf === this.blockSize) {
             this.compress_(buf);
             inbuf = 0;
             // Jump to the outer loop so we use the full-block optimization.

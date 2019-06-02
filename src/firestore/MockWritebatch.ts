@@ -134,7 +134,7 @@ export class MockWriteBatch implements WriteBatch {
       for (const path in this.transactionOperation) {
         if (this.transactionOperation.hasOwnProperty(path)) {
           const operation = this.transactionOperation[path];
-          const doc = this.firestore.doc(path) as MockDocumentReference;
+          const doc = this.firestore.doc(path);
 
           const documentChange = await doc.commitChange(operation, this.transactionData[path]);
           const collectionPath = path.substr(0, path.lastIndexOf('/'));
@@ -157,7 +157,7 @@ export class MockWriteBatch implements WriteBatch {
                     );
                 }
               }
-              const collection = this.firestore.collection(collectionId) as MockCollectionReference;
+              const collection = this.firestore.collection(collectionId);
 
               triggers[collectionId] = () => {
                 collection.fireBatchDocumentChange(documentChanges);
