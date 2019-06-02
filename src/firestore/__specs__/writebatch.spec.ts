@@ -64,7 +64,6 @@ describe('Write batch functionality', () => {
     expect(docChanges.length).toBe(1);
     expect(docChanges[0].type).toMatch('modified');
     expect(ref2Snap).toBeDefined();
-    expect(onRef2DocumentSnapshot.mock.calls.length).toBe(1);
   });
 
   it('will add and update operations atomically', async () => {
@@ -103,7 +102,6 @@ describe('Write batch functionality', () => {
     expect(docChanges[0].type).toMatch('modified');
     expect(docChanges[1].type).toMatch('added');
     expect(ref2Snap).toBeDefined();
-    expect(onRef2DocumentSnapshot.mock.calls.length).toBe(1);
   });
 
   it('will add, update and delete operations atomically', async () => {

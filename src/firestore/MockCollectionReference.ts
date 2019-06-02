@@ -196,7 +196,7 @@ export class MockCollectionReference implements CollectionReference {
       this.firestore,
       this.parent as MockDocumentReference,
       false,
-      documentPath || this.firestore.mocker.getNextDocumentId(),
+      documentPath || this.firestore.mocker.getNextDocumentId(this.path),
       false,
       this
     ) as DocumentReference;
@@ -212,7 +212,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   public add = (data: DocumentData): Promise<DocumentReference> => {
     return new Promise<DocumentReference>((resolve, reject) => {
-      const id = this.firestore.mocker.getNextDocumentId();
+      const id = this.firestore.mocker.getNextDocumentId(this.path);
       const document = new MockDocumentReference(this.firestore, id, this);
       this.mocker.setDoc(document);
       document.mocker.setData(deepCopy(data));

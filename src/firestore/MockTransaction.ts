@@ -110,7 +110,7 @@ export default class MockTransaction implements Transaction {
     this.modified = true;
 
     const path = documentRef.path;
-    const data = this.transactionData[path] || deepCopy(documentRef.data);
+    const data = this.transactionData[path] || documentRef.data;
     const newData = deepCopy(data);
 
     const fieldType = typeof dataOrField;

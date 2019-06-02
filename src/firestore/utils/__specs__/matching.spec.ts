@@ -31,6 +31,29 @@ describe('Where Clauses', () => {
 
       expect(query.length).toBe(1);
     });
+
+    it('will filter documents by exact field-path match', () => {
+      const docs = [
+        {
+          data: { sub: {a: 3 }},
+        },
+        {
+          data: { sub: {a: 2} },
+        },
+        {
+          data: { sub: {a: 1} },
+        },
+      ];
+      const query = filterDocumentsByRules(docs as any, [
+        {
+          fieldPath: 'sub.a',
+          opStr: '==',
+          value: 2,
+        },
+      ]);
+
+      expect(query.length).toBe(1);
+    });
   });
 
   describe('combination rules', () => {

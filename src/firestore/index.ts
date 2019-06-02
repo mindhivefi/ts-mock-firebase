@@ -8,7 +8,7 @@ import { FirebaseRulesIntepreter } from 'firebase-rules-parser';
 import * as fs from 'fs';
 
 import { hash } from '../utils/stringUtils';
-import { FirestoreMocker } from './FirestoreMocker';
+import { FirestoreMocker, GetDocumentIdCallback } from './FirestoreMocker';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference, { MockDocumentSnapshotCallback } from './MockDocumentReference';
 import { MockTimestamp } from './MockTimestamp';
@@ -80,7 +80,8 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
 
   private _rules?: FirebaseRulesIntepreter;
   private _rulesHash?: number;
-  private _nextDocumentIds: string[] = [];
+  private _nextDocumentIdsArray?: string[];
+  private _nextDocumentIdsFun?: GetDocumentIdCallback;
 
   // tslint:disable-next-line: cognitive-complexity
   public constructor(app: MockFirebaseApp) {
@@ -193,13 +194,26 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
         return context as any;
       },
 
-      setNextDocumentIds: (ids: string[]) => {
-        this._nextDocumentIds = ids;
+      setNextDocumentIds: (ids: string[] | GetDocumentIdCallback) => {
+        if (Array.isArray(ids)) {
+          this._nextDocumentIdsArray = ids;
+          this._nextDocumentIdsFun = undefined;
+          return;
+        }
+        if (typeof ids === 'function') {
+          this._nextDocumentIdsArray = undefined;
+          this._nextDocumentIdsFun = ids;
+          return;
+        }
+        throw new Error('Illegal argument type of ' + typeof ids);
       },
 
-      getNextDocumentId: (): string => {
-        if (this._nextDocumentIds.length > 0) {
-          return this._nextDocumentIds.shift() as string;
+      getNextDocumentId: (collectionPath: string): string => {
+        if (this._nextDocumentIdsArray && this._nextDocumentIdsArray.length > 0) {
+          return this._nextDocumentIdsArray.shift() as string;
+        }
+        if (this._nextDocumentIdsFun) {
+          return this._nextDocumentIdsFun(collectionPath);
         }
         return generateDocumentId();
       },

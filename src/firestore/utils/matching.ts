@@ -1,8 +1,9 @@
 import { FieldPath, WhereFilterOp } from '@firebase/firestore-types';
+
+import { MockFirebaseValidationError } from '.';
 import MockDocumentReference from '../MockDocumentReference';
 import { MockQueryWhereRule } from '../MockQuery';
 import { NotImplementedYet } from '../utils/NotImplementedYet';
-import { MockFirebaseValidationError } from './index';
 
 export type MatchFunction = (doc: MockDocumentReference) => boolean;
 
@@ -73,8 +74,19 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
   if (typeof fieldPath !== 'string') {
     throw new NotImplementedYet('doesRuleMatch - field value support');
   }
-  const field = doc.data[fieldPath];
-
+  let field;
+  if (fieldPath.includes('.')) {
+    field = doc.data;
+    const paths = fieldPath.split('.');
+    for (const path of paths) {
+      field = field[path];
+      if (!field) {
+        return value !== undefined;
+      }
+    }
+  } else {
+    field = doc.data[fieldPath];
+  }
   if (field) {
     switch (opStr) {
       case '==':

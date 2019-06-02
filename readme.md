@@ -41,6 +41,7 @@ export = firebaseAdmin;
 To get an access to mock operation in your jest code, you must expose the module:
 
 ```typescript
+// in my.test.ts or my.spec.ts -file:
 
 import * as firebase from 'firebase';
 import { exposeMockFirebase } from 'ts-mock-firebase';
