@@ -203,8 +203,8 @@ export function compareObjects(a: any, b: any): number {
     }
   }
 
-  const aValues = Object.values(a);
-  const bValues = Object.values(b);
+  const aValues = Object.values(a) as any;
+  const bValues = Object.values(b) as any;
   for (let i = 0; i < min; i++) {
     if (aValues[i] < bValues[i]) {
       return -1;
