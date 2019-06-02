@@ -12,12 +12,13 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noImplicitThis": false,
+    // "isolatedModules": true,
     /* Additional Checks */
     "noUnusedLocals": true,
     /* Module Resolution Options */    
-    "moduleResolution": "node"
+    "moduleResolution": "node",
     /* Source Map Options */
-
+    "sourceMap": true
     /* Test onces */
   },
   "exclude": [

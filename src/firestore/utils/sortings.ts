@@ -50,6 +50,10 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
     const first = getFieldValue(a, fieldPath);
     const second = getFieldValue(b, fieldPath);
 
+    if (first === undefined || second === undefined) {
+      console.warn(`Field value not found for path ${fieldPath}`);
+      return 0;
+    }
     const firstType = getFirestoreDataType(first);
     const secondType = getFirestoreDataType(second);
     if (firstType !== secondType) {

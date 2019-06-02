@@ -81,54 +81,54 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
     for (const path of paths) {
       field = field[path];
       if (!field) {
-        return value !== undefined;
+        return value === undefined;
       }
     }
   } else {
     field = doc.data[fieldPath];
   }
-  if (field) {
-    switch (opStr) {
-      case '==':
-        if (field !== value) {
-          return false;
-        }
-        break;
-      case '<':
-        if (field >= value) {
-          return false;
-        }
-        break;
-      case '<=':
-        if (field > value) {
-          return false;
-        }
-        break;
-      case '>':
-        if (field <= value) {
-          return false;
-        }
-        break;
-      case '>=':
-        if (field < value) {
-          return false;
-        }
-        break;
-      case 'array-contains': {
-        if (!Array.isArray(field)) {
-          throw new MockFirebaseValidationError(`Error: Field ${fieldPath} is not an array.`);
-        }
-
-        if (field.indexOf(value) < 0) {
-          return false;
-        }
-        break;
-      }
-      default:
-        throw new Error(`Unidentified where operation: ${opStr}`);
-    }
-  } else {
+  if (field === undefined) {
     return false;
   }
+  switch (opStr) {
+    case '==':
+      if (field !== value) {
+        return false;
+      }
+      break;
+    case '<':
+      if (field >= value) {
+        return false;
+      }
+      break;
+    case '<=':
+      if (field > value) {
+        return false;
+      }
+      break;
+    case '>':
+      if (field <= value) {
+        return false;
+      }
+      break;
+    case '>=':
+      if (field < value) {
+        return false;
+      }
+      break;
+    case 'array-contains': {
+      if (!Array.isArray(field)) {
+        throw new MockFirebaseValidationError(`Error: Field ${fieldPath} is not an array.`);
+      }
+
+      if (field.indexOf(value) < 0) {
+        return false;
+      }
+      break;
+    }
+    default:
+      throw new Error(`Unidentified where operation: ${opStr}`);
+  }
+
   return true;
 }

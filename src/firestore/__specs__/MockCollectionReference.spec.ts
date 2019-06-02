@@ -85,6 +85,43 @@ describe('CollectionReferenceMock', () => {
     },
   };
 
+  const testDataSub = {
+    list: {
+      docs: {
+        a: {
+          data: {
+            sub: {
+              name: 'a',
+            },
+          },
+        },
+        b: {
+          data: {
+            sub: {
+              name: 'd',
+              key: 'm',
+            },
+          },
+        },
+        c: {
+          data: {
+            sub: {
+              name: 'c',
+              key: 'm',
+            },
+          },
+        },
+        d: {
+          data: {
+            sub: {
+              name: 'b',
+            },
+          },
+        },
+      },
+    },
+  };
+
   describe('get()', () => {
     it('will get all documents', async () => {
       firestore.mocker.fromMockDatabase(testData);
@@ -245,6 +282,28 @@ describe('CollectionReferenceMock', () => {
         });
       });
     });
+
+    describe('sub fields', () => {
+      it('will return fields with a equal match', async () => {
+        firestore.mocker.fromMockDatabase(testDataSub);
+
+        const ref = firestore
+          .collection('list')
+          .where('sub.key', '==', 'm')
+          .orderBy('sub.name');
+        const query = await ref.get();
+
+        expect(query).toBeDefined();
+        expect(query.size).toBe(2);
+        expect(query.docs[0].data()).toEqual({
+          sub: { name: 'c', key: 'm' },
+        });
+        expect(query.docs[1].data()).toEqual({
+          sub: { name: 'd', key: 'm' },
+        });
+      });
+    });
+
     describe('comparization', () => {
       const testData3 = {
         list: {

@@ -50,6 +50,24 @@ describe('Simple field sorting', () => {
       const result = sortData(data, querySortFunction('a', 'desc'));
       expect(result[0].data.a).toBe('Horse');
     });
+
+    it('will sort string fields in based on sub object field', () => {
+      const objectData = [
+        {
+          data: { a: { key: 3 } },
+        },
+        {
+          data: { a: { key: 2 } },
+        },
+        {
+          data: { a: { key: 1, name: 'First' } },
+        },
+      ];
+      const result = sortData(objectData, querySortFunction('a.key'));
+      expect(result[0].data).toEqual({
+        a: { key: 1, name: 'First' },
+      });
+    });
   });
 
   describe('Map fields', () => {
