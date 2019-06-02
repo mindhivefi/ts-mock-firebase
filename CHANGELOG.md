@@ -1,3 +1,16 @@
+# [2.3.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.2.0...v2.3.0) (2019-06-02)
+
+
+### Bug Fixes
+
+* 🐛 Removed jest cache that causes out of memory error ([7f1cf46](https://github.com/mindhivefi/ts-mock-firebase/commit/7f1cf46))
+* 🐛 Removed unused import ([9db4917](https://github.com/mindhivefi/ts-mock-firebase/commit/9db4917))
+
+
+### Features
+
+* 🎸 Support for where and sort using field paths ([96131d6](https://github.com/mindhivefi/ts-mock-firebase/commit/96131d6)), closes [#55](https://github.com/mindhivefi/ts-mock-firebase/issues/55)
+
 # [2.2.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.4...v2.2.0) (2019-06-02)
 
 
