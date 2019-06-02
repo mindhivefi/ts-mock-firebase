@@ -1,3 +1,11 @@
+# [2.2.0](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.4...v2.2.0) (2019-06-02)
+
+
+### Features
+
+* 🎸 getDocumentIds support callback functions ([3c45c35](https://github.com/mindhivefi/ts-mock-firebase/commit/3c45c35))
+* 🎸 Triggering an listener right after registratration ([6fcb56d](https://github.com/mindhivefi/ts-mock-firebase/commit/6fcb56d))
+
 ## [2.1.4](https://github.com/mindhivefi/ts-mock-firebase/compare/v2.1.3...v2.1.4) (2019-05-21)
 
 
