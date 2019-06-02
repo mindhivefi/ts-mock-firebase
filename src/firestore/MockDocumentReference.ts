@@ -28,6 +28,7 @@ import {
 } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 import { processAndDeepMerge } from './utils/manipulation';
+import { NotImplementedYet } from './utils/NotImplementedYet';
 
 const MESSAGE_NO_ENTRY_TO_UPDATE = 'No entity to update';
 
@@ -356,9 +357,13 @@ export default class MockDocumentReference implements DocumentReference {
         this._snapshotCallbackHandler.remove(callback);
       };
       this._snapshotCallbackHandler.add(callback);
+
+      // Make the initial call to onSnapshot listener
+      const snapshot = new MockDocumentSnapshot(this, this.data);
+      this._snapshotCallbackHandler.fire(snapshot, [callback]);
       return unsubscribe;
     }
-    throw new Error('Not implemented yet');
+    throw new NotImplementedYet('onSnapshot');
   }
 
   public fireDocumentChangeEvent = (

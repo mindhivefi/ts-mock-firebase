@@ -206,6 +206,29 @@ describe('DocumentReferenceMock', () => {
       expect(collection.mocker.doc('doc')).toBeUndefined();
     });
 
+    it('will trigger onSnapshot -event after registering a tricker', async () => {
+      firestore.mocker.reset();
+
+      const collection = new MockCollectionReference(firestore, 'test', null);
+      firestore.mocker.setCollection(collection);
+      const document = new MockDocumentReference(firestore, 'doc', collection);
+      collection.mocker.setDoc(document);
+
+      let snap: MockDocumentSnapshot | undefined;
+
+      const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
+        snap = snapshot;
+      };
+
+      const unsubscribe = document.onSnapshot(listener);
+
+      await document.delete();
+      expect(collection.mocker.doc('doc')).toBeUndefined();
+      expect(snap!.data()).toBeUndefined();
+      expect(snap!.exists).toBeFalsy();
+
+      unsubscribe();
+    });
     it('will trigger onSnapshot -event', async () => {
       firestore.mocker.reset();
 
@@ -269,7 +292,6 @@ describe('DocumentReferenceMock', () => {
         anArray: ['one', 'two', 'three'],
       });
 
-
       const result = await firestore.doc('collection/doc').get();
       expect(result.exists).toBeTruthy();
 
@@ -279,9 +301,8 @@ describe('DocumentReferenceMock', () => {
       expect(Array.isArray(data.anArray)).toBeTruthy();
       expect(data.anArray.length).toBe(3);
 
-      data.anArray.push("four");
+      data.anArray.push('four');
       expect(data.anArray.length).toBe(4);
-
     });
   });
 
@@ -302,6 +323,7 @@ describe('DocumentReferenceMock', () => {
   });
 
   describe('onSnapshot()', () => {
+    // TODO no onSnapshot call when data has bot been changed
     it('will let user to start and stop listening snapshots', () => {
       firestore.mocker.reset();
 
@@ -315,6 +337,20 @@ describe('DocumentReferenceMock', () => {
 
       unsubscribe();
       expect(doc.mocker.listeners()).toEqual([]);
+    });
+
+    it('will trigger once snapshot listener after registration', () => {
+      firestore.mocker.reset();
+
+      const doc = firestore.doc('test/doc');
+      // tslint:disable-next-line: no-empty
+      let triggerCount = 0;
+      const listener = (snapshot: MockDocumentSnapshot) => {
+        triggerCount++;
+      };
+
+      doc.onSnapshot(listener);
+      expect(triggerCount).toBe(1);
     });
   });
 
