@@ -10,7 +10,6 @@ import {
 
 import { MockFirebaseFirestore } from '@firebase/app-types';
 import { deepCopy } from '@firebase/util';
-import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
 import { MockFieldPath } from './MockFieldPath';
 import { MockDocumentChange } from './MockTransaction';
