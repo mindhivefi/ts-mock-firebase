@@ -84,7 +84,7 @@
     "typescript": "3.5.1"
   },
   "dependencies": {
-    "@firebase/app-types": "0.3.9",
+    "@firebase/app-types": "0.4.2",
     "@firebase/auth": "0.10.0",
     "@firebase/firestore": "1.2.0",
     "@firebase/firestore-types": "1.2.0",
