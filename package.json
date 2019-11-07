@@ -89,7 +89,7 @@
     "@firebase/firestore": "1.2.0",
     "@firebase/firestore-types": "1.2.0",
     "@firebase/messaging": "0.3.18",
-    "@firebase/util": "0.2.13",
+    "@firebase/util": "0.2.32",
     "antlr4": "4.7.2",
     "firebase-rules-parser": "^2.0.0",
     "uuid": "3.3.2"
