@@ -134,6 +134,6 @@ describe('Write batch functionality', () => {
     expect(docChanges.length).toBe(2);
     expect(docChanges[0].type).toMatch('removed');
     expect(docChanges[1].type).toMatch('added');
-    expect(onRef2CollectionSnapshot.mock.calls.length).toBe(1);
+    expect(onRef2CollectionSnapshot.mock.calls.length).toBe(2);
   });
 });
