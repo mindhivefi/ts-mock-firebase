@@ -689,4 +689,15 @@ describe('CollectionReferenceMock', () => {
       expect(collection.mocker.save()).toEqual(mock);
     });
   });
+
+  describe('onSnapshot()', () => {
+    it('will trigger once snapshot listener after registration', () => {
+      firestore.mocker.reset();
+      const collection = firestore.collection('collection');
+
+      const listener = jest.fn();
+      collection.onSnapshot(listener);
+      expect(listener).toBeCalledTimes(1);
+    });
+  });
 });

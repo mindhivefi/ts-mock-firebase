@@ -428,10 +428,21 @@ export class MockCollectionReference implements CollectionReference {
     onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
-      this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
-      return () => {
-        this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
+      const callback = optionsOrObserverOrOnNext;
+      const unsubscribe = () => {
+        this._snapshotCallbackHandler.remove(callback);
       };
+      this._snapshotCallbackHandler.add(callback);
+
+      // Make the initial call to onSnapshot listener
+      const documentChanges: DocumentChange[] = this.getQueryDocumentSnapshots().map((snapshot, newIndex) => ({
+        type: 'added',
+        doc: snapshot as MockQueryDocumentSnapshot,
+        oldIndex: -1,
+        newIndex,
+      }));
+      this.fireBatchDocumentChange(documentChanges);
+      return unsubscribe;
     }
     throw new Error('Not implemented yet');
   }
