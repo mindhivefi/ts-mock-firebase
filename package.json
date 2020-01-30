@@ -77,7 +77,7 @@
     "jest": "24.7.1",
     "rimraf": "2.6.3",
     "semantic-release": "15.13.12",
-    "ts-jest": "24.0.2",
+    "ts-jest": "25.1.0",
     "tslint": "5.17.0",
     "tslint-config-prettier": "1.18.0",
     "tslint-sonarts": "1.9.0",
