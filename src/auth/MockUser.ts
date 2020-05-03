@@ -5,14 +5,27 @@ import {
   AuthProvider,
   ConfirmationResult,
   IdTokenResult,
+  MultiFactorUser,
   User,
   UserCredential,
   UserInfo,
   UserMetadata,
 } from '@firebase/auth-types';
 import { NotImplementedYet } from '../firestore/utils/NotImplementedYet';
+import { MockMultiFactorUser } from './MockMultiFactorUser';
 
 export default class MockUser implements User {
+
+  readonly tenantId: string | null = "";
+
+  public get multiFactor(): MultiFactorUser {
+    return this._multiFactor;
+  }
+
+  public set multiFactor(value: MultiFactorUser) {
+    this._multiFactor = value;
+  }
+
   public get displayName(): string | null {
     return this._displayName;
   }
@@ -107,6 +120,7 @@ export default class MockUser implements User {
   private _providerId: string = '';
   private _uid: string = '';
   private _emailVerified: boolean = false;
+  private _multiFactor: MultiFactorUser = new MockMultiFactorUser();
 
   constructor() {
     this._metadata = {};
@@ -132,7 +146,7 @@ export default class MockUser implements User {
   public linkAndRetrieveDataWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('User.linkAndRetrieveDataWithCredential()');
   }
-  public linkWithCredential = (credential: AuthCredential): Promise<User> => {
+  public linkWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('User.linkWithCredential()');
   }
   public linkWithPhoneNumber = (
@@ -150,7 +164,7 @@ export default class MockUser implements User {
   public reauthenticateAndRetrieveDataWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('User.reauthenticateAndRetrieveDataWithCredential()');
   }
-  public reauthenticateWithCredential = (credential: AuthCredential): Promise<void> => {
+  public reauthenticateWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('User.reauthenticateWithCredential()');
   }
   public reauthenticateWithPhoneNumber = (
@@ -188,5 +202,11 @@ export default class MockUser implements User {
   }
   public updateProfile = (profile: { displayName?: string | null; photoURL?: string | null }): Promise<void> => {
     throw new NotImplementedYet('User.updateProfile()');
+  }
+  public verifyBeforeUpdateEmail = (
+    newEmail: string,
+    actionCodeSettings?: ActionCodeSettings | null
+  ): Promise<void> => {
+    throw new NotImplementedYet('User.verifyBeforeUpdateEmail()');
   }
 }

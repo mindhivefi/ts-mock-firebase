@@ -1,5 +1,5 @@
 import { MockFirebaseApp, MockFirebaseFirestore, MockFirebaseService } from '@firebase/app-types';
-import * as types from '@firebase/firestore-types';
+import { Settings, PersistenceSettings, DocumentData, } from '@firebase/firestore-types';
 import createFirebaseRulesIntepreter, {
   defaultFirebaseRulesContext,
   FirebaseRulesContext,
@@ -16,35 +16,36 @@ import MockTransaction from './MockTransaction';
 import { MockWriteBatch } from './MockWritebatch';
 import { generateDocumentId, isValidCollectionReference, isValidDocumentReference, resolveReference } from './utils';
 import { NotImplementedYet } from './utils/NotImplementedYet';
+import MockQuery from './MockQuery';
 
 /**
  * Document object to define database data to be set into a mock
  */
-export interface MockDocument {
-  data?: types.DocumentData;
-  collections?: MockCollections;
+export interface MockDocument<T> {
+  data?: T;
+  collections?: MockCollections<T>;
   listerners?: MockDocumentSnapshotCallback[];
 }
 
 /**
  * A collection of documents in mock database
  */
-export interface MockDocuments {
-  [documentId: string]: MockDocument;
+export interface MockDocuments<T> {
+  [documentId: string]: MockDocument<T>;
 }
 
 /**
  * Mock Collection object defining documents and listeners that belong to collection
  */
-export interface MockCollection {
-  docs?: MockDocuments;
+export interface MockCollection<T = any> {
+  docs?: MockDocuments<T>;
   listeners?: any[]; // todo typing
 }
 /**
  * Collection object to define database data to be set into a mock
  */
-export interface MockCollections {
-  [collectionId: string]: MockCollection;
+export interface MockCollections<T = DocumentData> {
+  [collectionId: string]: MockCollection<T>;
 }
 
 export type MockDatabase = MockCollections;
@@ -52,8 +53,11 @@ export type MockDatabase = MockCollections;
 export type MockTimestampFunction = () => MockTimestamp;
 
 export interface CollectionObject {
-  [documentId: string]: types.DocumentData;
+  [documentId: string]: DocumentData;
 }
+
+type callbackFun = () => void;
+
 /**
  * `Firestore` represents a Firestore Database and is the entry point for all
  * Firestore operations.
@@ -74,9 +78,9 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
   public app: MockFirebaseApp;
 
   public INTERNAL: any;
-  private readonly root: MockDocumentReference = new MockDocumentReference(this, '', null as any);
+  private readonly root: MockDocumentReference<any> = new MockDocumentReference(this as any, '', null as any);
 
-  private _settings?: types.Settings;
+  private _settings?: Settings;
 
   private _rules?: FirebaseRulesIntepreter;
   private _rulesHash?: number;
@@ -104,7 +108,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
           if (database.hasOwnProperty(collectionId)) {
             const collectionData = database[collectionId];
 
-            const collection = new MockCollectionReference(this, collectionId, this.root);
+            const collection = new MockCollectionReference(this as any, collectionId, this.root);
             this.root.mocker.setCollection(collection);
             collection.mocker.load(collectionData);
           }
@@ -136,22 +140,23 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
       setCollection: (collection: MockCollectionReference) => {
         this.root.mocker.setCollection(collection);
       },
+
       loadCollection: (collectionPath: string, collectionData: CollectionObject) => {
         if (!isValidCollectionReference(collectionPath)) {
           throw new Error(`Invalid collection reference: ${collectionPath}`);
         }
 
-        const collection = this.root.collection(collectionPath) as MockCollectionReference;
+        const collection = this.root.collection(collectionPath) as any;
         for (const docId in collectionData) {
           if (collectionData.hasOwnProperty(docId)) {
-            const doc = new MockDocumentReference(firestore, docId, collection);
+            const doc = new MockDocumentReference(firestore as any, docId, collection);
             doc.mocker.setData(collectionData[docId]);
             collection.mocker.setDoc(doc);
           }
         }
       },
 
-      loadDocument: (documentPath: string, data: types.DocumentData) => {
+      loadDocument: (documentPath: string, data: DocumentData) => {
         if (!isValidDocumentReference(documentPath)) {
           throw new Error(`Invalid document reference: ${documentPath}`);
         }
@@ -160,7 +165,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
         const rootCollection = documentPath.substring(0, index);
         const path = documentPath.substring(index + 1);
 
-        const doc = this.root.collection(rootCollection).doc(path) as MockDocumentReference;
+        const doc = this.root.collection(rootCollection).doc(path) as any;
 
         doc.mocker.setData(data);
       },
@@ -220,7 +225,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
     };
   }
 
-  public readSettings = (): types.Settings | undefined => {
+  public readSettings = (): Settings | undefined => {
     return this._settings;
   }
   /**
@@ -229,7 +234,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    *
    * @param settings The settings to use.
    */
-  public settings = (settings: types.Settings): void => {
+  public settings = (settings: Settings): void => {
     this._settings = settings;
   }
 
@@ -253,7 +258,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    * @return A promise that represents successfully enabling persistent
    * storage.
    */
-  public enablePersistence = async (settings?: types.PersistenceSettings) => {
+  public enablePersistence = async (settings?: PersistenceSettings) => {
     throw new NotImplementedYet('MockFirebaseFirestore.enablePersistence');
   }
 
@@ -264,9 +269,14 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    * @param collectionPath A slash-separated path to a collection.
    * @return The `CollectionReference` instance.
    */
-  public collection = (collectionPath: string): MockCollectionReference => {
-    return resolveReference(this, this.root, true, collectionPath) as MockCollectionReference;
+  public collection = <T = DocumentData>(collectionPath: string): MockCollectionReference<T> => {
+    return resolveReference(this as any, this.root, true, collectionPath) as MockCollectionReference<T>;
   }
+
+  public collectionGroup = (collectionId: string): MockQuery<DocumentData> => {
+    throw new NotImplementedYet("MockFirebaseFirestore.collectionGroup")
+  }
+
 
   /**
    * Gets a `DocumentReference` instance that refers to the document at the
@@ -275,8 +285,8 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    * @param documentPath A slash-separated path to a document.
    * @return The `DocumentReference` instance.
    */
-  public doc = (documentPath: string): MockDocumentReference => {
-    return resolveReference(this, this.root, false, documentPath) as MockDocumentReference;
+  public doc = <T = DocumentData>(documentPath: string): MockDocumentReference<T> => {
+    return resolveReference<T>(this as any, this.root, false, documentPath) as any;
   }
 
   /**
@@ -294,9 +304,9 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    * error will be returned.
    */
   public runTransaction = async <T>(updateFunction: (transaction: MockTransaction) => Promise<T>): Promise<T> => {
-    const transaction = new MockTransaction(this);
+    const transaction = new MockTransaction(this as any);
     try {
-      const result = await updateFunction(transaction);
+      const result = await updateFunction(transaction as any);
       await transaction.commit();
       return result;
     } catch (error) {
@@ -310,7 +320,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
    * atomic operation.
    */
   public batch = (): MockWriteBatch => {
-    return new MockWriteBatch(this);
+    return new MockWriteBatch(this as any);
   }
 
   /**
@@ -341,6 +351,27 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
 
   private onGetCall = (path: string): any => {
     return {};
+  }
+
+  public clearPersistence = (): Promise<void> => {
+    throw new NotImplementedYet("MockFirebaseFirestore.clearPersistence")
+  }
+
+
+  public waitForPendingWrites = (): Promise<void> => {
+    throw new NotImplementedYet("MockFirebaseFirestore.clearPersistence")
+  }
+
+  public onSnapshotsInSync = (observerOrOnSync: {
+    next?: (value: void) => void;
+    error?: (error: Error) => void;
+    complete?: () => void;
+  } | callbackFun): () => void => {
+    throw new NotImplementedYet("MockFirebaseFirestore.clearPersistence")
+  }
+
+  public terminate = (): Promise<void> => {
+    throw new NotImplementedYet("MockFirebaseFirestore.clearPersistence")
   }
 }
 

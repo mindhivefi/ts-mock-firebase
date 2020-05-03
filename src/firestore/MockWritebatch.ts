@@ -1,6 +1,6 @@
+import { MockCollectionReference } from './MockCollectionReference';
 import {
   DocumentChangeType,
-  DocumentData,
   DocumentReference,
   FieldPath,
   SetOptions,
@@ -35,7 +35,7 @@ export class MockWriteBatch implements WriteBatch {
     [documentPath: string]: DocumentChangeType;
   } = {};
 
-  public constructor(public firestore: MockFirebaseFirestore) {}
+  public constructor(public firestore: MockFirebaseFirestore) { }
 
   /**
    * Writes to the document referred to by the provided `DocumentReference`.
@@ -47,21 +47,22 @@ export class MockWriteBatch implements WriteBatch {
    * @param options An object to configure the set behavior.
    * @return This `WriteBatch` instance. Used for chaining method calls.
    */
-  public set(documentRef: MockDocumentReference, data: DocumentData, options?: SetOptions): WriteBatch {
+  public set<T>(documentRef: MockDocumentReference<T> | DocumentReference<T>, data: T, options?: SetOptions): WriteBatch {
     const path = documentRef.path;
 
-    let docData = this.transactionData[path] || (documentRef.data && { ...documentRef.data }); // TODO need to do locking for transaction
+    const doc = documentRef as MockDocumentReference<T>;
+    let docData = this.transactionData[path] || (doc.data && { ...doc.data }); // TODO need to do locking for transaction
     const changeType: DocumentChangeType = docData ? 'modified' : 'added';
 
     if (options && options.merge) {
       docData = { ...docData, ...data };
-      this.transactionData[path] = documentRef.updateInTransaction(docData, data);
+      this.transactionData[path] = doc.updateInTransaction(docData, data);
     } else {
       docData = { ...data };
-      this.transactionData[path] = documentRef.setInTransaction(docData, data, options);
+      this.transactionData[path] = doc.setInTransaction(docData, data, options);
     }
     this.transactionOperation[path] = changeType;
-    return this;
+    return this as WriteBatch;
   }
 
   /**
@@ -82,7 +83,8 @@ export class MockWriteBatch implements WriteBatch {
     ...moreFieldsAndValues: any[]
   ): WriteBatch {
     const path = documentRef.path;
-    const data = this.transactionData[path] || deepCopy(documentRef.data);
+    const doc = documentRef as MockDocumentReference;
+    const data = this.transactionData[path] || deepCopy(doc.data);
 
     const fieldType = typeof dataOrField;
     if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
@@ -91,12 +93,12 @@ export class MockWriteBatch implements WriteBatch {
 
       this.transactionData[path] = setFieldValuePairs(this.firestore, data, args);
       this.transactionOperation[path] = 'modified';
-      return this;
+      return this as WriteBatch;
     }
     if (typeof dataOrField === 'object') {
       this.transactionData[path] = documentRef.updateInTransaction(data, dataOrField, value, moreFieldsAndValues);
       this.transactionOperation[path] = 'modified';
-      return this;
+      return this as WriteBatch;
     }
     throw new NotImplementedYet('MockTransaction.get');
   }
@@ -133,7 +135,7 @@ export class MockWriteBatch implements WriteBatch {
       for (const path in this.transactionOperation) {
         if (this.transactionOperation.hasOwnProperty(path)) {
           const operation = this.transactionOperation[path];
-          const doc = this.firestore.doc(path);
+          const doc = this.firestore.doc(path) as MockDocumentReference;
 
           const documentChange = await doc.commitChange(operation, this.transactionData[path]);
           const collectionPath = path.substr(0, path.lastIndexOf('/'));
@@ -156,7 +158,7 @@ export class MockWriteBatch implements WriteBatch {
                     );
                 }
               }
-              const collection = this.firestore.collection(collectionId);
+              const collection = this.firestore.collection(collectionId) as MockCollectionReference;
 
               triggers[collectionId] = () => {
                 collection.fireBatchDocumentChange(documentChanges);

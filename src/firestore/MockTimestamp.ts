@@ -92,4 +92,9 @@ export class MockTimestamp implements Timestamp {
   public isEqual(other: Timestamp): boolean {
     return other.seconds === this._seconds && other.nanoseconds === this._nanoseconds;
   }
+
+  public valueOf = (): string => {
+    // TODO Check in real case for a match
+    return this._seconds.toString() + "." + this._nanoseconds.toString();
+  }
 }

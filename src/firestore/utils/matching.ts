@@ -1,4 +1,4 @@
-import { FieldPath, WhereFilterOp } from '@firebase/firestore-types';
+import { FieldPath, WhereFilterOp, DocumentData } from '@firebase/firestore-types';
 
 import { MockFirebaseValidationError } from '.';
 import MockDocumentReference from '../MockDocumentReference';
@@ -47,10 +47,10 @@ export function createFirestoreMatchRuleFunction(
   throw new NotImplementedYet('createFirestoreMatchRuleFunction');
 }
 
-export function filterDocumentsByRules(
-  docs: MockDocumentReference[],
+export function filterDocumentsByRules<T = DocumentData>(
+  docs: MockDocumentReference<T>[],
   rules?: MockQueryWhereRule[]
-): MockDocumentReference[] {
+): MockDocumentReference<T>[] {
   if (!rules) {
     return docs.filter(d => d.data !== undefined);
   }
@@ -68,7 +68,7 @@ export function filterDocumentsByRules(
   });
 }
 
-function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
+function doesRuleMatch<T>(rule: MockQueryWhereRule, doc: MockDocumentReference<T>) {
   const { fieldPath, opStr, value } = rule;
 
   if (typeof fieldPath !== 'string') {
@@ -79,13 +79,13 @@ function doesRuleMatch(rule: MockQueryWhereRule, doc: MockDocumentReference) {
     field = doc.data;
     const paths = fieldPath.split('.');
     for (const path of paths) {
-      field = field[path];
+      field = (field as any)[path];
       if (!field) {
         return value === undefined;
       }
     }
   } else {
-    field = doc.data[fieldPath];
+    field = (doc.data as any)[fieldPath];
   }
   if (field === undefined) {
     return false;

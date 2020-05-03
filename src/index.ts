@@ -1,5 +1,4 @@
 import { MockFirebaseApp, MockFirebaseNamespace } from '@firebase/app-types';
-import { FirebaseErrorFactory } from '@firebase/app-types/private';
 import * as types from '@firebase/firestore-types';
 import { Observer, Subscribe } from '@firebase/util';
 import {
@@ -68,7 +67,7 @@ declare module '@firebase/app-types' {
    * `Firestore` represents a Firestore Database and is the entry point for all
    * Firestore operations.
    */
-  export class MockFirebaseFirestore {
+  export class MockFirebaseFirestore implements types.FirebaseFirestore {
     /**
      * The `FirebaseApp` associated with this `Firestore` instance.
      */
@@ -115,7 +114,7 @@ declare module '@firebase/app-types' {
      * @param collectionPath A slash-separated path to a collection.
      * @return The `CollectionReference` instance.
      */
-    public collection(collectionPath: string): MockCollectionReference;
+    public collection<T = types.DocumentData>(collectionPath: string): MockCollectionReference<T>;
 
     /**
      * Gets a `DocumentReference` instance that refers to the document at the
@@ -124,10 +123,8 @@ declare module '@firebase/app-types' {
      * @param documentPath A slash-separated path to a document.
      * @return The `DocumentReference` instance.
      */
-    public doc(documentPath: string): MockDocumentReference;
+    public doc<T = types.DocumentData>(documentPath: string): MockDocumentReference<T>;
 
-    // TODO(b/116617988): Uncomment method and change jsdoc comment to "/**"
-    // once backend support is ready.
     /*
      * Creates and returns a new Query that includes all documents in the
      * database that are contained in a collection or subcollection with the
@@ -138,7 +135,7 @@ declare module '@firebase/app-types' {
      * will be included. Cannot contain a slash.
      * @return The created Query.
      */
-    // collectionGroup(collectionId: string): Query;
+    public collectionGroup(collectionId: string): MockQuery<types.DocumentData>;
 
     /**
      * Executes the given updateFunction and then attempts to commit the
@@ -179,6 +176,19 @@ declare module '@firebase/app-types' {
      * @return A promise that is resolved once the network has been disabled.
      */
     public disableNetwork(): Promise<void>;
+
+    public clearPersistence(): Promise<void>;
+
+    onSnapshotsInSync(observer: {
+      next?: (value: void) => void;
+      error?: (error: Error) => void;
+      complete?: () => void;
+    }): () => void;
+
+    onSnapshotsInSync(onSync: () => void): () => void;
+
+    waitForPendingWrites(): Promise<void>;
+    terminate(): Promise<void>;
   }
   export interface MockFirebaseNamespace {
     app: {
@@ -278,7 +288,7 @@ declare module '@firebase/app-types' {
     service: string,
     serviceName: string,
     errors: { [code: string]: string }
-  ) => FirebaseErrorFactory<any>;
+  ) => any;
 
   export interface MockFirebaseAuthTokenData {
     accessToken: string;

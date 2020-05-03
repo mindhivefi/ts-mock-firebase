@@ -20,7 +20,7 @@ import MockUser from './MockUser';
 
 export default class MockFirebaseAuth implements FirebaseAuth {
   public get currentUser(): MockUser | null {
-    return this._user;
+    return this._user as MockUser;
   }
 
   public set currentUser(user: MockUser | null) {
@@ -32,6 +32,7 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   public get settings(): AuthSettings {
     throw new NotImplementedYet('settings');
   }
+  public tenantId: string | null = null;
 
   public static Persistence: {
     LOCAL: Persistence;
@@ -40,7 +41,7 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   };
   private _user: MockUser | null = null;
 
-  public constructor(public app: MockFirebaseAppImpl) {}
+  public constructor(public app: MockFirebaseAppImpl) { }
 
   public applyActionCode = (code: string): Promise<void> => {
     throw new NotImplementedYet('applyActionCode');
@@ -103,7 +104,7 @@ export default class MockFirebaseAuth implements FirebaseAuth {
   public signInAnonymouslyAndRetrieveData = (): Promise<UserCredential> => {
     throw new NotImplementedYet('signInAnonymouslyAndRetrieveData');
   }
-  public signInWithCredential = (credential: AuthCredential): Promise<User> => {
+  public signInWithCredential = (credential: AuthCredential): Promise<UserCredential> => {
     throw new NotImplementedYet('signInWithCredential');
   }
   public signInWithCustomToken = (token: string): Promise<UserCredential> => {

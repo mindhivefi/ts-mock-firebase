@@ -11,6 +11,7 @@ import {
   QuerySnapshot,
   SnapshotListenOptions,
   WhereFilterOp,
+  DocumentData, FirestoreDataConverter
 } from '@firebase/firestore-types';
 import { MockCollectionReference } from './MockCollectionReference';
 import MockDocumentReference from './MockDocumentReference';
@@ -93,29 +94,29 @@ interface MockQueryRules {
   limit?: number;
 }
 
-export type MockQuerySnapshotCallback = (snapshot: QuerySnapshot) => void;
+export type MockQuerySnapshotCallback = <T>(snapshot: QuerySnapshot<T>) => void;
 /**
  * A `Query` refers to a Query which you can read or listen to. You can also
  * construct refined `Query` objects by adding filters and ordering.
  */
-export default class MockQuery implements Query {
-  public docRefs: MockDocumentReference[];
+export default class MockQuery<T = DocumentData> implements Query<T> {
+  public docRefs: MockDocumentReference<T>[];
   /**
    * The `Firestore` for the Firestore database (useful for performing
    * transactions, etc.).
    */
   public firestore: FirebaseFirestore;
-  private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
+  private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot<T>>();
   private unsubscribeCollection: () => void;
 
   public constructor(
-    public collectionRef: CollectionReference,
-    docRefs: MockDocumentReference[],
+    public collectionRef: CollectionReference<T>,
+    docRefs: MockDocumentReference<T>[],
     private rules: MockQueryRules = {}
   ) {
     this.firestore = collectionRef.firestore;
     this.docRefs = docRefs.slice();
-    this.unsubscribeCollection = this.collectionRef.onSnapshot(this.handleCollectionSnapshotChange);
+    this.unsubscribeCollection = this.collectionRef.onSnapshot(this.handleCollectionSnapshotChange as any);
   }
 
   public reset = () => {
@@ -132,7 +133,7 @@ export default class MockQuery implements Query {
    * @param value The value for comparison
    * @return The created Query.
    */
-  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
+  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query<T> => {
     const result = this.createClone();
     const where: MockQueryWhereRule[] = result.rules.where || [];
     where.push({
@@ -141,7 +142,7 @@ export default class MockQuery implements Query {
       value,
     });
     result.rules.where = where;
-    return result;
+    return result as unknown as Query<T>;
   }
 
   /**
@@ -153,7 +154,7 @@ export default class MockQuery implements Query {
    * not specified, order will be ascending.
    * @return The created Query.
    */
-  public orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query => {
+  public orderBy = (fieldPath: string | FieldPath, directionStr: OrderByDirection = 'asc'): Query<T> => {
     const result = this.createClone();
     const rules = result.rules.order || ([] as MockQueryOrderRule[]);
     rules.push({
@@ -161,7 +162,7 @@ export default class MockQuery implements Query {
       directionStr,
     });
     result.rules.order = rules;
-    return result;
+    return result as unknown as Query<T>;
   }
 
   /**
@@ -171,15 +172,18 @@ export default class MockQuery implements Query {
    * @param limit The maximum number of items to return.
    * @return The created Query.
    */
-  public limit = (limit: number): Query => {
+  public limit = (limit: number): Query<T> => {
     if (limit <= 0) {
       throw new MockFirebaseValidationError('Query limit value must be greater than zero');
     }
     const result = this.createClone();
     result.rules.limit = limit;
-    return result;
+    return result as unknown as Query<T>;
   }
 
+  public limitToLast = (limit: number): Query<T> => {
+    throw new NotImplementedYet("MockQuery.limitToLast")
+  }
   /**
    * Creates and returns a new Query that starts at the provided document
    * (inclusive). The starting position is relative to the order of the query.
@@ -191,10 +195,10 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to start this query at, in order
    * @return The created Query.
    */
-  public startAt = (...fieldValues: any[]): Query => {
+  public startAt = (...fieldValues: any[]): Query<T> => {
     // TODO startAt / startAfter called multiple times?
     this.rules = this.createStartRule(fieldValues, 'at');
-    return this;
+    return this as unknown as Query<T>;
   }
 
   // /**
@@ -218,9 +222,9 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to start this query after, in order
    * @return The created Query.
    */
-  public startAfter = (...fieldValues: any[]): Query => {
+  public startAfter = (...fieldValues: any[]): Query<T> => {
     this.rules = this.createStartRule(fieldValues, 'after');
-    return this;
+    return this as unknown as Query<T>;
   }
 
   /**
@@ -244,9 +248,9 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to end this query before, in order
    * @return The created Query.
    */
-  public endBefore = (...fieldValues: any[]): Query => {
+  public endBefore = (...fieldValues: any[]): Query<T> => {
     this.rules = this.createEndRule(fieldValues, 'before');
-    return this;
+    return this as unknown as Query<T>;
   }
 
   /**
@@ -270,9 +274,9 @@ export default class MockQuery implements Query {
    * @param fieldValues The field values to end this query at, in order
    * @return The created Query.
    */
-  public endAt = (...fieldValues: any[]): Query => {
+  public endAt = (...fieldValues: any[]): Query<T> => {
     this.rules = this.createEndRule(fieldValues, 'at');
-    return this;
+    return this as unknown as Query<T>;
   }
 
   /**
@@ -307,10 +311,11 @@ export default class MockQuery implements Query {
    * @param options An object to configure the get behavior.
    * @return A Promise that will be resolved with the results of the Query.
    */
-  public get = (options?: GetOptions): Promise<QuerySnapshot> => {
+  public get = (options?: GetOptions): Promise<QuerySnapshot<T>> => {
     try {
       const docs = this.getFilterDocumentReferences();
-      return Promise.resolve<QuerySnapshot>(new MockQuerySnapshot(this, this.getDocumentSnapshots(docs), []));
+      return Promise.resolve<QuerySnapshot<T>>(new MockQuerySnapshot<T>(
+        this as any, this.getDocumentSnapshots(docs) as any, []) as any);
     } catch (error) {
       return Promise.reject(error);
     }
@@ -333,26 +338,25 @@ export default class MockQuery implements Query {
    * @return An unsubscribe function that can be called to cancel
    * the snapshot listener.
    */
-  public onSnapshot = (
+  public onSnapshot = ((
     optionsOrObserverOrOnNext: SnapshotListenOptions | MockQuerySnapshotObserver | MockQuerySnapshotCallback,
     observerOrOnNextOrOnError?: MockQuerySnapshotObserver | MockQuerySnapshotCallback | ErrorFunction,
     onErrorOrOnCompletion?: ErrorFunction | MockSubscriptionFunction
   ): MockSubscriptionFunction => {
     if (typeof optionsOrObserverOrOnNext === 'function') {
       this._snapshotCallbackHandler.add(optionsOrObserverOrOnNext);
-
       return () => this._snapshotCallbackHandler.remove(optionsOrObserverOrOnNext);
     }
     throw new NotImplementedYet('MockQuery.onSnapshot');
-  }
+  }) as any
 
   /**
    * Handle onSnapshot callbacks for document changes that have impact on this query.
    * @memberof MockQuery
    */
-  public handleCollectionSnapshotChange = (snapshot: QuerySnapshot) => {
+  public handleCollectionSnapshotChange = (snapshot: QuerySnapshot<T>) => {
     const oldDocs = this.getFilterDocumentReferences();
-    this.docRefs = (this.collectionRef as MockCollectionReference).mocker.docRefs();
+    this.docRefs = (this.collectionRef as unknown as MockCollectionReference<T>).mocker.docRefs();
     const newDocs = this.getFilterDocumentReferences();
 
     const docChanges: DocumentChange[] = [];
@@ -391,17 +395,21 @@ export default class MockQuery implements Query {
     });
     if (docChanges.length > 0) {
       this._snapshotCallbackHandler.fire(
-        new MockQuerySnapshot(snapshot.query, this.getDocumentSnapshots(newDocs), docChanges)
+        new MockQuerySnapshot<T>(snapshot.query, this.getDocumentSnapshots(newDocs), docChanges) as any
       );
     }
   }
 
-  private createClone = (): MockQuery => {
+  public withConverter = <U>(converter: FirestoreDataConverter<U>): Query<U> => {
+    throw new NotImplementedYet('MockQuery.withConverter');
+  }
+
+  private createClone = (): MockQuery<T> => {
     return new MockQuery(this.collectionRef, this.docRefs, this.rules);
   }
 
-  private getDocumentSnapshots = (docRefs: MockDocumentReference[] = this.docRefs): QueryDocumentSnapshot[] => {
-    return docRefs.map(doc => new MockQueryDocumentSnapshot(doc) as QueryDocumentSnapshot);
+  private getDocumentSnapshots = (docRefs: MockDocumentReference<T>[] = this.docRefs): QueryDocumentSnapshot<T>[] => {
+    return docRefs.map(doc => new MockQueryDocumentSnapshot<T>(doc) as unknown as QueryDocumentSnapshot<T>);
   }
 
   private getFilterDocumentReferences = () => {

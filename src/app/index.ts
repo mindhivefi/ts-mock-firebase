@@ -8,9 +8,10 @@ import {
   MockFirebaseServiceFactory,
   MockFirebaseServiceNamespace,
 } from '@firebase/app-types';
-import { createSubscribe, deepExtend, ErrorFactory, patchProperty } from '@firebase/util';
+import { createSubscribe, deepExtend, ErrorFactory, } from '@firebase/util';
 
 import { MockFirebaseAppImpl } from './app';
+import { patchProperty } from '../utils';
 
 export const DEFAULT_ENTRY_NAME = '[DEFAULT]';
 
@@ -274,10 +275,10 @@ const errors: { [code: string]: string } = {
   'invalid-app-argument': 'firebase.{$name}() takes either no argument or a ' + 'Firebase App instance.',
 };
 
-const appErrors = new ErrorFactory<AppError>('app', 'Firebase', errors);
+const appErrors = new ErrorFactory<AppError>('app', 'Firebase', errors as any);
 
 export function error(code: AppError, args?: { [name: string]: any }) {
-  throw appErrors.create(code, args);
+  throw appErrors.create(code);
 }
 
 export * from './app';

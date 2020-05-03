@@ -1,7 +1,7 @@
 import { MockFirebaseFirestore } from '@firebase/app-types';
-import { FieldPath, UpdateData } from '@firebase/firestore-types';
+import { FieldPath, UpdateData, DocumentData } from '@firebase/firestore-types';
 import { deepCopy } from '@firebase/util';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 
 import { MockFirebaseError } from '../../utils/errors';
 import { MockCollectionReference } from '../MockCollectionReference';
@@ -10,7 +10,7 @@ import { createFieldPathFromString, MockFieldPath } from '../MockFieldPath';
 import { MockFieldValue, processFieldValue } from '../MockFieldValue';
 
 // tslint:disable-next-line: max-classes-per-file
-export class MockFirebaseValidationError extends Error {}
+export class MockFirebaseValidationError extends Error { }
 /**
  * Generate an unique document id
  */
@@ -184,14 +184,14 @@ function isValidUnicodeString(s: string): boolean {
 }
 
 // tslint:disable-next-line
-export function resolveReference(
+export function resolveReference<T = DocumentData>(
   firestore: MockFirebaseFirestore,
   root: MockDocumentReference | null,
   isCollectionPath: boolean,
   path: string,
   startParity: boolean = true,
-  rootCollection?: MockCollectionReference
-): MockCollectionReference | MockDocumentReference {
+  rootCollection?: MockCollectionReference<T>
+): MockCollectionReference<T> | MockDocumentReference<T> {
   let testPath = path;
   if (!startParity) {
     /* if there is no start parity, it means that that path seeking is starting from a document level.
@@ -205,23 +205,22 @@ export function resolveReference(
 
   const elements = path.split('/');
   let doc = root || firestore.mocker.root();
-  let collection = rootCollection || (doc.parent as MockCollectionReference);
-
+  let collection: MockCollectionReference<T> = rootCollection || (doc.parent as MockCollectionReference<T>);
   let parity = startParity;
 
   for (const id of elements) {
     if (parity) {
-      collection = doc.mocker.collection(id);
+      collection = doc.mocker.collection(id) as any;
       if (!collection) {
         collection = new MockCollectionReference(firestore, id, doc !== firestore.mocker.root() ? doc : null);
-        doc.mocker.setCollection(collection);
+        doc.mocker.setCollection(collection as any);
       }
     } else {
       if (collection) {
-        doc = collection.mocker.doc(id);
+        doc = collection.mocker.doc(id) as any;
         if (!doc) {
           doc = new MockDocumentReference(firestore, id, collection);
-          collection.mocker.setDoc(doc);
+          collection.mocker.setDoc(doc as any);
         }
       }
     }
@@ -230,8 +229,7 @@ export function resolveReference(
   if (!collection) {
     throw new Error('Collection path parsing failed. No collection found.');
   }
-
-  return isCollectionPath ? collection : doc;
+  return isCollectionPath ? collection as unknown as MockCollectionReference<T> : doc as unknown as MockDocumentReference<T>;
 }
 
 /**
@@ -243,8 +241,8 @@ export function resolveReference(
  * @param {any[]} fieldValues
  * @returns {number}
  */
-export function findIndexForDocument(
-  docs: MockDocumentReference[],
+export function findIndexForDocument<T = DocumentData>(
+  docs: MockDocumentReference<T>[],
   fieldNames: Array<string | FieldPath>,
   fieldValues: any[]
 ): number {
@@ -265,8 +263,8 @@ export function findIndexForDocument(
  * @param {any[]} fieldValues Counter pair value for field pointed at fieldNames list with the same index
  * @returns {boolean} True if all name-value -pairs match
  */
-export function matchFields(
-  doc: MockDocumentReference,
+export function matchFields<T = DocumentData>(
+  doc: MockDocumentReference<T>,
   fieldNames: Array<string | FieldPath>,
   fieldValues: any[]
 ): boolean {
@@ -281,7 +279,7 @@ export function matchFields(
   return true;
 }
 
-export function getFieldValue(doc: MockDocumentReference, fieldName: string | FieldPath): any {
+export function getFieldValue<T = DocumentData>(doc: MockDocumentReference<T>, fieldName: string | FieldPath): any {
   return getFieldValueFromData(doc.data, fieldName);
 }
 

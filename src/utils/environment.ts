@@ -21,7 +21,7 @@ import { CONSTANTS } from './constants';
  * Returns navigator.userAgent string or '' if it's not defined.
  * @return {string} user agent string
  */
-export const getUA = function() {
+export const getUA = () => {
   if (typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string') {
     return navigator.userAgent;
   } else {
@@ -37,7 +37,7 @@ export const getUA = function() {
  *
  * @return {boolean} isMobileCordova
  */
-export const isMobileCordova = function() {
+export const isMobileCordova = () => {
   return (
     typeof window !== 'undefined' &&
     !!((window as any).cordova || (window as any).phonegap || (window as any).PhoneGap) &&
@@ -50,7 +50,7 @@ export const isMobileCordova = function() {
  *
  * @return {boolean} True if ReactNative environment is detected.
  */
-export const isReactNative = function() {
+export const isReactNative = () => {
   return typeof navigator === 'object' && navigator.product === 'ReactNative';
 };
 
@@ -59,6 +59,6 @@ export const isReactNative = function() {
  *
  * @return {boolean} True if Node.js environment is detected.
  */
-export const isNodeSdk = function() {
+export const isNodeSdk = () => {
   return CONSTANTS.NODE_CLIENT === true || CONSTANTS.NODE_ADMIN === true;
 };

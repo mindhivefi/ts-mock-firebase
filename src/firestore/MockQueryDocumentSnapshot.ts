@@ -18,13 +18,12 @@ import { getFieldValueFromData } from './utils';
  * access will return 'undefined'. You can use the `exists` property to
  * explicitly verify a document's existence.
  */
-export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot {
+export default class MockQueryDocumentSnapshot<T extends DocumentData = any> implements QueryDocumentSnapshot<DocumentData> {
   /**
    *
-   * @param _queryMock A `DocumentReference` to the document location.
    * @param _query The ID of the document for which this `DocumentSnapshot` contains data.
    */
-  public constructor(public _query: MockDocumentReference) {}
+  public constructor(public _query: MockDocumentReference<T>, ) { }
 
   public get ref() {
     return this._query;
@@ -70,7 +69,7 @@ export default class MockQueryDocumentSnapshot implements QueryDocumentSnapshot 
    * not yet been set to their final value).
    * @return An Object containing all fields in the document.
    */
-  public data = (options?: SnapshotOptions): DocumentData => {
+  public data = (options?: SnapshotOptions): T => {
     return this._query.data;
   }
 

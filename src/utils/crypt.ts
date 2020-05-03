@@ -243,7 +243,7 @@ export const base64 = {
 
     const output = [];
 
-    for (let i = 0; i < input.length; ) {
+    for (let i = 0; i < input.length;) {
       const byte1 = charToByteMap[input.charAt(i++)];
 
       const haveByte2 = i < input.length;
@@ -313,7 +313,7 @@ export const base64 = {
  * @param {!string} str
  * @return {!string}
  */
-export const base64Encode = function(str: string): string {
+export const base64Encode = function (str: string): string {
   const utf8Bytes = stringToByteArray(str);
   return base64.encodeByteArray(utf8Bytes, true);
 };
@@ -327,7 +327,7 @@ export const base64Encode = function(str: string): string {
  * @param {string} str To be decoded
  * @return {?string} Decoded result, if possible
  */
-export const base64Decode = function(str: string): string | null {
+export const base64Decode = function (str: string): string | null {
   try {
     return base64.decodeString(str, true);
   } catch (e) {

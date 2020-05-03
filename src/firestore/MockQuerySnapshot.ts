@@ -5,6 +5,7 @@ import {
   QuerySnapshot,
   SnapshotListenOptions,
   SnapshotMetadata,
+  DocumentData,
 } from '@firebase/firestore-types';
 
 /**
@@ -14,10 +15,13 @@ import {
  * number of documents can be determined via the `empty` and `size`
  * properties.
  */
-export default class MockQuerySnapshot implements QuerySnapshot {
-  /** An array of all the documents in the QuerySnapshot. */
-  public get docs(): QueryDocumentSnapshot[] {
-    return this._docs.slice();
+export default class MockQuerySnapshot<T = DocumentData> implements QuerySnapshot<DocumentData> {
+
+  /** 
+   * An array of all the documents in the QuerySnapshot. 
+   */
+  public get docs(): QueryDocumentSnapshot<T>[] {
+    return this._docs.slice() as QueryDocumentSnapshot<T>[];
   }
 
   /** The number of documents in the QuerySnapshot. */
@@ -50,7 +54,7 @@ export default class MockQuerySnapshot implements QuerySnapshot {
     public query: Query,
     private _docs: QueryDocumentSnapshot[],
     private _docChanges: DocumentChange[]
-  ) {}
+  ) { }
 
   /**
    * Returns an array of the documents changes since the last snapshot. If this
@@ -60,8 +64,8 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    * changes (i.e. only `DocumentSnapshot.metadata` changed) should trigger
    * snapshot events.
    */
-  public docChanges = (options?: SnapshotListenOptions): DocumentChange[] => {
-    return this._docChanges;
+  public docChanges = (options?: SnapshotListenOptions): DocumentChange<T>[] => {
+    return this._docChanges as DocumentChange<T>[];
   }
 
   /**
@@ -71,10 +75,10 @@ export default class MockQuerySnapshot implements QuerySnapshot {
    * each document in the snapshot.
    * @param thisArg The `this` binding for the callback.
    */
-  public forEach = (callback: (result: QueryDocumentSnapshot) => void, thisArg?: any): void => {
+  public forEach = (callback: (result: QueryDocumentSnapshot<T>) => void, thisArg?: any): void => {
     // Todo this binding
     for (const documentSnapshot of this._docs) {
-      callback(documentSnapshot);
+      callback(documentSnapshot as QueryDocumentSnapshot<T>);
     }
   }
 
