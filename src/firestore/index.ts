@@ -1,5 +1,4 @@
 import { MockFirebaseApp, MockFirebaseFirestore, MockFirebaseService } from '@firebase/app-types';
-import { Settings, PersistenceSettings, DocumentData, } from '@firebase/firestore-types';
 import createFirebaseRulesIntepreter, {
   defaultFirebaseRulesContext,
   FirebaseRulesContext,
@@ -17,6 +16,7 @@ import { MockWriteBatch } from './MockWritebatch';
 import { generateDocumentId, isValidCollectionReference, isValidDocumentReference, resolveReference } from './utils';
 import { NotImplementedYet } from './utils/NotImplementedYet';
 import MockQuery from './MockQuery';
+import { DocumentData, Settings, PersistenceSettings } from '@firebase/firestore-types';
 
 /**
  * Document object to define database data to be set into a mock

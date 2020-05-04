@@ -1,4 +1,3 @@
-import { DocumentSnapshot } from '@firebase/firestore-types';
 import { createFirebaseNamespace } from '../../app';
 
 import { MockDatabase } from '../index';
@@ -13,7 +12,7 @@ const firestore = firebase.initializeApp({}).firestore();
 describe('Database state restoring', () => {
   describe('Reading the whole database state', () => {
     it('will create the database from an object model', async () => {
-      const dogWhisper = (snapshot: DocumentSnapshot) => {
+      const dogWhisper = (snapshot: any) => {
         // tslint:disable-next-line: no-console
         console.log(snapshot);
       };
@@ -124,7 +123,7 @@ describe('Database state restoring', () => {
 
   describe('Saving the whole database state', () => {
     it('will save the database state to an object model', async () => {
-      const dogWhisper = (snapshot: DocumentSnapshot) => {
+      const dogWhisper = (snapshot: any) => {
         console.log(snapshot);
       };
 
