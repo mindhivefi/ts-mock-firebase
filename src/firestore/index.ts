@@ -96,49 +96,51 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
 
     const firestore = this;
 
+    const me = this;
+
     // TODO Refactor to own internal class
     this.mocker = {
       serverTime: undefined,
 
-      root: () => this.root,
+      root: () => me.root,
 
       fromMockDatabase: (database: MockDatabase) => {
-        this.root.mocker.reset();
+        me.root.mocker.reset();
         for (const collectionId in database) {
           if (database.hasOwnProperty(collectionId)) {
             const collectionData = database[collectionId];
 
-            const collection = new MockCollectionReference(this as any, collectionId, this.root);
-            this.root.mocker.setCollection(collection);
+            const collection = new MockCollectionReference(me as any, collectionId, me.root);
+            me.root.mocker.setCollection(collection);
             collection.mocker.load(collectionData);
           }
         }
       },
 
       toMockDatabase: (): MockDatabase => {
-        return this.root.mocker.saveCollections();
+        return me.root.mocker.saveCollections();
       },
 
       fromJson: (json: string) => {
-        this.mocker.fromMockDatabase(JSON.parse(json));
+        me.mocker.fromMockDatabase(JSON.parse(json));
       },
 
       toJson: () => {
-        return JSON.stringify(this.mocker.toMockDatabase(), undefined, 2);
+        return JSON.stringify(me.mocker.toMockDatabase(), undefined, 2);
       },
 
       reset: () => {
-        this.root.mocker.reset();
-        this._rules = undefined;
-        this._rulesHash = undefined;
+        me.root.mocker.reset();
+        me._rules = undefined;
+        me._rulesHash = undefined;
       },
 
       collection: (id: string): MockCollectionReference => {
-        return this.root.mocker.collection(id);
+        return me.root.mocker.collection(id);
       },
 
       setCollection: (collection: MockCollectionReference) => {
-        this.root.mocker.setCollection(collection);
+        me.root.mocker.setCollection(collection);
       },
 
       loadCollection: (collectionPath: string, collectionData: CollectionObject) => {
@@ -146,7 +148,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
           throw new Error(`Invalid collection reference: ${collectionPath}`);
         }
 
-        const collection = this.root.collection(collectionPath) as any;
+        const collection = me.root.collection(collectionPath) as any;
         for (const docId in collectionData) {
           if (collectionData.hasOwnProperty(docId)) {
             const doc = new MockDocumentReference(firestore as any, docId, collection);
@@ -165,7 +167,7 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
         const rootCollection = documentPath.substring(0, index);
         const path = documentPath.substring(index + 1);
 
-        const doc = this.root.collection(rootCollection).doc(path) as any;
+        const doc = me.root.collection(rootCollection).doc(path) as any;
 
         doc.mocker.setData(data);
       },
@@ -173,52 +175,52 @@ export class MockFirebaseFirestoreImpl implements MockFirebaseFirestore, MockFir
       loadRulesFromString: (sourceFile: string): void => {
         const hashValue = hash(sourceFile);
         // avoid parsing if the file is already loaded
-        if (hashValue !== this._rulesHash) {
-          this._rules = createFirebaseRulesIntepreter();
-          this._rules.init(sourceFile);
-          this._rulesHash = hashValue;
+        if (hashValue !== me._rulesHash) {
+          me._rules = createFirebaseRulesIntepreter();
+          me._rules.init(sourceFile);
+          me._rulesHash = hashValue;
         }
       },
 
       loadRulesFromFile: (filePath?: string): void => {
         const path = filePath || require('app-root-path') + 'firebase.rules';
         const sourceCode = fs.readFileSync(path, 'utf-8');
-        this.mocker.loadRulesFromString(sourceCode);
+        me.mocker.loadRulesFromString(sourceCode);
       },
 
       rules: () => {
-        return this.rules;
+        return me.rules;
       },
 
       getRulesContext: (resource: MockDocumentReference): FirebaseRulesContext => {
         const context = defaultFirebaseRulesContext;
         context.resource = resource;
         context.auth = {}; // TODO fix auth
-        context.onExistsCall = this.existCall;
-        context.onGetCall = this.onGetCall;
+        context.onExistsCall = me.existCall;
+        context.onGetCall = me.onGetCall;
         return context as any;
       },
 
       setNextDocumentIds: (ids: string[] | GetDocumentIdCallback) => {
         if (Array.isArray(ids)) {
-          this._nextDocumentIdsArray = ids;
-          this._nextDocumentIdsFun = undefined;
+          me._nextDocumentIdsArray = ids;
+          me._nextDocumentIdsFun = undefined;
           return;
         }
         if (typeof ids === 'function') {
-          this._nextDocumentIdsArray = undefined;
-          this._nextDocumentIdsFun = ids;
+          me._nextDocumentIdsArray = undefined;
+          me._nextDocumentIdsFun = ids;
           return;
         }
         throw new Error('Illegal argument type of ' + typeof ids);
       },
 
       getNextDocumentId: (collectionPath: string): string => {
-        if (this._nextDocumentIdsArray && this._nextDocumentIdsArray.length > 0) {
-          return this._nextDocumentIdsArray.shift() as string;
+        if (me._nextDocumentIdsArray && me._nextDocumentIdsArray.length > 0) {
+          return me._nextDocumentIdsArray.shift() as string;
         }
-        if (this._nextDocumentIdsFun) {
-          return this._nextDocumentIdsFun(collectionPath);
+        if (me._nextDocumentIdsFun) {
+          return me._nextDocumentIdsFun(collectionPath);
         }
         return generateDocumentId();
       },
@@ -380,3 +382,5 @@ export { MockFieldValue } from './MockFieldValue';
 export { MockGeoPoint } from './MockGeoPoint';
 export { MockTimestamp } from './MockTimestamp';
 export { MockBlob } from './MockBlob';
+
+export * from './utils/mocker';

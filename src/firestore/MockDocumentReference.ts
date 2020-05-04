@@ -77,7 +77,7 @@ export default class MockDocumentReference<T = DocumentData> implements Document
   }
 
   public get data(): T {
-    return (this._data ? deepCopy(this._data) : this._data) as T;
+    return deepCopy(this._data) as T;
   }
 
   public mocker: DocumentMocker<T>;
@@ -100,38 +100,41 @@ export default class MockDocumentReference<T = DocumentData> implements Document
   // tslint:disable-next-line
   public constructor(public firestore: MockFirebaseFirestore, public id: string,
     public parent: CollectionReference) {
+
+    const me = this;
+
     this.mocker = {
       collection: (collectionId: string) => {
-        return this._collections[collectionId];
+        return me._collections[collectionId];
       },
 
       setCollection: (collection: MockCollectionReference<T>) => {
-        this._collections[collection.id] = collection;
+        me._collections[collection.id] = collection;
       },
 
       getData: (): T | undefined => {
-        return this.data ? deepCopy(this.data) : undefined;
+        return me.data ? deepCopy(me.data) : undefined;
       },
 
       setData: (data: T) => {
-        this._data = data;
+        me._data = data;
       },
 
       reset: () => {
-        for (const collectionId in this._collections) {
+        for (const collectionId in me._collections) {
           if (this._collections.hasOwnProperty(collectionId)) {
-            const collection = this._collections[collectionId];
+            const collection = me._collections[collectionId];
             collection.mocker.reset();
           }
         }
-        this._collections = {};
-        this._snapshotCallbackHandler.reset();
-        this._data = undefined;
+        me._collections = {};
+        me._snapshotCallbackHandler.reset();
+        me._data = undefined;
       },
 
       load: (document: MockDocument<T>) => {
-        this.mocker.reset();
-        this._data = document.data ? deepCopy(document.data) : undefined;
+        me.mocker.reset();
+        me._data = deepCopy(document.data);
 
         const collections = document.collections;
 
@@ -140,7 +143,7 @@ export default class MockDocumentReference<T = DocumentData> implements Document
             if (collections.hasOwnProperty(collectionId)) {
               const collectionData = collections[collectionId];
 
-              const collection = new MockCollectionReference<T>(this.firestore, collectionId, this);
+              const collection = new MockCollectionReference<T>(me.firestore, collectionId, me);
               this.mocker.setCollection(collection);
               collection.mocker.load(collectionData);
             }
@@ -149,15 +152,15 @@ export default class MockDocumentReference<T = DocumentData> implements Document
 
         const listeners = document.listerners;
         if (listeners) {
-          this._snapshotCallbackHandler.load(listeners);
+          me._snapshotCallbackHandler.load(listeners);
         }
       },
 
       saveCollections: (): MockCollections<T> => {
         const result: MockCollections<T> = {};
-        for (const collectionId in this._collections) {
-          if (this._collections.hasOwnProperty(collectionId)) {
-            const collection = this._collections[collectionId];
+        for (const collectionId in me._collections) {
+          if (me._collections.hasOwnProperty(collectionId)) {
+            const collection = me._collections[collectionId];
             result[collectionId] = collection.mocker.save();
           }
         }
@@ -166,11 +169,11 @@ export default class MockDocumentReference<T = DocumentData> implements Document
 
       saveDocument: (): MockDocument<T> => {
         const result: MockDocument<T> = {
-          data: { ...this.data }, // TODO deep copy
+          data: { ...me.data }, // TODO deep copy
         };
-        const collectionKeys = Object.getOwnPropertyNames(this._collections);
+        const collectionKeys = Object.getOwnPropertyNames(me._collections);
         if (collectionKeys.length > 0) {
-          const collections = this.mocker.saveCollections();
+          const collections = me.mocker.saveCollections();
           if (collections) {
             result.collections = collections;
           }
@@ -179,7 +182,7 @@ export default class MockDocumentReference<T = DocumentData> implements Document
       },
 
       listeners: () => {
-        return this._snapshotCallbackHandler.list as any;
+        return me._snapshotCallbackHandler.list as any;
       },
     };
   }

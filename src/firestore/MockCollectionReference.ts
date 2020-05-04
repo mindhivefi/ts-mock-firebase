@@ -99,21 +99,23 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
     public id: string,
     public parent: DocumentReference | null = null
   ) {
+    const me = this;
+
     this.mocker = {
       doc: (documentId: string) => {
-        return this._docRefs[documentId];
+        return me._docRefs[documentId];
       },
       setDoc: (doc: MockDocumentReference<T>) => {
-        this._docRefs[doc.id] = doc;
+        me._docRefs[doc.id] = doc;
       },
 
       docRefs: () => {
-        return this.getDocs();
+        return me.getDocs();
       },
 
       deleteDoc: (documentId: string) => {
-        const index = Object.keys(this._docRefs).indexOf(documentId);
-        delete this._docRefs[documentId];
+        const index = Object.keys(me._docRefs).indexOf(documentId);
+        delete me._docRefs[documentId];
         return index;
       },
 
@@ -125,8 +127,8 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
             if (collection.docs.hasOwnProperty(documentId)) {
               const documentData = collection.docs[documentId];
 
-              const document = new MockDocumentReference<T>(this.firestore, documentId, this as any);
-              this.mocker.setDoc(document);
+              const document = new MockDocumentReference<T>(me.firestore, documentId, me as any);
+              me.mocker.setDoc(document);
               document.mocker.load(documentData);
             }
           }
@@ -135,12 +137,12 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
 
       save: (): MockCollection => {
         const collection: MockCollection = {};
-        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+        const docKeys = Object.getOwnPropertyNames(me._docRefs);
         if (docKeys.length > 0) {
           const docs: MockDocuments<T> = (collection.docs = {});
           for (const docId of docKeys) {
-            if (this._docRefs[docId].data) {
-              docs[docId] = this._docRefs[docId].mocker.saveDocument();
+            if (me._docRefs[docId].data) {
+              docs[docId] = me._docRefs[docId].mocker.saveDocument();
             }
           }
         }
@@ -149,11 +151,11 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
 
       getShallowCollection: () => {
         const docs: { [documentId: string]: T | undefined } = {};
-        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+        const docKeys = Object.getOwnPropertyNames(me._docRefs);
 
         for (const docId of docKeys) {
-          const data = this._docRefs[docId].data;
-          docs[docId] = data ? deepCopy(data) : undefined;
+          const data = me._docRefs[docId].data;
+          docs[docId] = deepCopy(data);
         }
         return docs;
       },
@@ -164,22 +166,22 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
         for (const documentId in docs) {
           if (docs.hasOwnProperty(documentId)) {
             const documentData = docs[documentId];
-            const document = new MockDocumentReference<T>(this.firestore, documentId, this as any);
-            this.mocker.setDoc(document);
+            const document = new MockDocumentReference<T>(me.firestore, documentId, me as any);
+            me.mocker.setDoc(document);
             document.mocker.setData(documentData);
           }
         }
       },
 
       reset: () => {
-        for (const documentId in this._docRefs) {
-          if (this._docRefs.hasOwnProperty(documentId)) {
-            const doc = this._docRefs[documentId];
+        for (const documentId in me._docRefs) {
+          if (me._docRefs.hasOwnProperty(documentId)) {
+            const doc = me._docRefs[documentId];
             doc.mocker.reset();
           }
         }
-        this._docRefs = {};
-        this._snapshotCallbackHandler.reset();
+        me._docRefs = {};
+        me._snapshotCallbackHandler.reset();
       },
     };
   }
