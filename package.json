@@ -7,7 +7,7 @@
     "clean": "rimraf -f -r -d lib",
     "prebuild": "yarn clean",
     "build": "./node_modules/.bin/tsc",
-    "test": "jest --verbose --no-cache",
+    "test": "jest --verbose --no-cache --maxWorkers=2",
     "test:watch": "jest --watch",
     "lint": "tslint --fix ./src/**/*.ts*  --project .",
     "semantic-release": "semantic-release",
