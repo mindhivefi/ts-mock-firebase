@@ -26,7 +26,7 @@ function assertUint8ArrayAvailable(): void {
 }
 
 /** Helper function to assert Base64 functions are available at runtime. */
-function assertBase64Available(): void {}
+function assertBase64Available(): void { }
 
 /**
  * An immutable object representing an array of bytes.

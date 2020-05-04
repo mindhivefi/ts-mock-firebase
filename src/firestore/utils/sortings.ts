@@ -1,4 +1,4 @@
-import { FieldPath, OrderByDirection } from '@firebase/firestore-types';
+import { FieldPath, OrderByDirection, DocumentData } from '@firebase/firestore-types';
 
 import { getFieldValue } from '.';
 import { MockTimestamp } from '../../app';
@@ -113,14 +113,14 @@ export function querySortFunction(fieldPath: string | FieldPath, directionStr: O
   };
 }
 
-export function sortDocumentsByRules(
-  docs: MockDocumentReference[],
+export function sortDocumentsByRules<T = DocumentData>(
+  docs: MockDocumentReference<T>[],
   rules?: MockQueryOrderRule[]
-): MockDocumentReference[] {
+): MockDocumentReference<T>[] {
   if (!rules) {
     return docs;
   }
-  docs.sort((a: MockDocumentReference, b: MockDocumentReference) => {
+  docs.sort((a: MockDocumentReference<T>, b: MockDocumentReference<T>) => {
     const A = a.data;
     const B = b.data;
 

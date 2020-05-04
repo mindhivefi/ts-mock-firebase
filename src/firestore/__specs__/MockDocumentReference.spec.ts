@@ -146,7 +146,7 @@ describe('DocumentReferenceMock', () => {
 
       let snap: MockDocumentSnapshot | undefined;
 
-      const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
+      const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot<any>) => {
         snap = snapshot;
       };
 
@@ -216,7 +216,7 @@ describe('DocumentReferenceMock', () => {
 
       let snap: MockDocumentSnapshot | undefined;
 
-      const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
+      const listener = (snapshot: MockDocumentSnapshot<any>) => {
         snap = snapshot;
       };
 
@@ -239,7 +239,7 @@ describe('DocumentReferenceMock', () => {
 
       let snap: MockDocumentSnapshot | undefined;
 
-      const listener: MockDocumentSnapshotCallback = (snapshot: MockDocumentSnapshot) => {
+      const listener = (snapshot: MockDocumentSnapshot<any>) => {
         snap = snapshot;
       };
 
@@ -329,7 +329,7 @@ describe('DocumentReferenceMock', () => {
 
       const doc = firestore.doc('test/doc');
       // tslint:disable-next-line: no-empty
-      const listener = (snapshot: MockDocumentSnapshot) => {};
+      const listener = (snapshot: MockDocumentSnapshot<any>) => { };
       const unsubscribe = doc.onSnapshot(listener);
       expect(unsubscribe).toBeDefined();
 
@@ -345,7 +345,7 @@ describe('DocumentReferenceMock', () => {
       const doc = firestore.doc('test/doc');
       // tslint:disable-next-line: no-empty
       let triggerCount = 0;
-      const listener = (snapshot: MockDocumentSnapshot) => {
+      const listener = (snapshot: MockDocumentSnapshot<any>) => {
         triggerCount++;
       };
 

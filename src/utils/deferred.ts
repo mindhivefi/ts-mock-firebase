@@ -43,7 +43,7 @@ export class Deferred<R> {
       if (typeof callback === 'function') {
         // Attaching noop handler just in case developer wasn't expecting
         // promises
-        this.promise.catch(() => {});
+        this.promise.catch(() => { });
 
         // Some of our callbacks don't expect a value and our own tests
         // assert that the parameter length is 1

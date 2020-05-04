@@ -101,7 +101,7 @@ export class MockFirebaseAppImpl implements MockFirebaseApp {
       removeAuthTokenListener: (callback: (token: string | null) => void) => {
         tokenListeners = tokenListeners.filter(listener => listener !== callback);
       },
-    };
+    } as any;
   }
 
   public delete(): Promise<void> {
@@ -158,7 +158,7 @@ export class MockFirebaseAppImpl implements MockFirebaseApp {
        * then we will pass that instance on, otherwise we pass `null`
        */
       const instanceSpecifier = instanceIdentifier !== DEFAULT_ENTRY_NAME ? instanceIdentifier : undefined;
-      const service = ((this.firebase_ as any) as _FirebaseNamespace).INTERNAL.factories[name](
+      const service = (((this.firebase_ as any) as _FirebaseNamespace).INTERNAL as any).factories[name](
         this,
         this.extendApp.bind(this),
         instanceSpecifier

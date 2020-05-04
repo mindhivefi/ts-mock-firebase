@@ -3,6 +3,7 @@ import { createFirebaseNamespace } from '../../app';
 import { MockFieldPath } from '../MockFieldPath';
 import { MockFieldValue } from '../MockFieldValue';
 import { MockTimestamp } from '../MockTimestamp';
+import MockDocumentReference from '../MockDocumentReference';
 
 const firebase = createFirebaseNamespace();
 const firestore = firebase.initializeApp({}).firestore();
@@ -27,7 +28,7 @@ describe('FieldValue', () => {
 
       it('will delete field from data on the top level', async () => {
         firestore.mocker.fromMockDatabase(database);
-        const ref = firestore.doc('list/a');
+        const ref = firestore.doc('list/a') as MockDocumentReference;
 
         await ref.update({
           first: MockFieldValue.delete(),
@@ -40,7 +41,7 @@ describe('FieldValue', () => {
 
       it('will throw an invalid-argument error when trying to use FieldValue.delete in sub object', async () => {
         firestore.mocker.fromMockDatabase(database);
-        const ref = firestore.doc('list/a');
+        const ref = firestore.doc('list/a') as MockDocumentReference;
 
         // FirebaseError: [code=invalid-argument]: Function DocumentReference.update() called with invalid data. FieldValue.delete() can only appear at the top level of your update data (found in field third.sub.B)
 
@@ -94,7 +95,7 @@ describe('FieldValue', () => {
             },
           };
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.update({
             first: MockFieldValue.serverTimestamp(),
@@ -122,7 +123,7 @@ describe('FieldValue', () => {
           firestore.mocker.serverTime = timestamp;
 
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.update({
             first: MockFieldValue.serverTimestamp(),
@@ -151,7 +152,7 @@ describe('FieldValue', () => {
           firestore.mocker.serverTime = () => timestamp;
 
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.update({
             first: MockFieldValue.serverTimestamp(),
@@ -179,7 +180,7 @@ describe('FieldValue', () => {
           };
 
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.set(
             {
@@ -209,7 +210,7 @@ describe('FieldValue', () => {
           };
 
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.set(
             {
@@ -239,7 +240,7 @@ describe('FieldValue', () => {
           };
 
           firestore.mocker.fromMockDatabase(database);
-          const ref = firestore.doc('list/a');
+          const ref = firestore.doc('list/a') as MockDocumentReference;
 
           await ref.set(
             {

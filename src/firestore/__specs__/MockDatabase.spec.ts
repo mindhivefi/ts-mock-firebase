@@ -1,7 +1,7 @@
-import { DocumentSnapshot } from '@firebase/firestore-types';
 import { createFirebaseNamespace } from '../../app';
 
 import { MockDatabase } from '../index';
+import MockDocumentReference from '../MockDocumentReference';
 
 const firebase = createFirebaseNamespace();
 const firestore = firebase.initializeApp({}).firestore();
@@ -12,7 +12,7 @@ const firestore = firebase.initializeApp({}).firestore();
 describe('Database state restoring', () => {
   describe('Reading the whole database state', () => {
     it('will create the database from an object model', async () => {
-      const dogWhisper = (snapshot: DocumentSnapshot) => {
+      const dogWhisper = (snapshot: any) => {
         // tslint:disable-next-line: no-console
         console.log(snapshot);
       };
@@ -74,7 +74,7 @@ describe('Database state restoring', () => {
         quantity: 2,
       });
 
-      const doc = firestore.doc('animals/dog');
+      const doc = firestore.doc('animals/dog') as MockDocumentReference;
       expect(doc.mocker.listeners().length).toBe(1);
       expect(doc.mocker.listeners()[0]).toBe(dogWhisper);
     });
@@ -123,7 +123,7 @@ describe('Database state restoring', () => {
 
   describe('Saving the whole database state', () => {
     it('will save the database state to an object model', async () => {
-      const dogWhisper = (snapshot: DocumentSnapshot) => {
+      const dogWhisper = (snapshot: any) => {
         console.log(snapshot);
       };
 

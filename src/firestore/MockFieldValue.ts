@@ -142,11 +142,11 @@ export class MockFieldValue implements FieldValue {
  * @param {DocumentData} data
  * @returns {DocumentData}
  */
-export function preprocessData(firestore: MockFirebaseFirestore, data: DocumentData): DocumentData {
+export function preprocessData<T extends DocumentData = any>(firestore: MockFirebaseFirestore, data: T): T {
   const result = { ...data };
   for (const key in result) {
     if (result.hasOwnProperty(key)) {
-      const value = result[key];
+      const value = result[key] as any;
       if (value && value instanceof MockFieldValue) {
         processFieldValue(firestore, data, result, key, value);
       } else {
@@ -198,9 +198,15 @@ export function processFieldValue(
 
         if (Array.isArray(currentValue)) {
           const newValues = fieldValue.args;
-          for (const arg of newValues) {
-            if (currentValue.indexOf(arg) < 0) {
-              currentValue.push(arg);
+          if (Array.isArray(newValues)) {
+            for (const arg of newValues) {
+              if (currentValue.indexOf(arg) < 0) {
+                currentValue.push(arg);
+              }
+            }
+          } else {
+            if (currentValue.indexOf(newValues) < 0) {
+              currentValue.push(newValues);
             }
           }
           targetData[key] = currentValue;
@@ -230,14 +236,14 @@ export function processFieldValue(
       }
       break;
 
-      case MockFieldValueType.INCREMENT: {
-        const currentValue = targetData[key];
-        if (!currentValue || typeof currentValue !== 'number') {
-          targetData[key] = fieldValue.args[0];
-        } else {
-          targetData[key] += fieldValue.args[0];
-        }
+    case MockFieldValueType.INCREMENT: {
+      const currentValue = targetData[key];
+      if (!currentValue || typeof currentValue !== 'number') {
+        targetData[key] = fieldValue.args[0];
+      } else {
+        targetData[key] += fieldValue.args[0];
       }
+    }
       break;
 
     default:

@@ -1,3 +1,4 @@
+import { DocumentData } from '@firebase/firestore-types';
 /**
  * Callback handler used for basic operation in onSnapshot -handlers.
  *
@@ -5,7 +6,7 @@
  * @class MockListener
  * @template S Type of snapshot object
  */
-export default class MockCallbackHandler<S> {
+export default class MockCallbackHandler<S = DocumentData> {
   private _callbacks: Array<(snapshot: S) => void> = [];
 
   /**

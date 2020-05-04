@@ -4,9 +4,9 @@ import {
   FieldPath,
   SnapshotMetadata,
   SnapshotOptions,
+  DocumentReference,
 } from '@firebase/firestore-types';
 
-import MockDocumentReference from './MockDocumentReference';
 import { getFieldValueFromData } from './utils';
 
 /**
@@ -18,13 +18,13 @@ import { getFieldValueFromData } from './utils';
  * access will return 'undefined'. You can use the `exists` property to
  * explicitly verify a document's existence.
  */
-export default class MockDocumentSnapshot implements DocumentSnapshot {
+export default class MockDocumentSnapshot<T = DocumentData> implements DocumentSnapshot<DocumentData> {
   /**
    *
    * @param ref A `DocumentReference` to the document location.
    * @param id The ID of the document for which this `DocumentSnapshot` contains data.
    */
-  public constructor(public ref: MockDocumentReference, public _data: any | undefined) {}
+  public constructor(public ref: DocumentReference<T>, public _data: T | undefined) { }
 
   /** True if the document exists. */
   public get exists(): boolean {
@@ -62,7 +62,7 @@ export default class MockDocumentSnapshot implements DocumentSnapshot {
    * @return An Object containing all fields in the document or 'undefined' if
    * the document doesn't exist.
    */
-  public data = (options?: SnapshotOptions): DocumentData | undefined => {
+  public data = (options?: SnapshotOptions): T | undefined => {
     return this._data;
   }
 
@@ -91,7 +91,7 @@ export default class MockDocumentSnapshot implements DocumentSnapshot {
    * @param other The `DocumentSnapshot` to compare against.
    * @return true if this `DocumentSnapshot` is equal to the provided one.
    */
-  public isEqual = (other: DocumentSnapshot): boolean => {
-    return this === other;
+  public isEqual = (other: DocumentSnapshot<T>): boolean => {
+    return (this as any) === other;
   }
 }

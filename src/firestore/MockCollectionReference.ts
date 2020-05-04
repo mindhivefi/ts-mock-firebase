@@ -14,6 +14,7 @@ import {
   QuerySnapshot,
   SnapshotListenOptions,
   WhereFilterOp,
+  FirestoreDataConverter,
 } from '@firebase/firestore-types';
 
 import { MockCollection, MockDocuments } from '.';
@@ -26,9 +27,9 @@ import MockQuerySnapshot from './MockQuerySnapshot';
 import { resolveReference } from './utils';
 import MockCallbackHandler from './utils/CallbackHandler';
 
-export interface CollectionMocker extends Mocker {
-  docRefs: () => MockDocumentReference[];
-  doc(id: string): MockDocumentReference;
+export interface CollectionMocker<T = DocumentData> extends Mocker {
+  docRefs: () => MockDocumentReference<T>[];
+  doc(id: string): MockDocumentReference<T>;
 
   /**
    * Set collection documents
@@ -36,7 +37,7 @@ export interface CollectionMocker extends Mocker {
    * @param {MockDocumentReference} doc
    * @memberof CollectionMocker
    */
-  setDoc(doc: MockDocumentReference): void;
+  setDoc(doc: MockDocumentReference<T>): void;
 
   /**
    * Delete document and return it's index where it was
@@ -46,7 +47,7 @@ export interface CollectionMocker extends Mocker {
   /**
    * Load mock collection content from MockCollection object
    */
-  load(collection: MockCollection): void;
+  load(collection: MockCollection<T>): void;
 
   /**
    * Save mock collection data into a new MockCollection object
@@ -54,7 +55,7 @@ export interface CollectionMocker extends Mocker {
    * @returns {MockCollection}
    * @memberof CollectionMocker
    */
-  save(): MockCollection;
+  save(): MockCollection<T>;
 
   /**
    * Get a shallow object listing all documents as fields where each field contains
@@ -63,32 +64,32 @@ export interface CollectionMocker extends Mocker {
    * @returns {{ [documentId: string]: DocumentData}}
    * @memberof CollectionMocker
    */
-  getShallowCollection(): { [documentId: string]: DocumentData | undefined };
+  getShallowCollection(): { [documentId: string]: T | undefined };
 
   /**
    * Set all documents of the collection by creating them from a single object
    * where eact field is a document and fields value is the data in the document
    * named by the field.
    */
-  setShallowCollection(docs: { [documentId: string]: DocumentData }): void;
+  setShallowCollection(docs: { [documentId: string]: T }): void;
 
   reset(): void;
 }
 
-interface MockDocumentReferences {
-  [documentId: string]: MockDocumentReference;
+interface MockDocumentReferences<T> {
+  [documentId: string]: MockDocumentReference<T>;
 }
-export class MockCollectionReference implements CollectionReference {
+export class MockCollectionReference<T = DocumentData> implements CollectionReference<DocumentData> {
   /**
    * A string representing the path of the referenced collection (relative
    * to the root of the database).
    */
   get path(): string {
-    return this.parent && this.parent.id ? `${this.parent.path}/${this.id}` : this.id;
+    return this.parent?.id ? `${this.parent.path}/${this.id}` : this.id;
   }
 
-  public mocker: CollectionMocker;
-  private _docRefs: MockDocumentReferences = {};
+  public mocker: CollectionMocker<T>;
+  private _docRefs: MockDocumentReferences<T> = {};
 
   private _snapshotCallbackHandler = new MockCallbackHandler<QuerySnapshot>();
 
@@ -98,21 +99,23 @@ export class MockCollectionReference implements CollectionReference {
     public id: string,
     public parent: DocumentReference | null = null
   ) {
+    const me = this;
+
     this.mocker = {
       doc: (documentId: string) => {
-        return this._docRefs[documentId];
+        return me._docRefs[documentId];
       },
-      setDoc: (doc: MockDocumentReference) => {
-        this._docRefs[doc.id] = doc;
+      setDoc: (doc: MockDocumentReference<T>) => {
+        me._docRefs[doc.id] = doc;
       },
 
       docRefs: () => {
-        return this.getDocs();
+        return me.getDocs();
       },
 
       deleteDoc: (documentId: string) => {
-        const index = Object.keys(this._docRefs).indexOf(documentId);
-        delete this._docRefs[documentId];
+        const index = Object.keys(me._docRefs).indexOf(documentId);
+        delete me._docRefs[documentId];
         return index;
       },
 
@@ -124,8 +127,8 @@ export class MockCollectionReference implements CollectionReference {
             if (collection.docs.hasOwnProperty(documentId)) {
               const documentData = collection.docs[documentId];
 
-              const document = new MockDocumentReference(this.firestore, documentId, this);
-              this.mocker.setDoc(document);
+              const document = new MockDocumentReference<T>(me.firestore, documentId, me as any);
+              me.mocker.setDoc(document);
               document.mocker.load(documentData);
             }
           }
@@ -134,12 +137,12 @@ export class MockCollectionReference implements CollectionReference {
 
       save: (): MockCollection => {
         const collection: MockCollection = {};
-        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+        const docKeys = Object.getOwnPropertyNames(me._docRefs);
         if (docKeys.length > 0) {
-          const docs: MockDocuments = (collection.docs = {});
+          const docs: MockDocuments<T> = (collection.docs = {});
           for (const docId of docKeys) {
-            if (this._docRefs[docId].data) {
-              docs[docId] = this._docRefs[docId].mocker.saveDocument();
+            if (me._docRefs[docId].data) {
+              docs[docId] = me._docRefs[docId].mocker.saveDocument();
             }
           }
         }
@@ -147,38 +150,38 @@ export class MockCollectionReference implements CollectionReference {
       },
 
       getShallowCollection: () => {
-        const docs: { [documentId: string]: DocumentData | undefined } = {};
-        const docKeys = Object.getOwnPropertyNames(this._docRefs);
+        const docs: { [documentId: string]: T | undefined } = {};
+        const docKeys = Object.getOwnPropertyNames(me._docRefs);
 
         for (const docId of docKeys) {
-          const data = this._docRefs[docId].data;
-          docs[docId] = data ? deepCopy(data) : undefined;
+          const data = me._docRefs[docId].data;
+          docs[docId] = deepCopy(data);
         }
         return docs;
       },
 
-      setShallowCollection: (docs: { [documentId: string]: DocumentData }): void => {
+      setShallowCollection: (docs: { [documentId: string]: T }): void => {
         this.mocker.reset();
 
         for (const documentId in docs) {
           if (docs.hasOwnProperty(documentId)) {
             const documentData = docs[documentId];
-            const document = new MockDocumentReference(this.firestore, documentId, this);
-            this.mocker.setDoc(document);
+            const document = new MockDocumentReference<T>(me.firestore, documentId, me as any);
+            me.mocker.setDoc(document);
             document.mocker.setData(documentData);
           }
         }
       },
 
       reset: () => {
-        for (const documentId in this._docRefs) {
-          if (this._docRefs.hasOwnProperty(documentId)) {
-            const doc = this._docRefs[documentId];
+        for (const documentId in me._docRefs) {
+          if (me._docRefs.hasOwnProperty(documentId)) {
+            const doc = me._docRefs[documentId];
             doc.mocker.reset();
           }
         }
-        this._docRefs = {};
-        this._snapshotCallbackHandler.reset();
+        me._docRefs = {};
+        me._snapshotCallbackHandler.reset();
       },
     };
   }
@@ -191,15 +194,15 @@ export class MockCollectionReference implements CollectionReference {
    * @param documentPath A slash-separated path to a document.
    * @return The `DocumentReference` instance.
    */
-  public doc = (documentPath?: string): DocumentReference => {
+  public doc = (documentPath?: string): DocumentReference<T> => {
     return resolveReference(
       this.firestore,
-      this.parent as MockDocumentReference,
+      this.parent as any,
       false,
       documentPath || this.firestore.mocker.getNextDocumentId(this.path),
       false,
-      this
-    ) as DocumentReference;
+      this as any
+    ) as unknown as DocumentReference<T>;
   }
 
   /**
@@ -210,16 +213,16 @@ export class MockCollectionReference implements CollectionReference {
    * @return A Promise resolved with a `DocumentReference` pointing to the
    * newly created document after it has been written to the backend.
    */
-  public add = (data: DocumentData): Promise<DocumentReference> => {
-    return new Promise<DocumentReference>((resolve, reject) => {
+  public add = (data: T): Promise<DocumentReference<T>> => {
+    return new Promise<DocumentReference<T>>((resolve, reject) => {
       const id = this.firestore.mocker.getNextDocumentId(this.path);
-      const document = new MockDocumentReference(this.firestore, id, this);
+      const document = new MockDocumentReference<T>(this.firestore, id, this as any);
       this.mocker.setDoc(document);
       document.mocker.setData(deepCopy(data));
 
       document.fireDocumentChangeEvent('added');
 
-      resolve(document);
+      resolve(document as any);
     });
   }
 
@@ -230,7 +233,7 @@ export class MockCollectionReference implements CollectionReference {
    * @return true if this `CollectionReference` is equal to the provided one.
    */
   public isEqual = (other: CollectionReference | Query): boolean => {
-    return this === other;
+    return (this as any) === other;
   }
 
   /**
@@ -249,8 +252,8 @@ export class MockCollectionReference implements CollectionReference {
    * @param value The value for comparison
    * @return The created Query.
    */
-  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query => {
-    return new MockQuery(this, this.getDocs()).where(fieldPath, opStr, value);
+  public where = (fieldPath: string | FieldPath, opStr: WhereFilterOp, value: any): Query<T> => {
+    return new MockQuery(this as any, this.getDocs()).where(fieldPath, opStr, value);
   }
 
   /**
@@ -263,7 +266,7 @@ export class MockCollectionReference implements CollectionReference {
    * @return The created Query.
    */
   public orderBy = (fieldPath: string | FieldPath, directionStr?: OrderByDirection): Query => {
-    return new MockQuery(this, this.getDocs()).orderBy(fieldPath, directionStr);
+    return new MockQuery(this as any, this.getDocs()).orderBy(fieldPath, directionStr);
   }
 
   /**
@@ -273,8 +276,12 @@ export class MockCollectionReference implements CollectionReference {
    * @param limit The maximum number of items to return.
    * @return The created Query.
    */
-  public limit = (limit: number): Query => {
-    return new MockQuery(this, this.getDocs()).limit(limit);
+  public limit = (limit: number): Query<T> => {
+    return new MockQuery<T>(this as any, this.getDocs()).limit(limit);
+  }
+
+  public limitToLast = (limit: number): Query<T> => {
+    return new MockQuery<T>(this as any, this.getDocs()).limitToLast(limit);
   }
   /**
    * Creates and returns a new Query that starts at the provided document
@@ -289,7 +296,7 @@ export class MockCollectionReference implements CollectionReference {
   // public startAt(snapshot: DocumentSnapshot): Query;
   // public startAt(...fieldValues: any[]): Query  {
   public startAt = (args: DocumentSnapshot | any[]) => {
-    throw new MockQuery(this, this.getDocs()).startAt(args);
+    throw new MockQuery(this as any, this.getDocs()).startAt(args);
   }
 
   /**
@@ -313,8 +320,8 @@ export class MockCollectionReference implements CollectionReference {
    */
   // public startAfter(...fieldValues: any[]): Query;
   // public startAfter = (snapshot: DocumentSnapshot): Query=> {
-  public startAfter = (args: DocumentSnapshot | any[]) => {
-    throw new MockQuery(this, this.getDocs()).startAfter(args);
+  public startAfter = (args: DocumentSnapshot<T> | any[]) => {
+    throw new MockQuery(this as any, this.getDocs()).startAfter(args);
   }
 
   /**
@@ -349,7 +356,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endBefore(...fieldValues: any[]): Query;
   public endBefore = (args: DocumentSnapshot | any[]) => {
-    throw new MockQuery(this, this.getDocs()).endBefore(args);
+    throw new MockQuery(this as any, this.getDocs()).endBefore(args);
   }
   /**
    * Creates and returns a new Query that ends at the provided document
@@ -373,7 +380,7 @@ export class MockCollectionReference implements CollectionReference {
    */
   // endAt(...fieldValues: any[]): Query;
   public endAt = (...fieldValues: any[]): Query => {
-    throw new MockQuery(this, this.getDocs()).endAt(fieldValues);
+    throw new MockQuery(this as any, this.getDocs()).endAt(fieldValues);
   }
 
   /**
@@ -397,9 +404,9 @@ export class MockCollectionReference implements CollectionReference {
    * @param options An object to configure the get behavior.
    * @return A Promise that will be resolved with the results of the Query.
    */
-  public get = async (options?: GetOptions): Promise<QuerySnapshot> => {
+  public get = async (options?: GetOptions): Promise<QuerySnapshot<T>> => {
     try {
-      return Promise.resolve(new MockQuery(this, this.getDocs()).get());
+      return Promise.resolve(new MockQuery(this as any, this.getDocs()).get());
     } catch (error) {
       return Promise.reject(error);
     }
@@ -435,9 +442,9 @@ export class MockCollectionReference implements CollectionReference {
       this._snapshotCallbackHandler.add(callback);
 
       // Make the initial call to onSnapshot listener
-      const documentChanges: DocumentChange[] = this.getQueryDocumentSnapshots().map((snapshot, newIndex) => ({
+      const documentChanges: DocumentChange<T>[] = this.getQueryDocumentSnapshots().map((snapshot, newIndex) => ({
         type: 'added',
-        doc: snapshot as MockQueryDocumentSnapshot,
+        doc: snapshot as QueryDocumentSnapshot<T>,
         oldIndex: -1,
         newIndex,
       }));
@@ -447,13 +454,23 @@ export class MockCollectionReference implements CollectionReference {
     throw new Error('Not implemented yet');
   }
 
-  public fireBatchDocumentChange = (documentChanges: DocumentChange[]) => {
+  public fireBatchDocumentChange = (documentChanges: DocumentChange<T>[]) => {
     const docs = this.getQueryDocumentSnapshots();
     const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
     this._snapshotCallbackHandler.fire(querySnapshot);
   }
 
-  public fireSubDocumentChange = (type: DocumentChangeType, snapshot: DocumentSnapshot, oldIndex: number = -1) => {
+  public withConverter = <U>(
+    converter: FirestoreDataConverter<U>
+  ): CollectionReference<U> => {
+    throw new Error('Not implemented yet');
+  }
+
+  public mock = (): MockCollectionReference<T> => {
+    return this as MockCollectionReference<T>;
+  }
+
+  public fireSubDocumentChange = (type: DocumentChangeType, snapshot: DocumentSnapshot<T>, oldIndex: number = -1) => {
     switch (type) {
       case 'modified':
         {
@@ -479,7 +496,7 @@ export class MockCollectionReference implements CollectionReference {
           const documentChanges: DocumentChange[] = [
             {
               type,
-              doc: snapshot as MockQueryDocumentSnapshot,
+              doc: snapshot as unknown as MockQueryDocumentSnapshot,
               oldIndex: -1,
               newIndex,
             },
@@ -492,15 +509,15 @@ export class MockCollectionReference implements CollectionReference {
       case 'removed':
         {
           const docs = this.getQueryDocumentSnapshots();
-          const documentChanges: DocumentChange[] = [
+          const documentChanges: DocumentChange<T>[] = [
             {
               type,
-              doc: snapshot as MockQueryDocumentSnapshot,
+              doc: snapshot as unknown as QueryDocumentSnapshot<T>,
               oldIndex,
               newIndex: -1,
             },
           ];
-          const querySnapshot = new MockQuerySnapshot(this, docs, documentChanges);
+          const querySnapshot = new MockQuerySnapshot(this as any, docs, documentChanges);
           this._snapshotCallbackHandler.fire(querySnapshot);
         }
         break;
@@ -510,7 +527,7 @@ export class MockCollectionReference implements CollectionReference {
     }
   }
 
-  private getDocs(): MockDocumentReference[] {
+  private getDocs(): MockDocumentReference<T>[] {
     return Object.getOwnPropertyNames(this._docRefs).map(docId => {
       return this._docRefs[docId];
     });
