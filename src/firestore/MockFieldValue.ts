@@ -151,7 +151,10 @@ export function preprocessData<T extends DocumentData = any>(firestore: MockFire
         processFieldValue(firestore, data, result, key, value);
       } else {
         if (typeof value === 'object') {
-          result[key] = preprocessData(firestore, value);
+          if (Array.isArray(value)) {
+            result[key] = value as any;
+          } else
+            result[key] = preprocessData(firestore, value);
         }
       }
     }
@@ -212,7 +215,7 @@ export function processFieldValue(
           targetData[key] = currentValue;
         } else {
           // if the field is not an array, all field values will be replaced with the given array values
-          targetData[key] = fieldValue.args;
+          targetData[key] = [fieldValue.args];
         }
       }
       break;
