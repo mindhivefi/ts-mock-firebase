@@ -70,7 +70,7 @@
     "@types/antlr4": "4.7.0",
     "@types/jest": "25.2.1",
     "@types/uuid": "7.0.3",
-    "commitizen": "4.0.5",
+    "commitizen": "4.1.2",
     "condition-circle": "2.0.2",
     "git-cz": "3.0.1",
     "husky": "4.2.5",
