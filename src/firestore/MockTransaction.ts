@@ -65,6 +65,23 @@ export default class MockTransaction implements Transaction {
   }
 
   /**
+  * Create the document referred to by the provided `DocumentReference`.
+  * The operation will fail the transaction if a document exists at the
+  * specified location.
+  *
+  * @param documentRef A reference to the document to be create.
+  * @param data The object data to serialize as the document.
+  * @return This `Transaction` instance. Used for chaining method calls.
+  */
+  public create = <T>(documentRef: DocumentReference<T>, data: T): MockTransaction => {
+
+    if ((documentRef as unknown as MockDocumentReference<T>).data !== undefined) {
+      throw Error('Document already exists: ' + documentRef.path); // TODO Emulate the actual exception
+    }
+    return this.set(documentRef, data);
+  }
+
+  /**
    * Writes to the document referred to by the provided `DocumentReference`.
    * If the document does not exist yet, it will be created. If you pass
    * `SetOptions`, the provided data can be merged into the existing document.
