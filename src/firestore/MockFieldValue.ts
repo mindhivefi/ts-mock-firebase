@@ -215,7 +215,8 @@ export function processFieldValue(
           targetData[key] = currentValue;
         } else {
           // if the field is not an array, all field values will be replaced with the given array values
-          targetData[key] = [fieldValue.args];
+          targetData[key] = Array.isArray(fieldValue.args) ?
+            fieldValue.args : [fieldValue.args];
         }
       }
       break;

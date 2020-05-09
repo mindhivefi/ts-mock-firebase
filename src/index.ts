@@ -241,9 +241,9 @@ declare module '@firebase/app-types' {
       setLogLevel: typeof types.setLogLevel;
 
       /**
- * Mocker object for reading and writing the whole firestore's state without indirect effects. This is a basic tool
- * for setting up the test setup for an unit test.
- */
+       * Mocker object for reading and writing the whole firestore's state without indirect effects. This is a basic tool
+       * for setting up the test setup for an unit test.
+       */
       mocker: FirestoreMocker;
     };
     /**

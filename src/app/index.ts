@@ -125,8 +125,9 @@ export function createFirebaseNamespace(): MockFirebaseNamespace {
       error('bad-app-name', { name: name + '' });
     }
 
+    // Current version will override the old firebase app. This makes things easier with unit tests
     if (contains(apps_, name)) {
-      // tslint:disable-next-line
+      // tslint: disable - next - line
       error('duplicate-app', { name: name });
     }
 
