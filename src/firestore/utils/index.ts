@@ -7,7 +7,7 @@ import { MockFirebaseError } from '../../utils/errors';
 import { MockCollectionReference } from '../MockCollectionReference';
 import MockDocumentReference from '../MockDocumentReference';
 import { createFieldPathFromString, MockFieldPath } from '../MockFieldPath';
-import { MockFieldValue, processFieldValue } from '../MockFieldValue';
+import { MockFieldValue, processFieldValue, preprocessData } from '../MockFieldValue';
 
 // tslint:disable-next-line: max-classes-per-file
 export class MockFirebaseValidationError extends Error { }
@@ -384,7 +384,7 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
       if (fieldValue instanceof MockFieldValue) {
         processFieldValue(firestore, data, parent, propPath, fieldValue);
       } else {
-        parent[propPath] = fieldValue;
+        parent[propPath] = preprocessData(firestore, fieldValue);
       }
     } else {
       throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof path}: ${path})`);
