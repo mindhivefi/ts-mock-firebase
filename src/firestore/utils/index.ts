@@ -353,8 +353,12 @@ export function parseFieldValuePairsFromArgs(prefix: any[], moreFieldsAndValues:
 export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, fieldValuePairs: any[]) => {
   const newData = deepCopy(data);
   for (let i = 0; i < fieldValuePairs.length; i += 2) {
-    const path = fieldValuePairs[i];
+    let path = fieldValuePairs[i];
     const fieldValue = fieldValuePairs[i + 1];
+
+    if (path.includes('.') && typeof path === 'string') {
+      path = createFieldPathFromString(path);
+    }
     if (typeof path === 'string') {
       if (fieldValue instanceof MockFieldValue) {
         processFieldValue(firestore, data, newData, path, fieldValue);
