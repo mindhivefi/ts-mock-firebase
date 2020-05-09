@@ -1,3 +1,4 @@
+import { setFieldValuePairs } from './utils/index';
 import { MockFirebaseFirestore } from '@firebase/app-types';
 import {
   CollectionReference,
@@ -20,7 +21,7 @@ import {
 import { MockCollection, MockDocuments } from '.';
 import { Mocker } from '../app';
 import { deepCopy } from '../utils/deepCopy';
-import MockDocumentReference, { ErrorFunction, MockSubscriptionFunction } from './MockDocumentReference';
+import MockDocumentReference, { ErrorFunction, MockSubscriptionFunction, extractArguments } from './MockDocumentReference';
 import MockQuery, { MockQuerySnapshotCallback, MockQuerySnapshotObserver } from './MockQuery';
 import MockQueryDocumentSnapshot from './MockQueryDocumentSnapshot';
 import MockQuerySnapshot from './MockQuerySnapshot';
@@ -218,7 +219,8 @@ export class MockCollectionReference<T = DocumentData> implements CollectionRefe
       const id = this.firestore.mocker.getNextDocumentId(this.path);
       const document = new MockDocumentReference<T>(this.firestore, id, this as any);
       this.mocker.setDoc(document);
-      document.mocker.setData(deepCopy(data));
+
+      document.mocker.setData(setFieldValuePairs(this.firestore, {}, extractArguments(data)));
 
       document.fireDocumentChangeEvent('added');
 

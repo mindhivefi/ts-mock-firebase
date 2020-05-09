@@ -1,9 +1,11 @@
+import { MockCollectionReference } from './../MockCollectionReference';
 import { MockDatabase } from '..';
 import { createFirebaseNamespace } from '../../app';
 import { MockFieldPath } from '../MockFieldPath';
 import { MockFieldValue } from '../MockFieldValue';
 import { MockTimestamp } from '../MockTimestamp';
 import MockDocumentReference from '../MockDocumentReference';
+import MockDocumentSnapshot from '../MockDocumentSnapshot';
 
 const firebase = createFirebaseNamespace();
 const firestore = firebase.initializeApp({}).firestore();
@@ -134,6 +136,40 @@ describe('FieldValue', () => {
         });
       });
 
+      describe('Server time mocked with MockTimestamp value', () => {
+        it('will replace sentinels with timestamps in addition', async () => {
+          const timestamp = MockTimestamp.fromDate(new Date('2019-03-11 20:47'));
+          const database: MockDatabase = {
+            list: {
+              docs: {
+                a: {
+                  data: {
+                    first: 1,
+                    second: 2,
+                  },
+                },
+              },
+            },
+          };
+          const docId = '123';
+
+          firestore.mocker.serverTime = timestamp;
+          firestore.mocker.setNextDocumentIds([docId])
+          firestore.mocker.fromMockDatabase(database);
+          const ref = firestore.collection('list') as MockCollectionReference;
+
+          await ref.add({
+            first: MockFieldValue.serverTimestamp(),
+          });
+
+          const snapshot = await ref.doc(docId).get() as MockDocumentSnapshot;
+
+          expect(snapshot.exists).toBeTruthy();
+          expect(snapshot.data()!.first instanceof MockTimestamp).toBeTruthy();
+          expect(timestamp.isEqual(snapshot.data()!.first)).toBe(true);
+        });
+      });
+
       describe('Server time mocked with a function', () => {
         it('will replace sentinels with timestamps', async () => {
           const timestamp = MockTimestamp.fromDate(new Date('2019-03-11 21:47'));
@@ -242,13 +278,11 @@ describe('FieldValue', () => {
           firestore.mocker.fromMockDatabase(database);
           const ref = firestore.doc('list/a') as MockDocumentReference;
 
-          await ref.set(
-            {
-              nottable: MockFieldValue.arrayUnion([3, 4, 5]),
-            },
-            {
-              merge: true,
-            }
+          await ref.set({
+            nottable: MockFieldValue.arrayUnion([3, 4, 5]),
+          }, {
+            merge: true,
+          }
           );
 
           expect(ref.data).toEqual({
