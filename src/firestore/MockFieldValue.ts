@@ -226,8 +226,15 @@ export function processFieldValue(
         const currentValue = targetData[key];
         if (Array.isArray(currentValue)) {
           const newValues = fieldValue.args;
-          for (const arg of newValues) {
-            const index = currentValue.indexOf(arg);
+          if (Array.isArray(newValues)) {
+            for (const arg of newValues) {
+              const index = currentValue.indexOf(arg);
+              if (index >= 0) {
+                currentValue.splice(index, 1);
+              }
+            }
+          } else {
+            const index = currentValue.indexOf(newValues);
             if (index >= 0) {
               currentValue.splice(index, 1);
             }
