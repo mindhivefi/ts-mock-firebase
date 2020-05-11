@@ -139,7 +139,7 @@ export default class MockTransaction implements Transaction {
 
     if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
       // TODO remove repetative code
-      const args = parseFieldValuePairsFromArgs([dataOrField], [moreFieldsAndValues]);
+      const args = parseFieldValuePairsFromArgs([dataOrField], moreFieldsAndValues);
 
       this.updateFieldsFromArgs(args, data, newData);
       this.transactionData[path] = newData;

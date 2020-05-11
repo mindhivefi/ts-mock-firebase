@@ -331,7 +331,7 @@ export function parseFieldValuePairsFromArgs(prefix: any[], moreFieldsAndValues:
       moreFieldsAndValues[0].length === 0
     )
   ) {
-    args = args.concat(moreFieldsAndValues[0]);
+    args = args.concat(moreFieldsAndValues);
   }
 
   if (args.length % 1 === 1) {
@@ -356,7 +356,7 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
     let path = fieldValuePairs[i];
     const fieldValue = fieldValuePairs[i + 1];
 
-    if (path.includes('.') && typeof path === 'string') {
+    if (typeof path === 'string' && path.includes('.')) {
       path = createFieldPathFromString(path);
     }
     if (typeof path === 'string') {
@@ -384,7 +384,9 @@ export const setFieldValuePairs = (firestore: MockFirebaseFirestore, data: any, 
       if (fieldValue instanceof MockFieldValue) {
         processFieldValue(firestore, data, parent, propPath, fieldValue);
       } else {
-        parent[propPath] = preprocessData(firestore, fieldValue);
+        parent[propPath] = typeof fieldValue === 'object' ?
+          preprocessData(firestore, fieldValue) :
+          fieldValue;
       }
     } else {
       throw new MockFirebaseValidationError(`Unsupported field path: typeof(${typeof path}: ${path})`);

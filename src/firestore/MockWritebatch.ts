@@ -89,7 +89,7 @@ export class MockWriteBatch implements WriteBatch {
     const fieldType = typeof dataOrField;
     if (fieldType === 'string' || dataOrField instanceof MockFieldPath) {
       // TODO remove repetative code
-      const args = parseFieldValuePairsFromArgs([dataOrField, value], moreFieldsAndValues[0]);
+      const args = parseFieldValuePairsFromArgs([dataOrField, value], moreFieldsAndValues);
 
       this.transactionData[path] = setFieldValuePairs(this.firestore, data, args);
       this.transactionOperation[path] = 'modified';

@@ -257,7 +257,7 @@ export default class MockDocumentReference<T = DocumentData> implements Document
       // TODO change to use actual exception
       throw new MockFirebaseValidationError(MESSAGE_NO_ENTRY_TO_UPDATE);
     }
-    await this._update(true, data, value, moreFieldsAndValues);
+    await this._update(true, data, value, ...moreFieldsAndValues);
   }
 
   /**

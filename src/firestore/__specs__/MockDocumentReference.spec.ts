@@ -476,7 +476,11 @@ describe('DocumentReferenceMock', () => {
       firestore.mocker.fromMockDatabase(database);
 
       const document = firestore.doc('list/doc');
-      await document.update('test', 'cool', 'test2', 'cooler', 'test3', 'the coolest');
+      await document.update(
+        'test', 'cool',
+        'test2', 'cooler',
+        'test3', 'the coolest'
+      );
 
       expect(document.data).toEqual({
         value: 1,
