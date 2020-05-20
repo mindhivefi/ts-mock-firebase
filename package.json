@@ -92,7 +92,7 @@
     "@firebase/util": "0.2.45",
     "antlr4": "4.7.2",
     "firebase-rules-parser": "2.0.1",
-    "uuid": "8.0.0"
+    "uuid": "8.1.0"
   },
   "config": {
     "commitizen": {
