@@ -88,7 +88,7 @@
     "@firebase/auth": "0.14.4",
     "@firebase/firestore": "1.14.2",
     "@firebase/firestore-types": "1.10.1",
-    "@firebase/messaging": "0.6.14",
+    "@firebase/messaging": "0.6.16",
     "@firebase/util": "0.2.45",
     "antlr4": "4.7.2",
     "firebase-rules-parser": "2.0.1",
