@@ -85,7 +85,7 @@
   },
   "dependencies": {
     "@firebase/app-types": "0.6.0",
-    "@firebase/auth": "0.14.4",
+    "@firebase/auth": "0.14.6",
     "@firebase/firestore": "1.14.2",
     "@firebase/firestore-types": "1.10.1",
     "@firebase/messaging": "0.6.14",
