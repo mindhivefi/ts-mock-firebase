@@ -72,7 +72,7 @@
     "@types/uuid": "7.0.3",
     "commitizen": "4.1.0",
     "condition-circle": "2.0.2",
-    "git-cz": "3.0.1",
+    "git-cz": "4.6.2",
     "husky": "4.2.5",
     "jest": "25.5.4",
     "rimraf": "3.0.2",
